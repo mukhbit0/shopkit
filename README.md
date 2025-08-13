@@ -22,6 +22,7 @@ ShopKit eliminates all common e-commerce development pain points:
 ## 🚀 Features
 
 ### 🎨 Advanced Theming System
+
 - **Material 3 Design** - Latest Material Design with dynamic color support
 - **Neumorphism** - Soft UI with customizable depth and shadow effects  
 - **Glassmorphism** - Modern glass effects with backdrop blur
@@ -30,6 +31,7 @@ ShopKit eliminates all common e-commerce development pain points:
 - **Export/Import** - Save and share theme configurations
 
 ### 🌍 Internationalization
+
 - **35+ Languages** - Comprehensive translation support including RTL languages
 - **Custom Translations** - Override any text with your own translations
 - **Pluralization** - Smart plural forms for different languages
@@ -37,6 +39,7 @@ ShopKit eliminates all common e-commerce development pain points:
 - **RTL Support** - Full right-to-left language support
 
 ### 🔧 Flexible Configuration
+
 - **Widget Builder System** - Configure every aspect of widget behavior
 - **Responsive Layouts** - Automatic adaptation to screen sizes
 - **Accessibility Config** - Comprehensive accessibility customization
@@ -44,6 +47,7 @@ ShopKit eliminates all common e-commerce development pain points:
 - **Validation System** - Flexible form validation with custom rules
 
 ### 📱 Production-Ready Widgets
+
 - **Product Grid/List** - Responsive product displays with lazy loading
 - **Search & Filters** - Real-time search with advanced filtering
 - **Shopping Cart** - Full cart management with animations
@@ -194,7 +198,7 @@ class MyCustomTheme extends ShopKitBaseTheme {
 themeManager.setTheme(MyCustomTheme());
 ```
 
-## 🌍 Internationalization
+## 🌎 Internationalization
 
 ### Basic Usage
 
@@ -439,7 +443,7 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/shopkit.git
+git clone https://github.com/mukhbit0/shopkit.git
 cd shopkit
 
 # Install dependencies
@@ -459,299 +463,17 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🔗 Links
 
-- [Documentation](https://shopkit.dev)
-- [Examples](https://github.com/yourusername/shopkit/tree/main/example)
-- [Issue Tracker](https://github.com/yourusername/shopkit/issues)
+- [Examples](https://github.com/mukhbit0/shopkit/tree/main/example)
 - [Changelog](CHANGELOG.md)
-        extensions: [ECommerceTheme.light()],
-      ),
-      home: ProductShowcase(),
-    );
-  }
-}
-
-class ProductShowcase extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final products = [
-      ProductModel(
-        id: '1',
-        name: 'Wireless Headphones',
-        price: 99.99,
-        currency: 'USD',
-        imageUrl: 'https://example.com/headphones.jpg',
-        rating: 4.5,
-        reviewCount: 128,
-        discountPercentage: 15,
-      ),
-      // Add more products...
-    ];
-
-    return Scaffold(
-      appBar: AppBar(title: Text('ShopKit Demo')),
-      body: ProductGrid(
-        products: products,
-        onProductTap: (product) => print('Tapped: ${product.name}'),
-        onAddToCart: (cartItem) => print('Added to cart: ${cartItem.product.name}'),
-      ),
-    );
-  }
-}
-```
-
-## Core Widgets 🧩
-
-### Product Discovery
-- **ProductCard** - Customizable product display with animations
-- **ProductGrid** - Responsive grid layout with sliver support
-- **ProductSearchBar** - Search with autocomplete suggestions
-- **CategoryTabs** - Category navigation tabs
-- **ProductFilter** - Advanced filtering capabilities
-
-### Product Details
-- **ProductDetailView** - Comprehensive product page
-- **ImageCarousel** - Swipeable image gallery with zoom
-- **VariantPicker** - Size/color selection with swatches
-- **ProductTabs** - Organized product information
-- **ReviewWidget** - Customer reviews and ratings
-
-### Cart Management
-- **CartBubble** - Floating cart indicator
-- **CartSummary** - Complete cart overview
-- **AddToCartButton** - Animated add-to-cart button
-- **StickyAddToCart** - Persistent purchase button
-
-### Checkout Flow
-- **CheckoutStepper** - Multi-step checkout process
-- **ShippingCalculator** - Dynamic shipping costs
-- **PaymentMethodSelector** - Payment option selection
-- **CartDiscount** - Promo code application
-
-## Data Models 📊
-
-ShopKit provides comprehensive data models for type-safe e-commerce development:
-
-```dart
-// Product with variants and pricing
-final product = ProductModel(
-  id: 'prod_123',
-  name: 'Premium T-Shirt',
-  price: 29.99,
-  currency: 'USD',
-  variants: [
-    VariantModel(
-      id: 'var_1',
-      name: 'Red Large',
-      type: 'color',
-      value: 'Red',
-      stockQuantity: 10,
-      swatchColor: '#FF0000',
-    ),
-  ],
-);
-
-// Cart management
-final cartItem = CartItemModel(
-  id: 'item_1',
-  product: product,
-  quantity: 2,
-  pricePerItem: product.discountedPrice,
-);
-```
-
-## Theming 🎨
-
-### Light & Dark Themes
-
-```dart
-MaterialApp(
-  theme: ThemeData(
-    extensions: [ECommerceTheme.light()],
-  ),
-  darkTheme: ThemeData(
-    extensions: [ECommerceTheme.dark()],
-  ),
-  home: MyHomePage(),
-)
-```
-
-### Custom Theming
-
-```dart
-final customTheme = ECommerceTheme.light().copyWith(
-  primaryColor: Colors.purple,
-  cardBorderRadius: BorderRadius.circular(20),
-  priceStyle: TextStyle(
-    fontSize: 18,
-    fontWeight: FontWeight.bold,
-    color: Colors.green,
-  ),
-);
-```
-
-## Headless Architecture 🧠
-
-Use controllers for business logic while keeping UI flexible:
-
-```dart
-class MyCartPage extends StatefulWidget {
-  @override
-  _MyCartPageState createState() => _MyCartPageState();
-}
-
-class _MyCartPageState extends State<MyCartPage> {
-  final cartController = CartController();
-
-  @override
-  Widget build(BuildContext context) {
-    return ListenableBuilder(
-      listenable: cartController,
-      builder: (context, child) {
-        return CartSummary(
-          cart: cartController.cart,
-          onUpdateQuantity: cartController.updateQuantity,
-          onRemoveItem: cartController.removeItem,
-        );
-      },
-    );
-  }
-}
-```
-
-## Accessibility 🌟
-
-ShopKit prioritizes accessibility:
-
-- **Screen Reader Support** - Semantic labels and descriptions
-- **Keyboard Navigation** - Full keyboard accessibility
-- **High Contrast** - WCAG compliant color schemes
-- **Focus Management** - Proper focus handling in complex widgets
-- **ARIA Attributes** - Comprehensive ARIA implementation
-
-## Responsive Design 📱
-
-All widgets adapt to different screen sizes:
-
-```dart
-ProductGrid(
-  products: products,
-  minColumnWidth: 160.0, // Responsive columns
-  crossAxisCount: null, // Auto-calculated
-  childAspectRatio: 0.75,
-)
-```
-
-## Performance 🚀
-
-- **Image Caching** - Built-in network image caching
-- **Lazy Loading** - Efficient list rendering
-- **Memory Management** - Optimized widget lifecycle
-- **Animation Performance** - 60fps smooth animations
-
-## Advanced Features 🔧
-
-### State Management Agnostic
-Works with any state management solution:
-- Provider
-- Riverpod
-- Bloc/Cubit
-- GetX
-- MobX
-
-### Customization Levels
-1. **Theme-based** - Global appearance changes
-2. **Widget-level** - Individual widget customization
-3. **Headless** - Complete UI control with business logic
-
-### Type Safety
-Full TypeScript-level type safety:
-```dart
-// Compile-time type checking
-ProductCard(
-  product: ProductModel(...), // Type-safe
-  onAddToCart: (CartItemModel item) {
-    // Guaranteed correct types
-  },
-)
-```
-
-## Example Apps 📚
-
-Check out the `/example` folder for complete implementations:
-
-- **Basic Shop** - Simple product catalog
-- **Advanced Shop** - Full e-commerce flow
-- **Custom Theme** - Brand-specific styling
-
-## API Reference 📖
-
-### ProductCard
-
-```dart
-ProductCard({
-  required ProductModel product,
-  VoidCallback? onTap,
-  Function(CartItemModel)? onAddToCart,
-  Function(ProductModel)? onAddToWishlist,
-  bool showAddToCart = true,
-  bool showWishlistButton = false,
-  ECommerceTheme? theme,
-  bool enableAnimations = true,
-  // ... more customization options
-})
-```
-
-### ProductGrid
-
-```dart
-ProductGrid({
-  required List<ProductModel> products,
-  int? crossAxisCount,
-  double minColumnWidth = 160.0,
-  Function(ProductModel)? onProductTap,
-  Function(CartItemModel)? onAddToCart,
-  // ... more options
-})
-```
-
-## Contributing 🤝
-
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## Roadmap 🗺️
-
-### Phase 1 (Current) ✅
-- Product discovery widgets
-- Product detail widgets
-- Basic theming system
-
-### Phase 2 (Next)
-- Cart management widgets
-- Checkout flow widgets
-- Advanced animations
-
-### Phase 3 (Future)
-- Post-purchase widgets
-- Marketing widgets
-- Analytics integration
-
-## License 📄
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Support 💬
-
-- 📧 Email: support@shopkit.dev
-- 🐛 Issues: [GitHub Issues](https://github.com/yourusername/shopkit/issues)
-- 💬 Discussions: [GitHub Discussions](https://github.com/yourusername/shopkit/discussions)
-- 📚 Documentation: [shopkit.dev](https://shopkit.dev)
 
 ---
 
-Made with ❤️ by the ShopKit team
+## Support 💬
+
+- 📧 Email: [support@ionicerrrrscode.com](support@ionicerrrrscode.com)
+- 🐛 Issues: [GitHub Issues](https://github.com/mukhbit0/shopkit/issues)
+- 💬 Discussions: [GitHub Discussions](https://github.com/mukhbit0/shopkit/discussions)
+
+---
+
+Made with ❤️ by the [Ionic Errrrs Code](ionicerrrrscode.com)
