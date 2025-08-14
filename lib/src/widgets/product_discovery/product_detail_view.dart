@@ -325,6 +325,7 @@ class ProductDetailViewNewState extends State<ProductDetailViewNew>
           SliverToBoxAdapter(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min, // CRITICAL FIX
               children: [
                 _buildImageSection(context, theme),
                 _buildProductInfo(context, theme),
@@ -379,6 +380,7 @@ class ProductDetailViewNewState extends State<ProductDetailViewNew>
       body: SingleChildScrollView(
         padding: EdgeInsets.all(_getConfig('accordionPadding', 16.0)),
         child: Column(
+          mainAxisSize: MainAxisSize.min, // Fixed: Added mainAxisSize.min
           children: [
             _buildImageSection(context, theme),
             _buildProductInfo(context, theme),
@@ -396,21 +398,24 @@ class ProductDetailViewNewState extends State<ProductDetailViewNew>
           _config?.getColor('backgroundColor', theme.backgroundColor) ??
               theme.backgroundColor,
       appBar: _buildSimpleAppBar(context, theme),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: EdgeInsets.all(_getConfig('gridPadding', 16.0)),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              flex: _getConfig('imageGridFlex', 1),
-              child: _buildImageSection(context, theme),
-            ),
-            SizedBox(width: _getConfig('gridSpacing', 16.0)),
-            Expanded(
-              flex: _getConfig('infoGridFlex', 1),
-              child: SingleChildScrollView(
+        child: IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Flexible(
+                flex: _getConfig('imageGridFlex', 1),
+                fit: FlexFit.loose,
+                child: _buildImageSection(context, theme),
+              ),
+              SizedBox(width: _getConfig('gridSpacing', 16.0)),
+              Flexible(
+                flex: _getConfig('infoGridFlex', 1),
+                fit: FlexFit.loose,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     _buildProductInfo(context, theme),
                     if (widget.enableVariantSelection &&
@@ -421,8 +426,8 @@ class ProductDetailViewNewState extends State<ProductDetailViewNew>
                   ],
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -605,8 +610,10 @@ class ProductDetailViewNewState extends State<ProductDetailViewNew>
       margin: EdgeInsets.all(_getConfig('imageGalleryMargin', 16.0)),
       child: Row(
         children: [
-          Expanded(
+          Flexible(
+            // Fixed: Changed from Expanded to Flexible
             flex: 3,
+            fit: FlexFit.loose, // Fixed: Added FlexFit.loose
             child: ClipRRect(
               borderRadius: BorderRadius.circular(
                   _getConfig('imageGalleryBorderRadius', 12.0)),
@@ -618,14 +625,19 @@ class ProductDetailViewNewState extends State<ProductDetailViewNew>
             ),
           ),
           SizedBox(width: _getConfig('imageGallerySpacing', 8.0)),
-          Expanded(
+          Flexible(
+            // Fixed: Changed from Expanded to Flexible
             flex: 1,
+            fit: FlexFit.loose, // Fixed: Added FlexFit.loose
             child: Column(
+              mainAxisSize: MainAxisSize.min, // Fixed: Added mainAxisSize.min
               children: widget.product.images!.take(4).map((image) {
                 final index = widget.product.images!.indexOf(image);
                 final isSelected = index == _selectedImageIndex;
 
-                return Expanded(
+                return Flexible(
+                  // Fixed: Changed from Expanded to Flexible
+                  fit: FlexFit.loose, // Fixed: Added FlexFit.loose
                   child: GestureDetector(
                     onTap: () => setState(() => _selectedImageIndex = index),
                     child: Container(
@@ -724,6 +736,7 @@ class ProductDetailViewNewState extends State<ProductDetailViewNew>
       padding: EdgeInsets.all(_getConfig('productInfoPadding', 16.0)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min, // Fixed: Added mainAxisSize.min
         children: [
           Text(
             widget.product.name,
@@ -740,6 +753,7 @@ class ProductDetailViewNewState extends State<ProductDetailViewNew>
           ),
           SizedBox(height: _getConfig('productInfoSpacing', 8.0)),
           Row(
+            mainAxisSize: MainAxisSize.min, // Fixed: Added mainAxisSize.min
             children: [
               Text(
                 '\$${_getDisplayPrice().toStringAsFixed(2)}',
@@ -795,6 +809,7 @@ class ProductDetailViewNewState extends State<ProductDetailViewNew>
   Widget _buildRatingDisplay(BuildContext context, ShopKitTheme theme) {
     final rating = widget.product.rating ?? 0.0;
     return Row(
+      mainAxisSize: MainAxisSize.min, // Fixed: Added mainAxisSize.min
       children: [
         ...List.generate(5, (index) {
           return Icon(
@@ -847,12 +862,15 @@ class ProductDetailViewNewState extends State<ProductDetailViewNew>
     return Container(
       padding: EdgeInsets.all(_getConfig('quantityActionsPadding', 16.0)),
       child: Row(
+        mainAxisSize: MainAxisSize.min, // Fixed: Added mainAxisSize.min
         children: [
           if (widget.enableQuantitySelector) ...[
             _buildQuantitySelector(context, theme),
             SizedBox(width: _getConfig('quantityActionsSpacing', 16.0)),
           ],
-          Expanded(
+          Flexible(
+            // Fixed: Changed from Expanded to Flexible
+            fit: FlexFit.loose, // Fixed: Added FlexFit.loose
             child: AddToCartButtonNew(
               product: widget.product,
               quantity: _selectedQuantity,
@@ -926,6 +944,7 @@ class ProductDetailViewNewState extends State<ProductDetailViewNew>
       padding: EdgeInsets.all(_getConfig('descriptionSectionPadding', 16.0)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min, // Fixed: Added mainAxisSize.min
         children: [
           Text(
             _getConfig('descriptionSectionTitle', 'Description'),
@@ -999,6 +1018,7 @@ class ProductDetailViewNewState extends State<ProductDetailViewNew>
       padding: EdgeInsets.all(_getConfig('reviewsSectionPadding', 16.0)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min, // Fixed: Added mainAxisSize.min
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1056,8 +1076,10 @@ class ProductDetailViewNewState extends State<ProductDetailViewNew>
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min, // Fixed: Added mainAxisSize.min
         children: [
           Row(
+            mainAxisSize: MainAxisSize.min, // Fixed: Added mainAxisSize.min
             children: [
               ...List.generate(5, (index) {
                 return Icon(
@@ -1110,6 +1132,7 @@ class ProductDetailViewNewState extends State<ProductDetailViewNew>
           EdgeInsets.all(_getConfig('recommendationsSectionPadding', 16.0)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min, // Fixed: Added mainAxisSize.min
         children: [
           Text(
             _getConfig('recommendationsSectionTitle', 'You might also like'),
@@ -1148,8 +1171,11 @@ class ProductDetailViewNewState extends State<ProductDetailViewNew>
           EdgeInsets.only(right: _getConfig('recommendationItemSpacing', 12.0)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min, // Fixed: Added mainAxisSize.min
         children: [
-          Expanded(
+          Flexible(
+            // Fixed: Changed from Expanded to Flexible
+            fit: FlexFit.loose, // Fixed: Added FlexFit.loose
             child: ClipRRect(
               borderRadius: BorderRadius.circular(
                   _getConfig('recommendationImageBorderRadius', 8.0)),
@@ -1183,7 +1209,7 @@ class ProductDetailViewNewState extends State<ProductDetailViewNew>
             overflow: TextOverflow.ellipsis,
           ),
           Text(
-            '\$${product.price.toStringAsFixed(2)}',
+            '\${product.price.toStringAsFixed(2)}',
             style: TextStyle(
               color: _config?.getColor(
                       'recommendationPriceColor', theme.primaryColor) ??
@@ -1214,56 +1240,58 @@ class ProductDetailViewNewState extends State<ProductDetailViewNew>
         ],
       ),
       child: SafeArea(
-        child: Row(
-          children: [
-            Expanded(
-              child: ElevatedButton(
-                onPressed: _handleAddToCart,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _config?.getColor(
-                          'addToCartButtonColor', theme.primaryColor) ??
-                      theme.primaryColor,
-                  foregroundColor: _config?.getColor(
-                          'addToCartButtonTextColor', theme.onPrimaryColor) ??
-                      theme.onPrimaryColor,
-                  padding: EdgeInsets.symmetric(
-                      vertical:
-                          _getConfig('bottomButtonVerticalPadding', 16.0)),
-                ),
-                child: Text(
-                  _getConfig('addToCartButtonText', 'Add to Cart'),
-                  style: TextStyle(
-                    fontSize: _getConfig('bottomButtonFontSize', 16.0),
-                    fontWeight: FontWeight.w600,
+        child: IntrinsicHeight(
+          child: Row(
+            children: [
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: _handleAddToCart,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _config?.getColor(
+                            'addToCartButtonColor', theme.primaryColor) ??
+                        theme.primaryColor,
+                    foregroundColor: _config?.getColor(
+                            'addToCartButtonTextColor', theme.onPrimaryColor) ??
+                        theme.onPrimaryColor,
+                    padding: EdgeInsets.symmetric(
+                        vertical:
+                            _getConfig('bottomButtonVerticalPadding', 16.0)),
+                  ),
+                  child: Text(
+                    _getConfig('addToCartButtonText', 'Add to Cart'),
+                    style: TextStyle(
+                      fontSize: _getConfig('bottomButtonFontSize', 16.0),
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ),
-            ),
-            SizedBox(width: _getConfig('bottomButtonSpacing', 12.0)),
-            Expanded(
-              child: ElevatedButton(
-                onPressed: _handleBuyNow,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _config?.getColor(
-                          'buyNowButtonColor', theme.secondaryColor) ??
-                      theme.secondaryColor,
-                  foregroundColor: _config?.getColor(
-                          'buyNowButtonTextColor', theme.onSecondaryColor) ??
-                      theme.onSecondaryColor,
-                  padding: EdgeInsets.symmetric(
-                      vertical:
-                          _getConfig('bottomButtonVerticalPadding', 16.0)),
-                ),
-                child: Text(
-                  _getConfig('buyNowButtonText', 'Buy Now'),
-                  style: TextStyle(
-                    fontSize: _getConfig('bottomButtonFontSize', 16.0),
-                    fontWeight: FontWeight.w600,
+              SizedBox(width: _getConfig('bottomButtonSpacing', 12.0)),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: _handleBuyNow,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _config?.getColor(
+                            'buyNowButtonColor', theme.secondaryColor) ??
+                        theme.secondaryColor,
+                    foregroundColor: _config?.getColor(
+                            'buyNowButtonTextColor', theme.onSecondaryColor) ??
+                        theme.onSecondaryColor,
+                    padding: EdgeInsets.symmetric(
+                        vertical:
+                            _getConfig('bottomButtonVerticalPadding', 16.0)),
+                  ),
+                  child: Text(
+                    _getConfig('buyNowButtonText', 'Buy Now'),
+                    style: TextStyle(
+                      fontSize: _getConfig('bottomButtonFontSize', 16.0),
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -1275,6 +1303,7 @@ class ProductDetailViewNewState extends State<ProductDetailViewNew>
       padding: EdgeInsets.all(_getConfig('tabContentPadding', 16.0)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min, // Fixed: Added mainAxisSize.min
         children: [
           _buildImageSection(context, theme),
           _buildProductInfo(context, theme),
@@ -1292,6 +1321,7 @@ class ProductDetailViewNewState extends State<ProductDetailViewNew>
       padding: EdgeInsets.all(_getConfig('tabContentPadding', 16.0)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min, // Fixed: Added mainAxisSize.min
         children: [
           Text(
             _getConfig('specificationsTitle', 'Specifications'),
@@ -1327,6 +1357,7 @@ class ProductDetailViewNewState extends State<ProductDetailViewNew>
       child: widget.reviews.isEmpty
           ? _buildEmptyReviews(context, theme)
           : Column(
+              mainAxisSize: MainAxisSize.min, // Fixed: Added mainAxisSize.min
               children: widget.reviews.map((review) {
                 return _buildReviewItem(context, theme, review);
               }).toList(),
@@ -1362,6 +1393,7 @@ class ProductDetailViewNewState extends State<ProductDetailViewNew>
 
   Widget _buildAccordionSections(BuildContext context, ShopKitTheme theme) {
     return Column(
+      mainAxisSize: MainAxisSize.min, // Fixed: Added mainAxisSize.min
       children: [
         _buildAccordionSection(
           context,
@@ -1423,6 +1455,7 @@ class ProductDetailViewNewState extends State<ProductDetailViewNew>
 
   Widget _buildReviewsContent(BuildContext context, ShopKitTheme theme) {
     return Column(
+      mainAxisSize: MainAxisSize.min, // Fixed: Added mainAxisSize.min
       children: widget.reviews.map((review) {
         return _buildReviewItem(context, theme, review);
       }).toList(),
@@ -1433,6 +1466,7 @@ class ProductDetailViewNewState extends State<ProductDetailViewNew>
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min, // Fixed: Added mainAxisSize.min
         children: [
           Icon(
             Icons.rate_review_outlined,
@@ -1472,6 +1506,7 @@ class ProductDetailViewNewState extends State<ProductDetailViewNew>
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min, // Fixed: Added mainAxisSize.min
         children: [
           Icon(
             Icons.shopping_bag_outlined,

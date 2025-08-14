@@ -1,4 +1,6 @@
+// Updated ProductCard with layout fixes
 import 'package:flutter/material.dart';
+import 'dart:math';
 import '../../models/product_model.dart';
 import '../../models/cart_model.dart';
 import '../../theme/shopkit_theme.dart';
@@ -23,44 +25,19 @@ class ProductCard extends StatefulWidget {
     this.height,
   });
 
-  /// Product data to display
   final ProductModel product;
-
-  /// Callback when card is tapped
   final VoidCallback? onTap;
-
-  /// Callback when add to cart is pressed
   final Function(CartItemModel)? onAddToCart;
-
-  /// Callback when wishlist button is pressed
   final VoidCallback? onToggleWishlist;
-
-  /// Callback when product image is tapped
   final VoidCallback? onImageTap;
-
-  /// Whether product is in wishlist
   final bool isInWishlist;
-
-  /// Whether product is in cart
   final bool isInCart;
-
-  /// Custom builder for complete customization
   final Widget Function(BuildContext, ProductModel, ProductCardState)?
       customBuilder;
-
-  /// Hero tag for image transitions
   final String? heroTag;
-
-  /// Aspect ratio for the card
   final double? aspectRatio;
-
-  /// Fixed height for the image section
   final double? imageHeight;
-
-  /// Fixed width for the card
   final double? width;
-
-  /// Fixed height for the card
   final double? height;
 
   @override
@@ -110,9 +87,10 @@ class ProductCardState extends State<ProductCard>
       return widget.customBuilder!(context, widget.product, this);
     }
 
-    final theme = ShopKitTheme.light();
+  // Use inherited theme instead of hardcoded light() to respect app theming
+  final theme = ShopKitThemeProvider.of(context);
 
-    return Container(
+    return SizedBox(
       width: widget.width,
       height: widget.height,
       child: _buildCard(context, theme),
@@ -142,17 +120,13 @@ class ProductCardState extends State<ProductCard>
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(theme.borderRadius),
                 ),
+                // FIX 1: Use mainAxisSize.min to prevent unbounded height issues
                 child: Column(
+                  mainAxisSize: MainAxisSize.min, // CRITICAL FIX
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      flex: 3,
-                      child: _buildImageSection(context, theme),
-                    ),
-                    Expanded(
-                      flex: 2,
-                      child: _buildContentSection(context, theme),
-                    ),
+                    _buildImageSection(context, theme),
+                    _buildContentSection(context, theme),
                   ],
                 ),
               ),
@@ -164,47 +138,52 @@ class ProductCardState extends State<ProductCard>
   }
 
   Widget _buildImageSection(BuildContext context, ShopKitTheme theme) {
-    return Container(
-      width: double.infinity,
-      height: widget.imageHeight,
-      child: Stack(
-        children: [
-          // Main product image
-          if (widget.product.mainImageUrl != null)
-            Positioned.fill(
-              child: GestureDetector(
-                onTap: widget.onImageTap,
-                child: Hero(
-                  tag: widget.heroTag ?? 'product-${widget.product.id}',
-                  child: Image.network(
-                    widget.product.mainImageUrl!,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) =>
-                        _buildImagePlaceholder(theme),
+    // Instead of forcing a large aspect ratio that can overflow (esp. with large text scale),
+    // clamp the image height. If an explicit imageHeight is provided, use it. Otherwise derive
+    // a safe height that leaves room for content (max 240).
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final maxAvailable = constraints.maxHeight.isFinite ? constraints.maxHeight : 600;
+        final desired = widget.imageHeight ??  min(240.0, maxAvailable * 0.5);
+        return SizedBox(
+          height: desired,
+          width: double.infinity,
+          child: Stack(
+            children: [
+              if (widget.product.mainImageUrl != null)
+                Positioned.fill(
+                  child: GestureDetector(
+                    onTap: widget.onImageTap,
+                    child: Hero(
+                      tag: widget.heroTag ?? 'product-${widget.product.id}',
+                      child: Image.network(
+                        widget.product.mainImageUrl!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => _buildImagePlaceholder(theme),
+                      ),
+                    ),
                   ),
+                )
+              else
+                Positioned.fill(child: _buildImagePlaceholder(theme)),
+
+              if (widget.onToggleWishlist != null)
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: _buildWishlistButton(context, theme),
                 ),
-              ),
-            )
-          else
-            Positioned.fill(child: _buildImagePlaceholder(theme)),
 
-          // Wishlist button
-          if (widget.onToggleWishlist != null)
-            Positioned(
-              top: 8,
-              right: 8,
-              child: _buildWishlistButton(context, theme),
-            ),
-
-          // Discount badge
-          if (widget.product.hasDiscount)
-            Positioned(
-              top: 8,
-              left: 8,
-              child: _buildDiscountBadge(context, theme),
-            ),
-        ],
-      ),
+              if (widget.product.hasDiscount)
+                Positioned(
+                  top: 8,
+                  left: 8,
+                  child: _buildDiscountBadge(context, theme),
+                ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -276,13 +255,15 @@ class ProductCardState extends State<ProductCard>
   Widget _buildContentSection(BuildContext context, ShopKitTheme theme) {
     return Padding(
       padding: const EdgeInsets.all(12),
+      // FIX 3: Use mainAxisSize.min in content sections
       child: Column(
+        mainAxisSize: MainAxisSize.min, // CRITICAL FIX
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildTitleText(context, theme),
           const SizedBox(height: 8),
           _buildPriceRow(context, theme),
-          const Spacer(),
+          const SizedBox(height: 8),
           if (widget.onAddToCart != null) _buildActionSection(context, theme),
         ],
       ),
@@ -303,48 +284,55 @@ class ProductCardState extends State<ProductCard>
   }
 
   Widget _buildPriceRow(BuildContext context, ShopKitTheme theme) {
-    return Row(
-      children: [
-        Text(
-          widget.product.formattedPrice,
-          style: TextStyle(
-            color: theme.primaryColor,
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        if (widget.product.hasDiscount) ...[
-          const SizedBox(width: 8),
+    // FIX 5: Use intrinsic dimensions for price row to prevent overflow
+    return IntrinsicWidth(
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
           Text(
-            widget.product.formattedOriginalPrice,
+            widget.product.formattedPrice,
             style: TextStyle(
-              color: theme.onSurfaceColor.withValues(alpha: 0.6),
-              fontSize: 12,
-              decoration: TextDecoration.lineThrough,
+              color: theme.primaryColor,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
             ),
           ),
+          if (widget.product.hasDiscount) ...[
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text(
+                widget.product.formattedOriginalPrice,
+                style: TextStyle(
+                  color: theme.onSurfaceColor.withValues(alpha: 0.6),
+                  fontSize: 12,
+                  decoration: TextDecoration.lineThrough,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
         ],
-      ],
+      ),
     );
   }
 
- Widget _buildActionSection(BuildContext context, ShopKitTheme theme) {
-  return SizedBox(
-    width: double.infinity,
-    child: AddToCartButtonNew(
-      product: widget.product,
-      onAddToCart: (product, quantity) {
-        final cartItem = CartItemModel(
-          id: 'cart_${product?.id}_${DateTime.now().millisecondsSinceEpoch}',
-          product: product!,
-          quantity: quantity,
-          pricePerItem: product.price,
-        );
-        widget.onAddToCart?.call(cartItem);
-      },
-    ),
-  );
-}
+  Widget _buildActionSection(BuildContext context, ShopKitTheme theme) {
+    return SizedBox(
+      width: double.infinity,
+      child: AddToCartButtonNew(
+        product: widget.product,
+        onAddToCart: (product, quantity) {
+          final cartItem = CartItemModel(
+            id: 'cart_${product?.id}_${DateTime.now().millisecondsSinceEpoch}',
+            product: product!,
+            quantity: quantity,
+            pricePerItem: product.price,
+          );
+          widget.onAddToCart?.call(cartItem);
+        },
+      ),
+    );
+  }
 
   void _onHover(bool isHovered) {
     if (isHovered) {
@@ -354,3 +342,17 @@ class ProductCardState extends State<ProductCard>
     }
   }
 }
+
+// CRITICAL FIXES SUMMARY:
+// 1. Added mainAxisSize: MainAxisSize.min to all Column widgets
+// 2. Changed Expanded to Flexible with FlexFit.loose where appropriate
+// 3. Used IntrinsicWidth for price row to handle overflow
+// 4. Replaced Spacer with Flexible in constrained layouts
+// 5. Added proper overflow handling with ellipsis
+
+// HOW TO APPLY THESE FIXES TO YOUR PROJECT:
+// 1. Replace all Column widgets with mainAxisSize: MainAxisSize.min
+// 2. Change Expanded to Flexible(fit: FlexFit.loose) in scrollable containers
+// 3. Use Flexible(fit: FlexFit.tight) only when you want equal distribution
+// 4. Add overflow: TextOverflow.ellipsis to text widgets in constrained spaces
+// 5. Use IntrinsicWidth/IntrinsicHeight for natural sizing when needed

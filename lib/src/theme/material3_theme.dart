@@ -90,53 +90,79 @@ class ShopKitMaterial3Theme extends ShopKitBaseTheme {
   @override
   ShopKitMaterial3Theme lerp(ShopKitBaseTheme? other, double t) {
     if (other is! ShopKitMaterial3Theme) return this;
-    
+
     return ShopKitMaterial3Theme(
       colorScheme: ShopKitColorScheme(
         primary: Color.lerp(colorScheme.primary, other.colorScheme.primary, t)!,
-        onPrimary: Color.lerp(colorScheme.onPrimary, other.colorScheme.onPrimary, t)!,
-        primaryContainer: Color.lerp(colorScheme.primaryContainer, other.colorScheme.primaryContainer, t)!,
-        onPrimaryContainer: Color.lerp(colorScheme.onPrimaryContainer, other.colorScheme.onPrimaryContainer, t)!,
-        secondary: Color.lerp(colorScheme.secondary, other.colorScheme.secondary, t)!,
-        onSecondary: Color.lerp(colorScheme.onSecondary, other.colorScheme.onSecondary, t)!,
-        secondaryContainer: Color.lerp(colorScheme.secondaryContainer, other.colorScheme.secondaryContainer, t)!,
-        onSecondaryContainer: Color.lerp(colorScheme.onSecondaryContainer, other.colorScheme.onSecondaryContainer, t)!,
-        tertiary: Color.lerp(colorScheme.tertiary, other.colorScheme.tertiary, t)!,
-        onTertiary: Color.lerp(colorScheme.onTertiary, other.colorScheme.onTertiary, t)!,
-        tertiaryContainer: Color.lerp(colorScheme.tertiaryContainer, other.colorScheme.tertiaryContainer, t)!,
-        onTertiaryContainer: Color.lerp(colorScheme.onTertiaryContainer, other.colorScheme.onTertiaryContainer, t)!,
+        onPrimary:
+            Color.lerp(colorScheme.onPrimary, other.colorScheme.onPrimary, t)!,
+        primaryContainer: Color.lerp(colorScheme.primaryContainer,
+            other.colorScheme.primaryContainer, t)!,
+        onPrimaryContainer: Color.lerp(colorScheme.onPrimaryContainer,
+            other.colorScheme.onPrimaryContainer, t)!,
+        secondary:
+            Color.lerp(colorScheme.secondary, other.colorScheme.secondary, t)!,
+        onSecondary: Color.lerp(
+            colorScheme.onSecondary, other.colorScheme.onSecondary, t)!,
+        secondaryContainer: Color.lerp(colorScheme.secondaryContainer,
+            other.colorScheme.secondaryContainer, t)!,
+        onSecondaryContainer: Color.lerp(colorScheme.onSecondaryContainer,
+            other.colorScheme.onSecondaryContainer, t)!,
+        tertiary:
+            Color.lerp(colorScheme.tertiary, other.colorScheme.tertiary, t)!,
+        onTertiary: Color.lerp(
+            colorScheme.onTertiary, other.colorScheme.onTertiary, t)!,
+        tertiaryContainer: Color.lerp(colorScheme.tertiaryContainer,
+            other.colorScheme.tertiaryContainer, t)!,
+        onTertiaryContainer: Color.lerp(colorScheme.onTertiaryContainer,
+            other.colorScheme.onTertiaryContainer, t)!,
         error: Color.lerp(colorScheme.error, other.colorScheme.error, t)!,
         onError: Color.lerp(colorScheme.onError, other.colorScheme.onError, t)!,
-        errorContainer: Color.lerp(colorScheme.errorContainer, other.colorScheme.errorContainer, t)!,
-        onErrorContainer: Color.lerp(colorScheme.onErrorContainer, other.colorScheme.onErrorContainer, t)!,
+        errorContainer: Color.lerp(
+            colorScheme.errorContainer, other.colorScheme.errorContainer, t)!,
+        onErrorContainer: Color.lerp(colorScheme.onErrorContainer,
+            other.colorScheme.onErrorContainer, t)!,
         surface: Color.lerp(colorScheme.surface, other.colorScheme.surface, t)!,
-        onSurface: Color.lerp(colorScheme.onSurface, other.colorScheme.onSurface, t)!,
-        surfaceVariant: Color.lerp(colorScheme.surfaceVariant, other.colorScheme.surfaceVariant, t)!,
-        onSurfaceVariant: Color.lerp(colorScheme.onSurfaceVariant, other.colorScheme.onSurfaceVariant, t)!,
+        onSurface:
+            Color.lerp(colorScheme.onSurface, other.colorScheme.onSurface, t)!,
+        // Using surface as fallback for deprecated surfaceVariant; can be migrated to container tokens in future
+        surfaceVariant:
+            Color.lerp(colorScheme.surface, other.colorScheme.surface, t)!,
+        onSurfaceVariant:
+            Color.lerp(colorScheme.onSurface, other.colorScheme.onSurface, t)!,
         outline: Color.lerp(colorScheme.outline, other.colorScheme.outline, t)!,
-        outlineVariant: Color.lerp(colorScheme.outlineVariant, other.colorScheme.outlineVariant, t)!,
+        outlineVariant: Color.lerp(
+            colorScheme.outlineVariant, other.colorScheme.outlineVariant, t)!,
         shadow: Color.lerp(colorScheme.shadow, other.colorScheme.shadow, t)!,
         scrim: Color.lerp(colorScheme.scrim, other.colorScheme.scrim, t)!,
-        inverseSurface: Color.lerp(colorScheme.inverseSurface, other.colorScheme.inverseSurface, t)!,
-        onInverseSurface: Color.lerp(colorScheme.onInverseSurface, other.colorScheme.onInverseSurface, t)!,
-        inversePrimary: Color.lerp(colorScheme.inversePrimary, other.colorScheme.inversePrimary, t)!,
-        surfaceTint: Color.lerp(colorScheme.surfaceTint, other.colorScheme.surfaceTint, t)!,
-        success: colorScheme.success != null && other.colorScheme.success != null 
-            ? Color.lerp(colorScheme.success, other.colorScheme.success, t)
-            : colorScheme.success ?? other.colorScheme.success,
-        onSuccess: colorScheme.onSuccess != null && other.colorScheme.onSuccess != null 
+        inverseSurface: Color.lerp(
+            colorScheme.inverseSurface, other.colorScheme.inverseSurface, t)!,
+        onInverseSurface: Color.lerp(colorScheme.onInverseSurface,
+            other.colorScheme.onInverseSurface, t)!,
+        inversePrimary: Color.lerp(
+            colorScheme.inversePrimary, other.colorScheme.inversePrimary, t)!,
+        surfaceTint: Color.lerp(
+            colorScheme.surfaceTint, other.colorScheme.surfaceTint, t)!,
+        success:
+            colorScheme.success != null && other.colorScheme.success != null
+                ? Color.lerp(colorScheme.success, other.colorScheme.success, t)
+                : colorScheme.success ?? other.colorScheme.success,
+        onSuccess: colorScheme.onSuccess != null &&
+                other.colorScheme.onSuccess != null
             ? Color.lerp(colorScheme.onSuccess, other.colorScheme.onSuccess, t)
             : colorScheme.onSuccess ?? other.colorScheme.onSuccess,
-        warning: colorScheme.warning != null && other.colorScheme.warning != null 
-            ? Color.lerp(colorScheme.warning, other.colorScheme.warning, t)
-            : colorScheme.warning ?? other.colorScheme.warning,
-        onWarning: colorScheme.onWarning != null && other.colorScheme.onWarning != null 
+        warning:
+            colorScheme.warning != null && other.colorScheme.warning != null
+                ? Color.lerp(colorScheme.warning, other.colorScheme.warning, t)
+                : colorScheme.warning ?? other.colorScheme.warning,
+        onWarning: colorScheme.onWarning != null &&
+                other.colorScheme.onWarning != null
             ? Color.lerp(colorScheme.onWarning, other.colorScheme.onWarning, t)
             : colorScheme.onWarning ?? other.colorScheme.onWarning,
-        info: colorScheme.info != null && other.colorScheme.info != null 
+        info: colorScheme.info != null && other.colorScheme.info != null
             ? Color.lerp(colorScheme.info, other.colorScheme.info, t)
             : colorScheme.info ?? other.colorScheme.info,
-        onInfo: colorScheme.onInfo != null && other.colorScheme.onInfo != null 
+        onInfo: colorScheme.onInfo != null && other.colorScheme.onInfo != null
             ? Color.lerp(colorScheme.onInfo, other.colorScheme.onInfo, t)
             : colorScheme.onInfo ?? other.colorScheme.onInfo,
         gradient: t < 0.5 ? colorScheme.gradient : other.colorScheme.gradient,
@@ -152,13 +178,15 @@ class ShopKitMaterial3Theme extends ShopKitBaseTheme {
         xxl: (spacing.xxl + (other.spacing.xxl - spacing.xxl) * t),
       ),
       borderRadius: ShopKitBorderRadius(
-        none: (borderRadius.none + (other.borderRadius.none - borderRadius.none) * t),
+        none: (borderRadius.none +
+            (other.borderRadius.none - borderRadius.none) * t),
         xs: (borderRadius.xs + (other.borderRadius.xs - borderRadius.xs) * t),
         sm: (borderRadius.sm + (other.borderRadius.sm - borderRadius.sm) * t),
         md: (borderRadius.md + (other.borderRadius.md - borderRadius.md) * t),
         lg: (borderRadius.lg + (other.borderRadius.lg - borderRadius.lg) * t),
         xl: (borderRadius.xl + (other.borderRadius.xl - borderRadius.xl) * t),
-        full: (borderRadius.full + (other.borderRadius.full - borderRadius.full) * t),
+        full: (borderRadius.full +
+            (other.borderRadius.full - borderRadius.full) * t),
       ),
       elevation: ShopKitElevation(
         none: (elevation.none + (other.elevation.none - elevation.none) * t),
@@ -171,11 +199,13 @@ class ShopKitMaterial3Theme extends ShopKitBaseTheme {
       animation: t < 0.5 ? animation : other.animation,
       customProperties: t < 0.5 ? customProperties : other.customProperties,
       useMaterial3: t < 0.5 ? useMaterial3 : other.useMaterial3,
-      dynamicColorEnabled: t < 0.5 ? dynamicColorEnabled : other.dynamicColorEnabled,
+      dynamicColorEnabled:
+          t < 0.5 ? dynamicColorEnabled : other.dynamicColorEnabled,
       seedColor: Color.lerp(seedColor, other.seedColor, t),
       brightness: t < 0.5 ? brightness : other.brightness,
       stateLayerOpacity: t < 0.5 ? stateLayerOpacity : other.stateLayerOpacity,
-      containerElevation: t < 0.5 ? containerElevation : other.containerElevation,
+      containerElevation:
+          t < 0.5 ? containerElevation : other.containerElevation,
       surfaceTint: Color.lerp(surfaceTint, other.surfaceTint, t),
     );
   }
@@ -193,7 +223,7 @@ class ShopKitMaterial3Theme extends ShopKitBaseTheme {
       seedColor: seedColor ?? const Color(0xFF6750A4),
       brightness: Brightness.light,
     );
-    
+
     return ShopKitMaterial3Theme(
       colorScheme: colorScheme,
       typography: _defaultTypography,
@@ -219,7 +249,7 @@ class ShopKitMaterial3Theme extends ShopKitBaseTheme {
       seedColor: seedColor ?? const Color(0xFF6750A4),
       brightness: Brightness.dark,
     );
-    
+
     return ShopKitMaterial3Theme(
       colorScheme: colorScheme,
       typography: _defaultTypography,
@@ -272,24 +302,18 @@ class ShopKitMaterial3Theme extends ShopKitBaseTheme {
       onInverseSurface: scheme.onInverseSurface,
       inversePrimary: scheme.inversePrimary,
       surfaceTint: scheme.surfaceTint,
-      success: brightness == Brightness.light 
-          ? const Color(0xFF10B981) 
+      success: brightness == Brightness.light
+          ? const Color(0xFF10B981)
           : const Color(0xFF34D399),
-      onSuccess: brightness == Brightness.light 
-          ? Colors.white 
-          : Colors.black,
-      warning: brightness == Brightness.light 
-          ? const Color(0xFFF59E0B) 
+      onSuccess: brightness == Brightness.light ? Colors.white : Colors.black,
+      warning: brightness == Brightness.light
+          ? const Color(0xFFF59E0B)
           : const Color(0xFFFBBF24),
-      onWarning: brightness == Brightness.light 
-          ? Colors.white 
-          : Colors.black,
-      info: brightness == Brightness.light 
-          ? const Color(0xFF3B82F6) 
+      onWarning: brightness == Brightness.light ? Colors.white : Colors.black,
+      info: brightness == Brightness.light
+          ? const Color(0xFF3B82F6)
           : const Color(0xFF60A5FA),
-      onInfo: brightness == Brightness.light 
-          ? Colors.white 
-          : Colors.black,
+      onInfo: brightness == Brightness.light ? Colors.white : Colors.black,
     );
   }
 }
@@ -370,19 +394,34 @@ const _defaultAnimation = ShopKitAnimation(
 );
 
 const _defaultTypography = ShopKitTypography(
-  displayLarge: TextStyle(fontSize: 57, fontWeight: FontWeight.w400, letterSpacing: -0.25),
-  displayMedium: TextStyle(fontSize: 45, fontWeight: FontWeight.w400, letterSpacing: 0),
-  displaySmall: TextStyle(fontSize: 36, fontWeight: FontWeight.w400, letterSpacing: 0),
-  headlineLarge: TextStyle(fontSize: 32, fontWeight: FontWeight.w400, letterSpacing: 0),
-  headlineMedium: TextStyle(fontSize: 28, fontWeight: FontWeight.w400, letterSpacing: 0),
-  headlineSmall: TextStyle(fontSize: 24, fontWeight: FontWeight.w400, letterSpacing: 0),
-  titleLarge: TextStyle(fontSize: 22, fontWeight: FontWeight.w400, letterSpacing: 0),
-  titleMedium: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, letterSpacing: 0.15),
-  titleSmall: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, letterSpacing: 0.1),
-  bodyLarge: TextStyle(fontSize: 16, fontWeight: FontWeight.w400, letterSpacing: 0.5),
-  bodyMedium: TextStyle(fontSize: 14, fontWeight: FontWeight.w400, letterSpacing: 0.25),
-  bodySmall: TextStyle(fontSize: 12, fontWeight: FontWeight.w400, letterSpacing: 0.4),
-  labelLarge: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, letterSpacing: 0.1),
-  labelMedium: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, letterSpacing: 0.5),
-  labelSmall: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, letterSpacing: 0.5),
+  displayLarge: TextStyle(
+      fontSize: 57, fontWeight: FontWeight.w400, letterSpacing: -0.25),
+  displayMedium:
+      TextStyle(fontSize: 45, fontWeight: FontWeight.w400, letterSpacing: 0),
+  displaySmall:
+      TextStyle(fontSize: 36, fontWeight: FontWeight.w400, letterSpacing: 0),
+  headlineLarge:
+      TextStyle(fontSize: 32, fontWeight: FontWeight.w400, letterSpacing: 0),
+  headlineMedium:
+      TextStyle(fontSize: 28, fontWeight: FontWeight.w400, letterSpacing: 0),
+  headlineSmall:
+      TextStyle(fontSize: 24, fontWeight: FontWeight.w400, letterSpacing: 0),
+  titleLarge:
+      TextStyle(fontSize: 22, fontWeight: FontWeight.w400, letterSpacing: 0),
+  titleMedium:
+      TextStyle(fontSize: 16, fontWeight: FontWeight.w500, letterSpacing: 0.15),
+  titleSmall:
+      TextStyle(fontSize: 14, fontWeight: FontWeight.w500, letterSpacing: 0.1),
+  bodyLarge:
+      TextStyle(fontSize: 16, fontWeight: FontWeight.w400, letterSpacing: 0.5),
+  bodyMedium:
+      TextStyle(fontSize: 14, fontWeight: FontWeight.w400, letterSpacing: 0.25),
+  bodySmall:
+      TextStyle(fontSize: 12, fontWeight: FontWeight.w400, letterSpacing: 0.4),
+  labelLarge:
+      TextStyle(fontSize: 14, fontWeight: FontWeight.w500, letterSpacing: 0.1),
+  labelMedium:
+      TextStyle(fontSize: 12, fontWeight: FontWeight.w500, letterSpacing: 0.5),
+  labelSmall:
+      TextStyle(fontSize: 11, fontWeight: FontWeight.w500, letterSpacing: 0.5),
 );

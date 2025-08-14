@@ -304,8 +304,8 @@ class ProductController extends ChangeNotifier {
       case 'price':
         _filteredProducts.sort((ProductModel a, ProductModel b) =>
             _sortAscending
-                ? a.discountedPrice.compareTo(b.discountedPrice)
-                : b.discountedPrice.compareTo(a.discountedPrice));
+                ? a.price.compareTo(b.price)
+                : b.price.compareTo(a.price));
         break;
       case 'rating':
         _filteredProducts.sort((ProductModel a, ProductModel b) {
@@ -403,19 +403,49 @@ class ProductController extends ChangeNotifier {
     // This would be replaced with actual API call
     final products = <ProductModel>[];
 
+    // Mock product names that include searchable terms
+    final productNames = [
+      'iPhone 15 Pro Max',
+      'Samsung Galaxy S24',
+      'MacBook Pro 16"',
+      'Dell XPS 13',
+      'Sony WH-1000XM5',
+      'AirPods Pro',
+      'iPad Air',
+      'Microsoft Surface',
+      'Google Pixel 8',
+      'OnePlus 11',
+      'ASUS ROG Laptop',
+      'Canon EOS R5',
+      'Nike Air Max',
+      'Adidas Ultraboost',
+      'Apple Watch Series 9',
+      'Fitbit Versa 4',
+      'PlayStation 5',
+      'Xbox Series X',
+      'Nintendo Switch',
+      'Tesla Model Y'
+    ];
+
+    // Mock categories
+    final categories = ['Electronics', 'Clothing', 'Sports', 'Gaming'];
+
     for (int i = 0; i < pageSize; i++) {
       final id = 'product_${page}_$i';
+      final globalIndex = page * pageSize + i;
+      final basePrice = 29.99 + (i * 10);
+      
       products.add(ProductModel(
         id: id,
-        name: 'Product ${page * pageSize + i + 1}',
-        price: 29.99 + (i * 10),
+        name: productNames[globalIndex % productNames.length],
+        price: basePrice,
         currency: 'USD',
         imageUrl: 'https://picsum.photos/300/300?random=$id',
         rating: 3.5 + (i % 3) * 0.5,
         reviewCount: 10 + (i * 5),
         isInStock: i % 7 != 0, // Some out of stock
         discountPercentage: i % 3 == 0 ? 15.0 : null,
-        categoryId: categoryId ?? 'category_${i % 4}',
+        categoryId: categoryId ?? categories[i % categories.length],
         brand: 'Brand ${String.fromCharCode(65 + (i % 5))}',
         tags: <String>['tag${i % 3}', 'popular'],
       ));

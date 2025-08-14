@@ -286,42 +286,45 @@ class ShopKitThemeManager extends ChangeNotifier {
   }
 
   Map<String, dynamic> _exportColorScheme(ShopKitColorScheme colorScheme) {
+    int c(Color c) => c.toARGB32();
+    int? cOpt(Color? c) => c?.toARGB32();
     return {
-      'primary': colorScheme.primary.value,
-      'onPrimary': colorScheme.onPrimary.value,
-      'primaryContainer': colorScheme.primaryContainer.value,
-      'onPrimaryContainer': colorScheme.onPrimaryContainer.value,
-      'secondary': colorScheme.secondary.value,
-      'onSecondary': colorScheme.onSecondary.value,
-      'secondaryContainer': colorScheme.secondaryContainer.value,
-      'onSecondaryContainer': colorScheme.onSecondaryContainer.value,
-      'tertiary': colorScheme.tertiary.value,
-      'onTertiary': colorScheme.onTertiary.value,
-      'tertiaryContainer': colorScheme.tertiaryContainer.value,
-      'onTertiaryContainer': colorScheme.onTertiaryContainer.value,
-      'error': colorScheme.error.value,
-      'onError': colorScheme.onError.value,
-      'errorContainer': colorScheme.errorContainer.value,
-      'onErrorContainer': colorScheme.onErrorContainer.value,
-      'surface': colorScheme.surface.value,
-      'onSurface': colorScheme.onSurface.value,
-      'surfaceVariant': colorScheme.surfaceVariant.value,
-      'onSurfaceVariant': colorScheme.onSurfaceVariant.value,
-      'outline': colorScheme.outline.value,
-      'outlineVariant': colorScheme.outlineVariant.value,
-      'shadow': colorScheme.shadow.value,
-      'scrim': colorScheme.scrim.value,
-      'inverseSurface': colorScheme.inverseSurface.value,
-      'onInverseSurface': colorScheme.onInverseSurface.value,
-      'inversePrimary': colorScheme.inversePrimary.value,
-      'surfaceTint': colorScheme.surfaceTint.value,
-      'success': colorScheme.success?.value,
-      'onSuccess': colorScheme.onSuccess?.value,
-      'warning': colorScheme.warning?.value,
-      'onWarning': colorScheme.onWarning?.value,
-      'info': colorScheme.info?.value,
-      'onInfo': colorScheme.onInfo?.value,
-      'customColors': colorScheme.customColors.map((k, v) => MapEntry(k, v.value)),
+      'primary': c(colorScheme.primary),
+      'onPrimary': c(colorScheme.onPrimary),
+      'primaryContainer': c(colorScheme.primaryContainer),
+      'onPrimaryContainer': c(colorScheme.onPrimaryContainer),
+      'secondary': c(colorScheme.secondary),
+      'onSecondary': c(colorScheme.onSecondary),
+      'secondaryContainer': c(colorScheme.secondaryContainer),
+      'onSecondaryContainer': c(colorScheme.onSecondaryContainer),
+      'tertiary': c(colorScheme.tertiary),
+      'onTertiary': c(colorScheme.onTertiary),
+      'tertiaryContainer': c(colorScheme.tertiaryContainer),
+      'onTertiaryContainer': c(colorScheme.onTertiaryContainer),
+      'error': c(colorScheme.error),
+      'onError': c(colorScheme.onError),
+      'errorContainer': c(colorScheme.errorContainer),
+      'onErrorContainer': c(colorScheme.onErrorContainer),
+      'surface': c(colorScheme.surface),
+      'onSurface': c(colorScheme.onSurface),
+  // surfaceVariant deprecated: exporting as surface to maintain backward compatibility
+  'surfaceVariant': c(colorScheme.surface),
+  'onSurfaceVariant': c(colorScheme.onSurface),
+      'outline': c(colorScheme.outline),
+      'outlineVariant': c(colorScheme.outlineVariant),
+      'shadow': c(colorScheme.shadow),
+      'scrim': c(colorScheme.scrim),
+      'inverseSurface': c(colorScheme.inverseSurface),
+      'onInverseSurface': c(colorScheme.onInverseSurface),
+      'inversePrimary': c(colorScheme.inversePrimary),
+      'surfaceTint': c(colorScheme.surfaceTint),
+      'success': cOpt(colorScheme.success),
+      'onSuccess': cOpt(colorScheme.onSuccess),
+      'warning': cOpt(colorScheme.warning),
+      'onWarning': cOpt(colorScheme.onWarning),
+      'info': cOpt(colorScheme.info),
+      'onInfo': cOpt(colorScheme.onInfo),
+      'customColors': colorScheme.customColors.map((k, v) => MapEntry(k, v.toARGB32())),
     };
   }
 
@@ -424,5 +427,17 @@ class ShopKitThemeProvider extends InheritedNotifier<ShopKitThemeManager> {
 
   static ShopKitBaseTheme themeOf(BuildContext context) {
     return of(context).currentTheme;
+  }
+}
+
+/// Color utilities avoiding deprecated direct .value access patterns.
+extension ShopKitColorExport on Color {
+  int toARGB32() {
+    // Use modern channel accessors (.a,.r,.g,.b produce 0..1 doubles)
+    final aInt = (a * 255.0).round() & 0xFF;
+    final rInt = (r * 255.0).round() & 0xFF;
+    final gInt = (g * 255.0).round() & 0xFF;
+    final bInt = (b * 255.0).round() & 0xFF;
+    return (aInt << 24) | (rInt << 16) | (gInt << 8) | bInt;
   }
 }

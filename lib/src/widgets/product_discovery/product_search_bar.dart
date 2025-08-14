@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../config/flexible_widget_config.dart';
@@ -118,6 +120,8 @@ class ProductSearchBarAdvancedState extends State<ProductSearchBarAdvanced>
   List<String> _filteredHistory = [];
   bool _showSuggestions = false;
   bool _isListening = false;
+  Timer? _debounceTimer;
+  Timer? _focusHideTimer;
 
   // Configuration helpers
   T _getConfig<T>(String key, T defaultValue) {
@@ -199,12 +203,19 @@ class ProductSearchBarAdvancedState extends State<ProductSearchBarAdvanced>
         _suggestionController.reverse();
       }
 
-      // Debounced search
-      Future.delayed(widget.debounceDelay, () {
+      // Debounced search with cancellable timer
+      _debounceTimer?.cancel();
+      if (widget.debounceDelay == Duration.zero) {
         if (_controller.text == query && query.isNotEmpty) {
           _performSearch(query);
         }
-      });
+      } else {
+        _debounceTimer = Timer(widget.debounceDelay, () {
+          if (_controller.text == query && query.isNotEmpty) {
+            _performSearch(query);
+          }
+        });
+      }
     }
   }
 
@@ -221,9 +232,12 @@ class ProductSearchBarAdvancedState extends State<ProductSearchBarAdvanced>
       }
     } else if (!_focusNode.hasFocus) {
       // Delay hiding suggestions to allow for tap events
-      Future.delayed(const Duration(milliseconds: 150), () {
+      _focusHideTimer?.cancel();
+      _focusHideTimer = Timer(const Duration(milliseconds: 150), () {
         if (!_focusNode.hasFocus) {
-          setState(() => _showSuggestions = false);
+          if (mounted) {
+            setState(() => _showSuggestions = false);
+          }
           _suggestionController.reverse();
         }
       });
@@ -286,7 +300,7 @@ class ProductSearchBarAdvancedState extends State<ProductSearchBarAdvanced>
 
   void _trackSearchAnalytics(String query) {
     // Implement analytics tracking here
-    debugPrint('Search Analytics: "$query"');
+  // Analytics logging removed or delegate to injected logger if needed
   }
 
   void _handleSuggestionTap(String suggestion) {
@@ -304,7 +318,7 @@ class ProductSearchBarAdvancedState extends State<ProductSearchBarAdvanced>
     setState(() => _isListening = true);
 
     // Simulate voice search (implement actual voice recognition here)
-    await Future.delayed(const Duration(seconds: 2));
+  await Future.delayed(const Duration(seconds: 2)); // simulate voice input
 
     setState(() => _isListening = false);
 
@@ -356,6 +370,8 @@ class ProductSearchBarAdvancedState extends State<ProductSearchBarAdvanced>
 
   @override
   void dispose() {
+  _debounceTimer?.cancel();
+  _focusHideTimer?.cancel();
     _controller.removeListener(_onQueryChanged);
     _focusNode.removeListener(_onFocusChanged);
     
@@ -508,8 +524,8 @@ class ProductSearchBarAdvancedState extends State<ProductSearchBarAdvanced>
   Widget _buildClearButton(BuildContext context, ShopKitTheme theme) {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: _getConfig('clearButtonPadding', 8.0)),
-      child: GestureDetector(
-        onTap: _clearSearch,
+          child: GestureDetector(
+            onTap: _clearSearch,
         child: Container(
           padding: EdgeInsets.all(_getConfig('clearButtonInnerPadding', 4.0)),
           decoration: BoxDecoration(
@@ -529,8 +545,8 @@ class ProductSearchBarAdvancedState extends State<ProductSearchBarAdvanced>
   Widget _buildVoiceButton(BuildContext context, ShopKitTheme theme) {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: _getConfig('voiceButtonPadding', 8.0)),
-      child: GestureDetector(
-        onTap: _handleVoiceSearch,
+          child: GestureDetector(
+            onTap: _handleVoiceSearch,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           padding: EdgeInsets.all(_getConfig('voiceButtonInnerPadding', 8.0)),
@@ -559,8 +575,8 @@ class ProductSearchBarAdvancedState extends State<ProductSearchBarAdvanced>
 
     return Container(
       padding: EdgeInsets.only(right: _getConfig('filterButtonPadding', 16.0)),
-      child: GestureDetector(
-        onTap: widget.onFilterTap,
+          child: GestureDetector(
+            onTap: widget.onFilterTap,
         child: Container(
           padding: EdgeInsets.all(_getConfig('filterButtonInnerPadding', 8.0)),
           decoration: BoxDecoration(
@@ -623,16 +639,15 @@ class ProductSearchBarAdvancedState extends State<ProductSearchBarAdvanced>
       
       ..._filteredHistory.asMap().entries.map((entry) {
         final history = entry.value;
-        
         return _buildSuggestionItem(
-          context, 
-          theme, 
-          history, 
-          Icons.history, 
+          context,
+          theme,
+          history,
+          Icons.history,
           () => _handleSuggestionTap(history),
           isHistory: true,
         );
-      }).toList(),
+      }),
     ];
   }
 
@@ -646,16 +661,15 @@ class ProductSearchBarAdvancedState extends State<ProductSearchBarAdvanced>
       ..._filteredSuggestions.asMap().entries.map((entry) {
         final index = entry.key;
         final suggestion = entry.value;
-        
         return widget.customSuggestionBuilder?.call(context, suggestion, index) ??
-          _buildSuggestionItem(
-            context, 
-            theme, 
-            suggestion, 
-            Icons.search, 
-            () => _handleSuggestionTap(suggestion),
-          );
-      }).toList(),
+            _buildSuggestionItem(
+              context,
+              theme,
+              suggestion,
+              Icons.search,
+              () => _handleSuggestionTap(suggestion),
+            );
+      }),
     ];
   }
 

@@ -219,8 +219,8 @@ class FlexibleWidgetConfig {
         return theme.colorScheme.secondary;
       case 'surface':
         return theme.colorScheme.surface;
-      case 'background':
-        return theme.colorScheme.background;
+      case 'background': // deprecated alias
+        return theme.colorScheme.surface; // map to surface to avoid deprecated background
       case 'error':
         return theme.colorScheme.error;
       case 'onPrimary':
@@ -229,8 +229,8 @@ class FlexibleWidgetConfig {
         return theme.colorScheme.onSecondary;
       case 'onSurface':
         return theme.colorScheme.onSurface;
-      case 'onBackground':
-        return theme.colorScheme.onBackground;
+      case 'onBackground': // deprecated alias
+        return theme.colorScheme.onSurface;
       case 'onError':
         return theme.colorScheme.onError;
       default:

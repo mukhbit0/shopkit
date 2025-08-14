@@ -87,8 +87,8 @@ class VariantPickerState extends State<VariantPicker>
   late Animation<Offset> _slideAnimation;
   late Animation<double> _scaleAnimation;
 
-  Set<VariantModel> _selectedVariants = {};
-  Map<String, List<VariantModel>> _groupedVariants = {};
+  final Set<VariantModel> _selectedVariants = {};
+  final Map<String, List<VariantModel>> _groupedVariants = {};
   FlexibleWidgetConfig? _config;
 
   // Configuration helpers

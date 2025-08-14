@@ -3,11 +3,15 @@ import 'package:flutter/services.dart';
 import '../../config/flexible_widget_config.dart';
 import '../../theme/shopkit_theme.dart';
 import '../../models/product_model.dart';
+import 'product_grid_types.dart';
+import 'components/product_grid_image.dart';
+import 'components/product_grid_badges.dart';
+import 'components/product_grid_action_button.dart';
 
 /// A comprehensive product grid widget with advanced features and unlimited customization
 /// Features: Multiple layouts, infinite scroll, search/filter, animations, and extensive theming
-class ProductGridNew extends StatefulWidget {
-  const ProductGridNew({
+class ProductGrid extends StatefulWidget {
+  const ProductGrid({
     super.key,
     required this.products,
     this.config,
@@ -46,7 +50,8 @@ class ProductGridNew extends StatefulWidget {
     this.style = ProductGridStyle.card,
     this.layout = ProductGridLayout.grid,
     this.imageStyle = ProductGridImageStyle.cover,
-    this.animationType = ProductGridAnimationType.fadeIn,
+  this.animationType = ProductGridAnimationType.fadeIn,
+  this.enableResponsive = true,
   });
 
   /// List of products to display
@@ -56,10 +61,10 @@ class ProductGridNew extends StatefulWidget {
   final FlexibleWidgetConfig? config;
 
   /// Custom builder for complete control
-  final Widget Function(BuildContext, List<ProductModel>, ProductGridNewState)? customBuilder;
+  final Widget Function(BuildContext, List<ProductModel>, ProductGridState)? customBuilder;
 
   /// Custom item builder for product cards
-  final Widget Function(BuildContext, ProductModel, int, ProductGridNewState)? customItemBuilder;
+  final Widget Function(BuildContext, ProductModel, int, ProductGridState)? customItemBuilder;
 
   /// Custom empty state builder
   final Widget Function(BuildContext)? customEmptyBuilder;
@@ -162,12 +167,14 @@ class ProductGridNew extends StatefulWidget {
 
   /// Animation type
   final ProductGridAnimationType animationType;
+  /// Whether to adapt crossAxisCount based on available width breakpoints
+  final bool enableResponsive;
 
   @override
-  State<ProductGridNew> createState() => ProductGridNewState();
+  State<ProductGrid> createState() => ProductGridState();
 }
 
-class ProductGridNewState extends State<ProductGridNew>
+class ProductGridState extends State<ProductGrid>
     with TickerProviderStateMixin {
   late ScrollController _scrollController;
   late AnimationController _animationController;
@@ -348,7 +355,7 @@ class ProductGridNewState extends State<ProductGridNew>
   }
 
   @override
-  void didUpdateWidget(ProductGridNew oldWidget) {
+  void didUpdateWidget(ProductGrid oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.products != oldWidget.products) {
       setState(() {
@@ -516,11 +523,24 @@ class ProductGridNewState extends State<ProductGridNew>
   }
 
   Widget _buildGridLayout(BuildContext context, ShopKitTheme theme) {
+    final width = MediaQuery.of(context).size.width;
+    int crossAxis = widget.crossAxisCount;
+    if (widget.enableResponsive) {
+      if (width >= 1400) {
+        crossAxis = 6;
+      } else if (width >= 1100) {
+        crossAxis = 5;
+      } else if (width >= 900) {
+        crossAxis = 4;
+      } else if (width >= 600) {
+        crossAxis = 3;
+      }
+    }
     return GridView.builder(
       controller: _scrollController,
       padding: EdgeInsets.all(_getConfig('gridPadding', 16.0)),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: widget.crossAxisCount,
+        crossAxisCount: crossAxis,
         childAspectRatio: widget.childAspectRatio,
         crossAxisSpacing: widget.crossAxisSpacing,
         mainAxisSpacing: widget.mainAxisSpacing,
@@ -657,81 +677,26 @@ class ProductGridNewState extends State<ProductGridNew>
   }
 
   Widget _buildProductImage(BuildContext context, ShopKitTheme theme, ProductModel product) {
-    return Stack(
-      children: [
-        ClipRRect(
-          borderRadius: widget.layout == ProductGridLayout.list
-            ? _config?.getBorderRadius('listImageBorderRadius', BorderRadius.circular(8)) ?? BorderRadius.circular(8)
-            : _config?.getBorderRadius('productImageBorderRadius', BorderRadius.only(
-                topLeft: Radius.circular(12),
-                topRight: Radius.circular(12),
-              )) ?? BorderRadius.only(
-                topLeft: Radius.circular(12),
-                topRight: Radius.circular(12),
-              ),
-          child: Container(
-            width: double.infinity,
-            height: widget.layout == ProductGridLayout.list ? double.infinity : _getConfig('productImageHeight', 150.0),
-            color: theme.surfaceColor,
-            child: product.images?.isNotEmpty == true
-              ? Image.network(
-                  product.images!.first,
-                  fit: widget.imageStyle == ProductGridImageStyle.cover ? BoxFit.cover : BoxFit.contain,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      color: theme.onSurfaceColor.withValues(alpha: 0.1),
-                      child: Icon(
-                        Icons.image_not_supported_outlined,
-                        color: theme.onSurfaceColor.withValues(alpha: 0.4),
-                        size: _getConfig('placeholderIconSize', 40.0),
-                      ),
-                    );
-                  },
-                )
-              : Container(
-                  color: theme.onSurfaceColor.withValues(alpha: 0.1),
-                  child: Icon(
-                    Icons.image_outlined,
-                    color: theme.onSurfaceColor.withValues(alpha: 0.4),
-                    size: _getConfig('placeholderIconSize', 40.0),
-                  ),
-                ),
-          ),
-        ),
-        
-        // Badges
-        if (widget.showBadges) ..._buildBadges(context, theme, product),
-        
-        // Action buttons
-        Positioned(
-          top: _getConfig('actionButtonsTop', 8.0),
-          right: _getConfig('actionButtonsRight', 8.0),
-          child: Column(
-            children: [
-              if (widget.showFavoriteButton)
-                _buildActionButton(
-                  context,
-                  theme,
-                  icon: Icons.favorite_border, // Placeholder favorite state
-                  color: theme.onSurfaceColor.withValues(alpha: 0.6),
-                  onTap: () => _handleFavorite(product),
-                ),
-              
-              if (widget.showAddToCartButton)
-                SizedBox(height: _getConfig('actionButtonSpacing', 8.0)),
-              
-              if (widget.showAddToCartButton)
-                _buildActionButton(
-                  context,
-                  theme,
-                  icon: Icons.add_shopping_cart,
-                  color: theme.primaryColor,
-                  onTap: () => _handleAddToCart(product),
-                ),
-            ],
-          ),
-        ),
-      ],
+    return ProductGridImage(
+      product: product,
+      theme: theme,
+      config: _config,
+      showBadges: widget.showBadges,
+      showFavoriteButton: widget.showFavoriteButton,
+      showAddToCartButton: widget.showAddToCartButton,
+      imageStyle: widget.imageStyle,
+      layout: widget.layout,
+      onFavorite: () => _handleFavorite(product),
+      onAddToCart: () => _handleAddToCart(product),
+      buildBadges: () => _buildBadges(context, theme, product),
+      buildActionButton: ({required IconData icon, required Color color, required VoidCallback onTap, String? semanticsLabel}) => _buildActionButton(
+        context,
+        theme,
+        icon: icon,
+        color: color,
+        onTap: onTap,
+        semanticsLabel: semanticsLabel,
+      ),
     );
   }
 
@@ -829,64 +794,7 @@ class ProductGridNewState extends State<ProductGridNew>
   }
 
   List<Widget> _buildBadges(BuildContext context, ShopKitTheme theme, ProductModel product) {
-    final badges = <Widget>[];
-    
-    if (product.hasDiscount) {
-      badges.add(
-        Positioned(
-          top: _getConfig('badgeTop', 8.0),
-          left: _getConfig('badgeLeft', 8.0),
-          child: Container(
-            padding: EdgeInsets.symmetric(
-              horizontal: _getConfig('badgeHorizontalPadding', 8.0),
-              vertical: _getConfig('badgeVerticalPadding', 4.0),
-            ),
-            decoration: BoxDecoration(
-              color: _config?.getColor('saleBadgeColor', Colors.red) ?? Colors.red,
-              borderRadius: _config?.getBorderRadius('badgeBorderRadius', BorderRadius.circular(4)) ?? BorderRadius.circular(4),
-            ),
-            child: Text(
-              _getConfig('saleBadgeText', 'SALE'),
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: _getConfig('badgeTextSize', 10.0),
-              ),
-            ),
-          ),
-        ),
-      );
-    }
-    
-    // For now, let's assume products without discounts are "new"
-    if (!product.hasDiscount) {
-      badges.add(
-        Positioned(
-          top: product.hasDiscount ? _getConfig('badgeTop', 8.0) + _getConfig('badgeSpacing', 32.0) : _getConfig('badgeTop', 8.0),
-          left: _getConfig('badgeLeft', 8.0),
-          child: Container(
-            padding: EdgeInsets.symmetric(
-              horizontal: _getConfig('badgeHorizontalPadding', 8.0),
-              vertical: _getConfig('badgeVerticalPadding', 4.0),
-            ),
-            decoration: BoxDecoration(
-              color: _config?.getColor('newBadgeColor', Colors.green) ?? Colors.green,
-              borderRadius: _config?.getBorderRadius('badgeBorderRadius', BorderRadius.circular(4)) ?? BorderRadius.circular(4),
-            ),
-            child: Text(
-              _getConfig('newBadgeText', 'NEW'),
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: _getConfig('badgeTextSize', 10.0),
-              ),
-            ),
-          ),
-        ),
-      );
-    }
-    
-    return badges;
+    return ProductGridBadgesBuilder(_config, theme).build(product);
   }
 
   Widget _buildActionButton(
@@ -895,31 +803,15 @@ class ProductGridNewState extends State<ProductGridNew>
     required IconData icon,
     required Color color,
     required VoidCallback onTap,
+    String? semanticsLabel,
   }) {
-    return GestureDetector(
+    return ProductGridActionButton(
+      icon: icon,
+      color: color,
       onTap: onTap,
-      child: Container(
-        width: _getConfig('actionButtonSize', 32.0),
-        height: _getConfig('actionButtonSize', 32.0),
-        decoration: BoxDecoration(
-          color: theme.surfaceColor.withValues(alpha: _getConfig('actionButtonBackgroundOpacity', 0.9)),
-          borderRadius: BorderRadius.circular(_getConfig('actionButtonBorderRadius', 16.0)),
-          boxShadow: _getConfig('showActionButtonShadow', true)
-            ? [
-                BoxShadow(
-                  color: theme.onSurfaceColor.withValues(alpha: 0.1),
-                  blurRadius: 4,
-                  offset: Offset(0, 2),
-                ),
-              ]
-            : null,
-        ),
-        child: Icon(
-          icon,
-          color: color,
-          size: _getConfig('actionButtonIconSize', 18.0),
-        ),
-      ),
+      semanticsLabel: semanticsLabel,
+      theme: theme,
+      config: _config,
     );
   }
 
@@ -1180,31 +1072,4 @@ class ProductGridNewState extends State<ProductGridNew>
   }
 }
 
-/// Style options for product grid
-enum ProductGridStyle {
-  card,
-  flat,
-  elevated,
-  outlined,
-}
-
-/// Layout options for product grid
-enum ProductGridLayout {
-  grid,
-  list,
-  staggered,
-}
-
-/// Image style options
-enum ProductGridImageStyle {
-  cover,
-  contain,
-}
-
-/// Animation type options
-enum ProductGridAnimationType {
-  none,
-  fadeIn,
-  slideUp,
-  scale,
-}
+// Enum types moved to product_grid_types.dart

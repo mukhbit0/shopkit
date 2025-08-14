@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shopkit/shopkit.dart';
 
+import 'new_architecture_demo.dart';
+
 void main() {
   runApp(const MyApp());
 }
@@ -18,7 +20,7 @@ class MyApp extends StatelessWidget {
             ECommerceTheme.light, // Add e-commerce theme
           ],
         ),
-        home: const ProductCatalogPage(),
+        home: const ShopKitNewArchitectureDemo(),
       );
 }
 
@@ -197,7 +199,7 @@ class _ProductCatalogPageState extends State<ProductCatalogPage> {
         ),
         body: ListenableBuilder(
           listenable: _cartController,
-          builder: (BuildContext context, Widget? child) => ProductGridNew(
+          builder: (BuildContext context, Widget? child) => ProductGrid(
             products: sampleProducts,
           ),
         ),

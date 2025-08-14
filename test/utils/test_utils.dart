@@ -3,6 +3,24 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shopkit/shopkit.dart';
 
 class TestUtils {
+  /// Create a mock configuration for testing
+  static Map<String, dynamic> createTestConfig() {
+    return {
+      'imageHeight': 200.0,
+      'showBadges': true,
+      'showRating': true,
+      'showDiscount': true,
+      'onTap': null,
+      'onAddToCart': null,
+    };
+  }
+
+  /// Simulate user tap interaction
+  static Future<void> simulateUserTap(WidgetTester tester, Finder finder) async {
+    await tester.tap(finder);
+    await tester.pumpAndSettle();
+  }
+
   /// Create a mock product for testing
   static ProductModel createMockProduct({
     String? id,
@@ -44,6 +62,16 @@ class TestUtils {
       reviewCount: reviewCount ?? 10,
       discountPercentage: discountPercentage,
     );
+  }
+
+  /// Create a list of mock products for testing
+  static List<ProductModel> createMockProductList(int count) {
+    return List.generate(count, (index) => createMockProduct(
+      id: 'product-${index + 1}',
+      name: 'Test Product ${index + 1}',
+      price: 50.0 + (index * 10.0),
+      rating: 3.5 + (index * 0.3),
+    ));
   }
 
   /// Create a test app wrapper for widget testing
@@ -92,7 +120,7 @@ class TestUtils {
       );
     }
     
-    print('Performance test completed in ${stopwatch.elapsed.inMilliseconds}ms');
+  // Debug print removed to keep test output clean
   }
 
   /// Verify widget accessibility
