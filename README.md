@@ -199,6 +199,81 @@ themeManager.setTheme(MyCustomTheme());
 
 ## 🌎 Internationalization
 
+## 🔄 Migration Guide (vNEXT)
+
+The upcoming release introduces a simplified, parameter‑based visual theming system and consolidates duplicate widgets.
+
+### 1. New `themeStyle` Parameter
+
+Most discovery / cart widgets now accept a simple `themeStyle` string:
+
+```dart
+ProductCard(
+  product: product,
+  themeStyle: 'glassmorphism', // material3 | materialYou | neumorphism | glassmorphism | cupertino | minimal | retro | neon
+)
+```
+
+This instantly applies adaptive colors, radius, blur, shadows, gradients, and animation curves defined in `ShopKitThemeConfig`.
+
+### 2. Unified Add To Cart Button
+
+The legacy `cart_management/add_to_cart_button.dart` is deprecated.
+
+Action required:
+
+- Replace legacy imports with: `import 'package:shopkit/shopkit.dart';`
+- Rename usages of the old `AddToCartButton` (legacy) only if you explicitly imported from `cart_management`. The new unified implementation keeps the typedef `AddToCartButton` so most apps require no code change besides removing deep import paths.
+- Optional: pass `themeStyle` for instant styling.
+
+### 3. AnnouncementBar, CartBubble, StickyAddToCart, CartSummary
+
+All now accept `themeStyle`. For CartSummary the standard layout is fully themed; remaining layouts will reach parity shortly (watch changelog).
+
+### 4. Deprecations
+
+| Legacy | Replacement | Notes |
+| ------ | ----------- | ----- |
+| `cart_management/add_to_cart_button.dart` | `AddToCartButton` unified | Deprecated annotation present; removal in next major. |
+| Manual deep styling via `FlexibleWidgetConfig` for common visuals | `themeStyle` param | You can still use `FlexibleWidgetConfig` for granular overrides. |
+
+### 5. Fallback Behavior
+
+If `themeStyle` is null, the existing legacy theme provider (`ShopKitThemeProvider`) path is used to preserve appearance.
+
+### 6. Custom Styles
+
+You can map your own style name to a `ShopKitThemeConfig` by extending the enum (PR welcome) or wrapping widgets and supplying overrides (colors, radius) plus `FlexibleWidgetConfig` for fine tuning.
+
+### 7. Quick Diff Example
+
+Before:
+
+```dart
+AddToCartButton(
+  product: p,
+  backgroundColor: Colors.deepPurple,
+  // many manual adjustments
+)
+```
+
+After:
+
+```dart
+AddToCartButton(
+  product: p,
+  themeStyle: 'materialYou',
+)
+```
+
+### 8. Roadmap
+
+- Full theming parity for all CartSummary layouts
+- Additional presets (pastel, midnight, solarized)
+- Dynamic style switching demo in example app
+
+Refer to the example `theme_showcase.dart` for a live gallery of every style.
+
 ### Basic Usage
 
 ```dart

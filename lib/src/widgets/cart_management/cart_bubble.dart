@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../config/flexible_widget_config.dart';
 import '../../theme/shopkit_theme.dart';
+import '../../theme/shopkit_theme_styles.dart';
 import '../../models/cart_model.dart';
 
 /// A comprehensive cart bubble widget with advanced features and unlimited customization
@@ -22,6 +23,7 @@ class CartBubbleAdvanced extends StatefulWidget {
     this.animateOnChange = true,
     this.position = CartBubblePosition.topRight,
     this.style = CartBubbleStyle.floating,
+  this.themeStyle,
   });
 
   /// List of cart items
@@ -62,6 +64,9 @@ class CartBubbleAdvanced extends StatefulWidget {
 
   /// Style of the bubble
   final CartBubbleStyle style;
+
+  /// New theming system style name (material3, glassmorphism, etc.)
+  final String? themeStyle;
 
   @override
   State<CartBubbleAdvanced> createState() => CartBubbleAdvancedState();
@@ -244,12 +249,19 @@ class CartBubbleAdvancedState extends State<CartBubbleAdvanced>
       return widget.customBuilder!(context, widget.cartItems, this);
     }
 
-    final theme = ShopKitThemeProvider.of(context);
+    final legacyTheme = ShopKitThemeProvider.of(context);
+  final useNewTheme = widget.themeStyle != null;
+    ShopKitThemeConfig? themeCfg;
+    if (useNewTheme) {
+      final styleName = widget.themeStyle ?? 'material3';
+      final style = ShopKitThemeStyleExtension.fromString(styleName);
+      themeCfg = ShopKitThemeConfig.forStyle(style, context);
+    }
 
-    return _buildCartBubble(context, theme);
+    return _buildCartBubble(context, legacyTheme, themeCfg);
   }
 
-  Widget _buildCartBubble(BuildContext context, ShopKitTheme theme) {
+  Widget _buildCartBubble(BuildContext context, ShopKitTheme theme, ShopKitThemeConfig? themeCfg) {
     Widget bubble = _buildBubbleContent(context, theme);
 
     // Apply animations
@@ -267,6 +279,37 @@ class CartBubbleAdvancedState extends State<CartBubbleAdvanced>
             child: child,
           );
         },
+        child: bubble,
+      );
+    }
+
+    // Apply themed wrapper if new theme in use (e.g., add blur/gradient container)
+    if (themeCfg != null) {
+      bubble = Container(
+        decoration: BoxDecoration(
+          color: themeCfg.enableBlur ? (themeCfg.primaryColor ?? theme.primaryColor).withValues(alpha: 0.15) : themeCfg.primaryColor ?? theme.primaryColor,
+          gradient: themeCfg.enableGradients
+              ? LinearGradient(
+                  colors: [
+                    (themeCfg.primaryColor ?? theme.primaryColor).withValues(alpha: 0.9),
+                    (themeCfg.primaryColor ?? theme.primaryColor).withValues(alpha: 0.6),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                )
+              : null,
+          borderRadius: BorderRadius.circular(themeCfg.borderRadius),
+          boxShadow: themeCfg.enableShadows
+              ? [
+                  BoxShadow(
+                    color: (themeCfg.shadowColor ?? Colors.black).withValues(alpha: 0.25),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
+                  ),
+                ]
+              : null,
+        ),
+        padding: const EdgeInsets.all(4),
         child: bubble,
       );
     }

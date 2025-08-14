@@ -48,12 +48,14 @@ ProductCard(
 ## ✨ Features
 
 ### Automatic Styling
+
 - **Smart Animations**: Each theme includes custom animations using flutter_animate
 - **Responsive Design**: Themes adapt to light/dark mode automatically  
 - **Consistent Colors**: Uses your app's color scheme as base
 - **Performance Optimized**: Animations are smooth and efficient
 
 ### Theme-Specific Effects
+
 - **Neumorphism**: Dual-direction shadows that create depth
 - **Glassmorphism**: Real backdrop blur with gradient overlays
 - **Neon**: Glowing borders with shimmer effects
@@ -63,6 +65,7 @@ ProductCard(
 ## 🎯 Usage Patterns
 
 ### Theme Switching
+
 ```dart
 class ProductList extends StatefulWidget {
   @override
@@ -83,6 +86,7 @@ class ProductList extends StatefulWidget {
 ```
 
 ### Mixed Themes in One App
+
 ```dart
 // Hero product with neon theme
 ProductCard(
@@ -100,6 +104,7 @@ ProductCard(
 ## 🛠 Customization
 
 ### Without Theme Style (Fallback)
+
 When no `themeStyle` is provided, the widget falls back to a clean, default design that respects your app's theme.
 
 ```dart
@@ -113,6 +118,7 @@ ProductCard(
 ## 📦 Dependencies
 
 The theme system requires:
+
 - `flutter_animate` for smooth animations
 - `dart:ui` for advanced effects like blur
 
@@ -132,13 +138,16 @@ The demo showcases all 8 theme styles side by side, so you can see the differenc
 ## 🔧 Advanced Usage
 
 ### Theme Configurations
+
 Each theme has pre-configured settings for:
+
 - Border radius and elevation
 - Colors and gradients  
 - Animation curves and durations
 - Visual effects (shadows, blur, glow)
 
 ### Extending Themes
+
 The theme system is built on `ShopKitThemeConfig` which you can extend to create custom themes:
 
 ```dart

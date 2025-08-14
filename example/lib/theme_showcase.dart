@@ -54,9 +54,80 @@ class ThemeShowcaseScreen extends StatelessWidget {
             
             SizedBox(height: 32.h),
             
-            // More widgets will support themeStyle soon!
+            // Category Tabs
             Text(
-              'More themed widgets coming soon...',
+              'Category Tabs',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 16.h),
+            _buildCategoryTabsShowcase(),
+            SizedBox(height: 32.h),
+
+            // Product Search Bars
+            Text(
+              'Product Search Bars',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 16.h),
+            _buildSearchBarsShowcase(),
+            SizedBox(height: 32.h),
+
+            // Announcement Bars
+            Text(
+              'Announcement Bars',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 16.h),
+            _buildAnnouncementBarsShowcase(),
+            SizedBox(height: 32.h),
+
+            // Variant Picker
+            Text(
+              'Variant Pickers',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 16.h),
+            _buildVariantPickersShowcase(),
+            SizedBox(height: 32.h),
+
+            // Image Carousel
+            Text(
+              'Image Carousels',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 16.h),
+            _buildImageCarouselsShowcase(),
+            SizedBox(height: 32.h),
+
+            // Cart Bubble
+            Text(
+              'Cart Bubbles',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 16.h),
+            _buildCartBubblesShowcase(),
+            SizedBox(height: 32.h),
+
+            // Sticky Add To Cart
+            Text(
+              'Sticky Add To Cart',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 16.h),
+            _buildStickyAddToCartShowcase(),
+            SizedBox(height: 32.h),
+
+            // Cart Summary
+            Text(
+              'Cart Summary',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 16.h),
+            _buildCartSummaryShowcase(),
+            SizedBox(height: 48.h),
+
+            Text(
+              'All core widgets now accept themeStyle for instant styling.',
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                 fontStyle: FontStyle.italic,
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -149,15 +220,199 @@ class ThemeShowcaseScreen extends StatelessWidget {
             AddToCartButton(
               product: _getSampleProduct(),
               text: 'Add to Cart',
-              onAddToCart: (cartItem) {
-                // Handle add to cart
-              },
+              onAddToCart: (product, qty) {},
             ),
           ],
         );
       }).toList(),
     );
   }
+
+  Widget _buildCategoryTabsShowcase() {
+    final themes = _themes;
+    const categories = [
+      CategoryModel(id: '1', name: 'Shoes', itemCount: 42),
+      CategoryModel(id: '2', name: 'Hats', itemCount: 18),
+      CategoryModel(id: '3', name: 'Bags', itemCount: 27),
+      CategoryModel(id: '4', name: 'Watches', itemCount: 9),
+    ];
+    return SizedBox(
+      height: 140.h,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: themes.length,
+        separatorBuilder: (_, __) => SizedBox(width: 20.w),
+        itemBuilder: (context, index) {
+          final theme = themes[index];
+          return SizedBox(
+            width: 220.w,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(theme, style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w600)),
+                SizedBox(height: 8.h),
+                Expanded(
+                  child: CategoryTabs(
+                    categories: categories,
+                    onCategorySelected: (_) {},
+                    themeStyle: theme,
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildSearchBarsShowcase() {
+    final themes = _themes;
+    return Column(
+      children: themes.map((theme) {
+        return Padding(
+          padding: EdgeInsets.only(bottom: 12.h),
+          child: ProductSearchBarAdvanced(
+            onSearch: (q) {},
+            themeStyle: theme,
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildAnnouncementBarsShowcase() {
+    final themes = _themes;
+    const model = AnnouncementModel(
+      id: 'ann1',
+      title: 'Summer Sale',
+      message: 'Up to 50% off select items!',
+      actionText: 'Shop Now',
+      actionUrl: 'https://example.com',
+    );
+    return Column(
+      children: themes.map((theme) {
+        return Padding(
+          padding: EdgeInsets.only(bottom: 12.h),
+          child: AnnouncementBar(
+            announcement: model,
+            themeStyle: theme,
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildVariantPickersShowcase() {
+    final themes = _themes;
+    final variants = [
+      const VariantModel(id: 's', name: 'Small', type: 'size', value: 'S', stockQuantity: 10),
+      const VariantModel(id: 'm', name: 'Medium', type: 'size', value: 'M', stockQuantity: 5),
+      const VariantModel(id: 'l', name: 'Large', type: 'size', value: 'L', stockQuantity: 0),
+    ];
+    return Column(
+      children: themes.map((theme) {
+        return Padding(
+          padding: EdgeInsets.only(bottom: 16.h),
+          child: VariantPicker(
+            variants: variants,
+            themeStyle: theme,
+            onVariantSelected: (_) {},
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildImageCarouselsShowcase() {
+    final themes = _themes;
+    final images = List.generate(4, (i) => ImageModel(id: '$i', url: 'https://picsum.photos/seed/car$i/400/400'));
+    return Column(
+      children: themes.map((theme) {
+        return Padding(
+          padding: EdgeInsets.only(bottom: 24.h),
+          child: ImageCarousel(
+            images: images,
+            height: 220.h,
+            aspectRatio: 1.2,
+            themeStyle: theme,
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildCartBubblesShowcase() {
+    final themes = _themes;
+    return Wrap(
+      spacing: 12.w,
+      runSpacing: 12.h,
+      children: themes.map((theme) {
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(theme, style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w600)),
+            SizedBox(height: 6.h),
+            CartBubbleAdvanced(
+              cartItems: _sampleCartItems(),
+              themeStyle: theme,
+            ),
+          ],
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildStickyAddToCartShowcase() {
+    final themes = _themes;
+    return Column(
+      children: themes.map((theme) {
+        return Padding(
+          padding: EdgeInsets.only(bottom: 20.h),
+          child: StickyAddToCart(
+            product: _getSampleProduct(),
+            onAddToCart: (_) {},
+            themeStyle: theme,
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildCartSummaryShowcase() {
+    final themes = _themes;
+    final items = _sampleCartItems();
+    return Column(
+      children: themes.map((theme) {
+        return Padding(
+          padding: EdgeInsets.only(bottom: 24.h),
+          child: CartSummaryAdvanced(
+            cartItems: items,
+            themeStyle: theme,
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  List<CartItemModel> _sampleCartItems() {
+    final product = _getSampleProduct();
+    return [
+      CartItemModel(id: 'c1', product: product, quantity: 1, pricePerItem: product.price),
+      CartItemModel(id: 'c2', product: product.copyWith(id: 'p2', name: 'Another Product'), quantity: 2, pricePerItem: product.price),
+    ];
+  }
+
+  List<String> get _themes => const [
+    'material3',
+    'materialYou',
+    'neumorphism',
+    'glassmorphism',
+    'cupertino',
+    'minimal',
+    'retro',
+    'neon',
+  ];
 
   ProductModel _getSampleProduct() {
     return const ProductModel(

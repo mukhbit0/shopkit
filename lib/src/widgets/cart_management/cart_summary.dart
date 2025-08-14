@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'dart:ui';
+import '../../theme/shopkit_theme_styles.dart';
 import 'package:flutter/services.dart';
 import '../../config/flexible_widget_config.dart';
 import '../../theme/shopkit_theme.dart';
@@ -36,6 +38,7 @@ class CartSummaryAdvanced extends StatefulWidget {
     this.discount,
     this.couponCode,
     this.currency = '\$',
+  this.themeStyle,
   });
 
   /// List of cart items
@@ -118,6 +121,9 @@ class CartSummaryAdvanced extends StatefulWidget {
 
   /// Currency symbol
   final String currency;
+
+  /// New theming system style name (material3, glassmorphism, etc.)
+  final String? themeStyle;
 
   @override
   State<CartSummaryAdvanced> createState() => CartSummaryAdvancedState();
@@ -310,11 +316,13 @@ class CartSummaryAdvancedState extends State<CartSummaryAdvanced>
     if (widget.customBuilder != null) {
       return widget.customBuilder!(context, widget.cartItems, this);
     }
-
     final theme = ShopKitThemeProvider.of(context);
-
-    Widget content = _buildCartSummary(context, theme);
-
+    ShopKitThemeConfig? themeCfg;
+    if (widget.themeStyle != null) {
+      final style = ShopKitThemeStyleExtension.fromString(widget.themeStyle!);
+      themeCfg = ShopKitThemeConfig.forStyle(style, context);
+    }
+    Widget content = _buildCartSummary(context, theme, themeCfg);
     if (widget.enableAnimations) {
       content = SlideTransition(
         position: _slideAnimation,
@@ -324,46 +332,82 @@ class CartSummaryAdvancedState extends State<CartSummaryAdvanced>
         ),
       );
     }
-
+    if (themeCfg != null && themeCfg.enableBlur) {
+      content = ClipRRect(
+        borderRadius: BorderRadius.circular(themeCfg.borderRadius),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+          child: content,
+        ),
+      );
+    }
     return content;
   }
 
-  Widget _buildCartSummary(BuildContext context, ShopKitTheme theme) {
+  Widget _buildCartSummary(BuildContext context, ShopKitTheme theme, ShopKitThemeConfig? themeCfg) {
     switch (widget.style) {
       case CartSummaryStyle.compact:
-        return _buildCompactSummary(context, theme);
+        return _buildCompactSummary(context, theme, themeCfg);
       case CartSummaryStyle.detailed:
-        return _buildDetailedSummary(context, theme);
+        return _buildDetailedSummary(context, theme, themeCfg);
       case CartSummaryStyle.minimal:
-        return _buildMinimalSummary(context, theme);
+        return _buildMinimalSummary(context, theme, themeCfg);
       case CartSummaryStyle.card:
-        return _buildCardSummary(context, theme);
+        return _buildCardSummary(context, theme, themeCfg);
       case CartSummaryStyle.standard:
-        return _buildStandardSummary(context, theme);
+        return _buildStandardSummary(context, theme, themeCfg);
     }
   }
 
-  Widget _buildStandardSummary(BuildContext context, ShopKitTheme theme) {
-    return Container(
+  Widget _buildStandardSummary(BuildContext context, ShopKitTheme theme, ShopKitThemeConfig? themeCfg) {
+    return AnimatedContainer(
+      duration: themeCfg?.animationDuration ?? const Duration(milliseconds: 250),
+      curve: themeCfg?.animationCurve ?? Curves.easeOut,
       padding: EdgeInsets.all(_getConfig('containerPadding', 16.0)),
       decoration: BoxDecoration(
-        color: _config?.getColor('backgroundColor', theme.surfaceColor) ?? theme.surfaceColor,
-        borderRadius: _config?.getBorderRadius('borderRadius', BorderRadius.circular(12)) ?? BorderRadius.circular(12),
-        border: _getConfig('showBorder', true)
-          ? Border.all(
-              color: _config?.getColor('borderColor', theme.onSurfaceColor) ?? theme.onSurfaceColor,
-              width: _getConfig('borderWidth', 1.0),
-            )
-          : null,
-        boxShadow: _getConfig('enableShadow', true)
-          ? [
-              BoxShadow(
-                color: theme.onSurfaceColor.withValues(alpha: _getConfig('shadowOpacity', 0.08)),
-                blurRadius: _getConfig('shadowBlurRadius', 8.0),
-                offset: Offset(0, _getConfig('shadowOffsetY', 2.0)),
-              ),
-            ]
-          : null,
+        color: themeCfg != null
+            ? (themeCfg.enableBlur
+                ? (themeCfg.backgroundColor ?? theme.surfaceColor).withValues(alpha: 0.85)
+                : themeCfg.backgroundColor ?? theme.surfaceColor)
+            : _config?.getColor('backgroundColor', theme.surfaceColor) ?? theme.surfaceColor,
+        borderRadius: BorderRadius.circular(
+          themeCfg != null
+              ? themeCfg.borderRadius
+              : (_config?.getBorderRadius('borderRadius', BorderRadius.circular(12)).topLeft.x ?? 12),
+        ),
+        border: themeCfg == null && _getConfig('showBorder', true)
+            ? Border.all(
+                color: _config?.getColor('borderColor', theme.onSurfaceColor) ?? theme.onSurfaceColor,
+                width: _getConfig('borderWidth', 1.0),
+              )
+            : null,
+        gradient: (themeCfg != null && themeCfg.enableGradients)
+            ? LinearGradient(
+                colors: [
+                  (themeCfg.backgroundColor ?? theme.surfaceColor).withValues(alpha: 0.95),
+                  (themeCfg.backgroundColor ?? theme.surfaceColor).withValues(alpha: 0.75),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              )
+            : null,
+        boxShadow: (themeCfg != null && themeCfg.enableShadows)
+            ? [
+                BoxShadow(
+                  color: (themeCfg.shadowColor ?? Colors.black).withValues(alpha: 0.15),
+                  blurRadius: 24.0,
+                  offset: const Offset(0, 10),
+                ),
+              ]
+            : (_getConfig('enableShadow', true)
+                ? [
+                    BoxShadow(
+                      color: theme.onSurfaceColor.withValues(alpha: _getConfig('shadowOpacity', 0.08)),
+                      blurRadius: _getConfig('shadowBlurRadius', 8.0),
+                      offset: Offset(0, _getConfig('shadowOffsetY', 2.0)),
+                    ),
+                  ]
+                : null),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min, // CRITICAL FIX: Prevents unbounded height
@@ -387,18 +431,45 @@ class CartSummaryAdvancedState extends State<CartSummaryAdvanced>
     );
   }
 
-  Widget _buildCompactSummary(BuildContext context, ShopKitTheme theme) {
-    return Container(
+  Widget _buildCompactSummary(BuildContext context, ShopKitTheme theme, ShopKitThemeConfig? themeCfg) {
+    return AnimatedContainer(
+      duration: themeCfg?.animationDuration ?? const Duration(milliseconds: 220),
+      curve: themeCfg?.animationCurve ?? Curves.easeOut,
       padding: EdgeInsets.all(_getConfig('compactPadding', 12.0)),
       decoration: BoxDecoration(
-        color: _config?.getColor('backgroundColor', theme.surfaceColor) ?? theme.surfaceColor,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: _config?.getColor('borderColor', theme.onSurfaceColor) ?? theme.onSurfaceColor,
-        ),
+        color: themeCfg != null
+            ? (themeCfg.enableBlur
+                ? (themeCfg.backgroundColor ?? theme.surfaceColor).withValues(alpha: 0.85)
+                : themeCfg.backgroundColor ?? theme.surfaceColor)
+            : _config?.getColor('backgroundColor', theme.surfaceColor) ?? theme.surfaceColor,
+        borderRadius: BorderRadius.circular(themeCfg?.borderRadius ?? 8),
+        border: themeCfg == null
+            ? Border.all(
+                color: _config?.getColor('borderColor', theme.onSurfaceColor) ?? theme.onSurfaceColor,
+              )
+            : null,
+        gradient: (themeCfg != null && themeCfg.enableGradients)
+            ? LinearGradient(
+                colors: [
+                  (themeCfg.backgroundColor ?? theme.surfaceColor).withValues(alpha: 0.95),
+                  (themeCfg.backgroundColor ?? theme.surfaceColor).withValues(alpha: 0.75),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              )
+            : null,
+        boxShadow: (themeCfg != null && themeCfg.enableShadows)
+            ? [
+                BoxShadow(
+                  color: (themeCfg.shadowColor ?? Colors.black).withValues(alpha: 0.12),
+                  blurRadius: 20.0,
+                  offset: const Offset(0, 8),
+                ),
+              ]
+            : null,
       ),
       child: Column(
-        mainAxisSize: MainAxisSize.min, // CRITICAL FIX: Prevents unbounded height
+        mainAxisSize: MainAxisSize.min,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -420,7 +491,6 @@ class CartSummaryAdvancedState extends State<CartSummaryAdvanced>
               ),
             ],
           ),
-          
           if (widget.showFooter) ...[
             SizedBox(height: _getConfig('compactSpacing', 8.0)),
             _buildCheckoutButton(context, theme),
@@ -430,19 +500,43 @@ class CartSummaryAdvancedState extends State<CartSummaryAdvanced>
     );
   }
 
-  Widget _buildDetailedSummary(BuildContext context, ShopKitTheme theme) {
-    return Container(
+  Widget _buildDetailedSummary(BuildContext context, ShopKitTheme theme, ShopKitThemeConfig? themeCfg) {
+    return AnimatedContainer(
+      duration: themeCfg?.animationDuration ?? const Duration(milliseconds: 280),
+      curve: themeCfg?.animationCurve ?? Curves.easeOutCubic,
       padding: EdgeInsets.all(_getConfig('detailedPadding', 20.0)),
       decoration: BoxDecoration(
-        color: _config?.getColor('backgroundColor', theme.surfaceColor) ?? theme.surfaceColor,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: theme.onSurfaceColor.withValues(alpha: 0.1),
-            blurRadius: 12.0,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        color: themeCfg != null
+            ? (themeCfg.enableBlur
+                ? (themeCfg.backgroundColor ?? theme.surfaceColor).withValues(alpha: 0.88)
+                : themeCfg.backgroundColor ?? theme.surfaceColor)
+            : _config?.getColor('backgroundColor', theme.surfaceColor) ?? theme.surfaceColor,
+        borderRadius: BorderRadius.circular(themeCfg?.borderRadius ?? 16),
+        gradient: (themeCfg != null && themeCfg.enableGradients)
+            ? LinearGradient(
+                colors: [
+                  (themeCfg.backgroundColor ?? theme.surfaceColor).withValues(alpha: 0.98),
+                  (themeCfg.backgroundColor ?? theme.surfaceColor).withValues(alpha: 0.85),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              )
+            : null,
+        boxShadow: (themeCfg != null && themeCfg.enableShadows)
+            ? [
+                BoxShadow(
+                  color: (themeCfg.shadowColor ?? Colors.black).withValues(alpha: 0.12),
+                  blurRadius: 28.0,
+                  offset: const Offset(0, 14),
+                ),
+              ]
+            : [
+                BoxShadow(
+                  color: theme.onSurfaceColor.withValues(alpha: 0.1),
+                  blurRadius: 12.0,
+                  offset: const Offset(0, 4),
+                ),
+              ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -456,11 +550,29 @@ class CartSummaryAdvancedState extends State<CartSummaryAdvanced>
     );
   }
 
-  Widget _buildMinimalSummary(BuildContext context, ShopKitTheme theme) {
-    return Container(
+  Widget _buildMinimalSummary(BuildContext context, ShopKitTheme theme, ShopKitThemeConfig? themeCfg) {
+    return AnimatedContainer(
+      duration: themeCfg?.animationDuration ?? const Duration(milliseconds: 180),
+      curve: themeCfg?.animationCurve ?? Curves.easeOut,
       padding: EdgeInsets.symmetric(
         horizontal: _getConfig('minimalHorizontalPadding', 16.0),
         vertical: _getConfig('minimalVerticalPadding', 8.0),
+      ),
+      decoration: BoxDecoration(
+        color: themeCfg != null
+            ? (themeCfg.enableBlur
+                ? (themeCfg.backgroundColor ?? theme.surfaceColor).withValues(alpha: 0.65)
+                : (themeCfg.backgroundColor ?? theme.surfaceColor).withValues(alpha: 0.85))
+            : Colors.transparent,
+        borderRadius: BorderRadius.circular(themeCfg?.borderRadius ?? 12),
+        gradient: (themeCfg != null && themeCfg.enableGradients)
+            ? LinearGradient(
+                colors: [
+                  (themeCfg.backgroundColor ?? theme.surfaceColor).withValues(alpha: 0.8),
+                  (themeCfg.backgroundColor ?? theme.surfaceColor).withValues(alpha: 0.55),
+                ],
+              )
+            : null,
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -485,25 +597,59 @@ class CartSummaryAdvancedState extends State<CartSummaryAdvanced>
     );
   }
 
-  Widget _buildCardSummary(BuildContext context, ShopKitTheme theme) {
-    return Card(
-      elevation: _getConfig('cardElevation', 4.0),
-      color: _config?.getColor('backgroundColor', theme.surfaceColor) ?? theme.surfaceColor,
-      shape: RoundedRectangleBorder(
-        borderRadius: _config?.getBorderRadius('cardBorderRadius', BorderRadius.circular(12)) ?? BorderRadius.circular(12),
-      ),
-      child: Padding(
-        padding: EdgeInsets.all(_getConfig('cardPadding', 16.0)),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (widget.showHeader) _buildHeader(context, theme),
-            _buildItemsList(context, theme),
-            _buildTotalsSection(context, theme),
-            if (widget.showFooter) _buildFooter(context, theme),
-          ],
+  Widget _buildCardSummary(BuildContext context, ShopKitTheme theme, ShopKitThemeConfig? themeCfg) {
+    final card = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (widget.showHeader) _buildHeader(context, theme),
+        _buildItemsList(context, theme),
+        _buildTotalsSection(context, theme),
+        if (widget.showFooter) _buildFooter(context, theme),
+      ],
+    );
+    if (themeCfg == null) {
+      return Card(
+        elevation: _getConfig('cardElevation', 4.0),
+        color: _config?.getColor('backgroundColor', theme.surfaceColor) ?? theme.surfaceColor,
+        shape: RoundedRectangleBorder(
+          borderRadius: _config?.getBorderRadius('cardBorderRadius', BorderRadius.circular(12)) ?? BorderRadius.circular(12),
         ),
+        child: Padding(
+          padding: EdgeInsets.all(_getConfig('cardPadding', 16.0)),
+          child: card,
+        ),
+      );
+    }
+    return AnimatedContainer(
+      duration: themeCfg.animationDuration,
+      curve: themeCfg.animationCurve,
+      padding: EdgeInsets.all(_getConfig('cardPadding', 16.0)),
+      decoration: BoxDecoration(
+        color: themeCfg.enableBlur
+            ? (themeCfg.backgroundColor ?? theme.surfaceColor).withValues(alpha: 0.85)
+            : themeCfg.backgroundColor ?? theme.surfaceColor,
+        borderRadius: BorderRadius.circular(themeCfg.borderRadius),
+        gradient: themeCfg.enableGradients
+            ? LinearGradient(
+                colors: [
+                  (themeCfg.backgroundColor ?? theme.surfaceColor).withValues(alpha: 0.95),
+                  (themeCfg.backgroundColor ?? theme.surfaceColor).withValues(alpha: 0.75),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              )
+            : null,
+        boxShadow: themeCfg.enableShadows
+            ? [
+                BoxShadow(
+                  color: (themeCfg.shadowColor ?? Colors.black).withValues(alpha: 0.15),
+                  blurRadius: 32.0,
+                  offset: const Offset(0, 16),
+                ),
+              ]
+            : null,
       ),
+      child: card,
     );
   }
 

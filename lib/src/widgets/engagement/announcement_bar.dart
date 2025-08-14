@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'dart:ui';
 import '../../models/announcement_model.dart';
 import '../../theme/ecommerce_theme.dart';
 import '../../config/flexible_widget_config.dart';
+import '../../theme/shopkit_theme_styles.dart';
 
 /// Position options for announcement bar
 enum AnnouncementPosition {
@@ -27,6 +29,7 @@ class AnnouncementBar extends StatefulWidget {
     this.autoHide = false,
     this.autoHideDuration,
   this.config,
+  this.themeStyle,
   });
 
   /// Announcement data to display
@@ -70,6 +73,11 @@ class AnnouncementBar extends StatefulWidget {
 
   /// Optional flexible config (overrides individual params when provided)
   final FlexibleWidgetConfig? config;
+
+  /// Built-in theme style support - pass theme name as string. When provided
+  /// the new ShopKitThemeConfig system styles the bar and overrides legacy
+  /// color fallback logic (unless explicit colors are passed in props).
+  final String? themeStyle;
 
   @override
   State<AnnouncementBar> createState() => _AnnouncementBarState();
@@ -144,7 +152,7 @@ class _AnnouncementBarState extends State<AnnouncementBar>
   }
 
   Color _getBackgroundColor(ECommerceTheme theme) {
-    final cfg = widget.config;
+  final cfg = widget.config; // Access legacy flexible widget config if provided.
     if (widget.backgroundColor != null) return widget.backgroundColor!;
     if (cfg?.has('backgroundColor') == true) {
       final dynamic val = cfg!.get<dynamic>('backgroundColor');
@@ -172,7 +180,7 @@ class _AnnouncementBarState extends State<AnnouncementBar>
   }
 
   Color _getTextColor(ECommerceTheme theme) {
-    final cfg = widget.config;
+  final cfg = widget.config;
     if (widget.textColor != null) return widget.textColor!;
     if (cfg?.has('textColor') == true) {
       final dynamic val = cfg!.get<dynamic>('textColor');
@@ -186,10 +194,19 @@ class _AnnouncementBarState extends State<AnnouncementBar>
 
   @override
   Widget build(BuildContext context) {
-    final theme = context.ecommerceTheme;
-    final cfg = widget.config;
-    final backgroundColor = _getBackgroundColor(theme);
-    final textColor = _getTextColor(theme);
+    final legacyTheme = context.ecommerceTheme;
+    final useNewTheme = widget.themeStyle != null;
+    ShopKitThemeConfig? themeCfg;
+    if (useNewTheme) {
+      final style = ShopKitThemeStyleExtension.fromString(widget.themeStyle!);
+      themeCfg = ShopKitThemeConfig.forStyle(style, context);
+    }
+  final backgroundColor = useNewTheme
+    ? (widget.backgroundColor ?? (themeCfg!.primaryColor ?? Theme.of(context).colorScheme.primary))
+    : _getBackgroundColor(legacyTheme);
+  final textColor = useNewTheme
+    ? (widget.textColor ?? (themeCfg!.onPrimaryColor ?? Colors.white))
+    : _getTextColor(legacyTheme);
     final showClose =
         widget.showCloseButton ?? widget.announcement.isDismissible;
 
@@ -197,35 +214,62 @@ class _AnnouncementBarState extends State<AnnouncementBar>
       return const SizedBox.shrink();
     }
 
-  return SlideTransition(
+  final bar = SlideTransition(
       position: _slideAnimation,
       child: Container(
         width: double.infinity,
         constraints: BoxConstraints(
-      minHeight: widget.height ??
-        (cfg?.has('minHeight') == true
-          ? (cfg?.get<double>('minHeight', 48) ?? 48)
-          : 48),
+      minHeight: widget.height ?? 48,
         ),
         decoration: BoxDecoration(
-          color: backgroundColor,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
-              blurRadius: 4,
-              offset: widget.position == AnnouncementPosition.top
-                  ? const Offset(0, 2)
-                  : const Offset(0, -2),
-            ),
-          ],
+      color: useNewTheme && (themeCfg?.enableBlur ?? false)
+              ? backgroundColor.withValues(alpha: 0.85)
+              : backgroundColor,
+      gradient: useNewTheme && (themeCfg?.enableGradients ?? false)
+              ? LinearGradient(
+                  colors: [
+                    backgroundColor.withValues(alpha: 0.95),
+                    backgroundColor.withValues(alpha: 0.75),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                )
+              : null,
+      borderRadius: useNewTheme
+        ? BorderRadius.circular((themeCfg?.borderRadius ?? 16) * 0.6)
+              : null,
+      border: useNewTheme && (themeCfg?.enableGradients ?? false)
+              ? Border.all(
+          color: (themeCfg?.primaryColor ?? backgroundColor)
+                      .withValues(alpha: 0.25),
+                )
+              : null,
+      boxShadow: useNewTheme && (themeCfg?.enableShadows ?? false)
+              ? [
+                  BoxShadow(
+          color: (themeCfg?.shadowColor ?? Colors.black)
+                        .withValues(alpha: 0.15),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
+                  ),
+                ]
+              : [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.1),
+                    blurRadius: 4,
+                    offset: widget.position == AnnouncementPosition.top
+                        ? const Offset(0, 2)
+                        : const Offset(0, -2),
+                  ),
+                ],
         ),
         child: SafeArea(
           top: widget.position == AnnouncementPosition.top,
           bottom: widget.position == AnnouncementPosition.bottom,
           child: Padding(
             padding: EdgeInsets.symmetric(
-              horizontal: theme.spacing,
-              vertical: theme.spacing * 0.5,
+        horizontal: useNewTheme ? 16 : legacyTheme.spacing,
+        vertical: useNewTheme ? 10 : legacyTheme.spacing * 0.5,
             ),
             child: Row(
               children: [
@@ -291,25 +335,33 @@ class _AnnouncementBarState extends State<AnnouncementBar>
                 // Action Button
                 if (widget.announcement.hasAction) ...[
                   const SizedBox(width: 12),
-                  TextButton(
-                    onPressed: widget.onActionTap,
-                    style: TextButton.styleFrom(
-                      foregroundColor: widget.actionColor ?? textColor,
-                      backgroundColor: textColor.withValues(alpha: 0.2),
-                      minimumSize: const Size(60, 32),
+                  GestureDetector(
+                    onTap: widget.onActionTap,
+            child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 220),
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
+                        horizontal: 14,
+                        vertical: 8,
                       ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+                      decoration: BoxDecoration(
+                        color: (widget.actionColor ?? textColor)
+                            .withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(
+                useNewTheme ? (themeCfg?.borderRadius ?? 16) * 0.4 : 16),
+                        border: useNewTheme
+                            ? Border.all(
+                  color: (themeCfg?.primaryColor ?? textColor)
+                                    .withValues(alpha: 0.3),
+                              )
+                            : null,
                       ),
-                    ),
-                    child: Text(
-                      widget.announcement.actionText!,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
+                      child: Text(
+                        widget.announcement.actionText!,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: widget.actionColor ?? textColor,
+                        ),
                       ),
                     ),
                   ),
@@ -339,6 +391,18 @@ class _AnnouncementBarState extends State<AnnouncementBar>
         ),
       ),
     );
+
+  if (useNewTheme && (themeCfg?.enableBlur ?? false)) {
+      return ClipRRect(
+        borderRadius:
+      BorderRadius.circular((themeCfg?.borderRadius ?? 16) * 0.6),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+          child: bar,
+        ),
+      );
+    }
+    return bar;
   }
 
   Color? _parseColor(String colorString) {

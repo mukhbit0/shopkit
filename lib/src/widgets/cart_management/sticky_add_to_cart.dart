@@ -3,6 +3,7 @@ import '../../models/product_model.dart';
 import '../../models/cart_model.dart';
 import '../../models/variant_model.dart';
 import '../../config/flexible_widget_config.dart';
+import '../../theme/shopkit_theme_styles.dart';
 
 /// A sticky add-to-cart widget that appears at the bottom of the screen
 class StickyAddToCart extends StatefulWidget {
@@ -25,6 +26,7 @@ class StickyAddToCart extends StatefulWidget {
     this.margin,
     this.animationDuration = const Duration(milliseconds: 300),
   this.flexibleConfig,
+  this.themeStyle,
   });
 
   /// Product to add to cart
@@ -81,6 +83,9 @@ class StickyAddToCart extends StatefulWidget {
   /// showProductInfo, showQuantitySelector, showVariantSelector, isVisible,
   /// buttonLabel, outOfStockLabel, quantityStep (int), enableAnimations (bool)
   final FlexibleWidgetConfig? flexibleConfig;
+
+  /// New theming system style name (material3, glassmorphism, etc.)
+  final String? themeStyle;
 
   @override
   State<StickyAddToCart> createState() => _StickyAddToCartState();
@@ -150,6 +155,13 @@ class _StickyAddToCartState extends State<StickyAddToCart>
     final colorScheme = theme.colorScheme;
     final mediaQuery = MediaQuery.of(context);
 
+    // New theming system (initial integration). If themeStyle provided, compute config.
+    ShopKitThemeConfig? themeCfg;
+    if (widget.themeStyle != null) {
+      final style = ShopKitThemeStyleExtension.fromString(widget.themeStyle!);
+      themeCfg = ShopKitThemeConfig.forStyle(style, context);
+    }
+
     // Config resolution helper
     T cfg<T>(String key, T fallback) {
       final fc = widget.flexibleConfig;
@@ -167,7 +179,7 @@ class _StickyAddToCartState extends State<StickyAddToCart>
     final isVisible = cfg<bool>('isVisible', widget.isVisible);
     final padding = widget.padding ?? cfg<EdgeInsets>('padding', const EdgeInsets.all(16));
     final margin = widget.margin ?? cfg<EdgeInsets>('margin', EdgeInsets.only(bottom: mediaQuery.viewPadding.bottom));
-    final bgColor = widget.backgroundColor ?? cfg<Color>('backgroundColor', colorScheme.surface);
+  final bgColor = themeCfg?.primaryColor ?? widget.backgroundColor ?? cfg<Color>('backgroundColor', colorScheme.surface);
     final borderRadius = widget.borderRadius ?? cfg<BorderRadius>('borderRadius', const BorderRadius.vertical(top: Radius.circular(16)));
     final showProductInfo = cfg<bool>('showProductInfo', widget.showProductInfo);
     final showQuantitySelector = cfg<bool>('showQuantitySelector', widget.showQuantitySelector);
@@ -192,7 +204,17 @@ class _StickyAddToCartState extends State<StickyAddToCart>
           child: Container(
             padding: padding,
             decoration: BoxDecoration(
-              color: bgColor,
+              color: themeCfg?.enableBlur == true ? bgColor.withValues(alpha: 0.85) : bgColor,
+              gradient: themeCfg?.enableGradients == true
+                  ? LinearGradient(
+                      colors: [
+                        bgColor.withValues(alpha: 0.95),
+                        bgColor.withValues(alpha: 0.75),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    )
+                  : null,
               borderRadius: borderRadius,
             ),
             child: SafeArea(

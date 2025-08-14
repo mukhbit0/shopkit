@@ -352,9 +352,17 @@ class AnnouncementBarNewState extends State<AnnouncementBarNew>
       return widget.customBuilder!(context, _visibleAnnouncements, this);
     }
 
+    final useNewTheme = widget.themeStyle != null;
+    ShopKitThemeConfig? cfg;
+    if (useNewTheme) {
+      final style = ShopKitThemeStyleExtension.fromString(widget.themeStyle!);
+      cfg = ShopKitThemeConfig.forStyle(style, context);
+    }
     final theme = ShopKitThemeProvider.of(context);
 
-    Widget content = _buildAnnouncementBar(context, theme);
+    Widget content = useNewTheme
+        ? _buildThemedAnnouncementBar(context, cfg!)
+        : _buildAnnouncementBar(context, theme);
 
     if (widget.enableAnimations) {
       content = SlideTransition(
@@ -381,6 +389,191 @@ class AnnouncementBarNewState extends State<AnnouncementBarNew>
         return _buildOutlinedBar(context, theme);
       case AnnouncementBarStyle.banner:
         return _buildBannerBar(context, theme);
+    }
+  }
+
+  Widget _buildThemedAnnouncementBar(BuildContext context, ShopKitThemeConfig cfg) {
+    switch (widget.style) {
+      case AnnouncementBarStyle.minimal:
+        return _buildThemedMinimal(context, cfg);
+      case AnnouncementBarStyle.card:
+        return _buildThemedCard(context, cfg);
+      case AnnouncementBarStyle.gradient:
+        return _buildThemedGradient(context, cfg);
+      case AnnouncementBarStyle.outlined:
+        return _buildThemedOutlined(context, cfg);
+      case AnnouncementBarStyle.banner:
+        return _buildThemedBanner(context, cfg);
+    }
+  }
+
+  Color _onColor(ShopKitThemeConfig cfg) => cfg.onPrimaryColor ?? Colors.white;
+  Color _primary(ShopKitThemeConfig cfg, BuildContext c) => cfg.primaryColor ?? Theme.of(c).colorScheme.primary;
+
+  Widget _buildThemedBanner(BuildContext context, ShopKitThemeConfig cfg) {
+    return _wrapPositioned(
+      context,
+      Container(
+        width: double.infinity,
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+        decoration: BoxDecoration(
+          color: _primary(cfg, context),
+          gradient: cfg.enableGradients ? LinearGradient(
+            colors: [
+              _primary(cfg, context),
+              _primary(cfg, context).withValues(alpha: 0.8),
+            ],
+          ) : null,
+          boxShadow: cfg.enableShadows ? [
+            BoxShadow(
+              color: (_primary(cfg, context)).withValues(alpha: 0.4),
+              blurRadius: 12,
+              offset: const Offset(0,4),
+            ),
+          ] : null,
+          borderRadius: BorderRadius.circular(cfg.borderRadius),
+        ),
+        child: _buildThemedContentRow(context, cfg),
+      ),
+    );
+  }
+
+  Widget _buildThemedCard(BuildContext context, ShopKitThemeConfig cfg) {
+    return _wrapPositioned(
+      context,
+      Container(
+        width: double.infinity,
+        margin: EdgeInsets.all(12.w),
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+        decoration: BoxDecoration(
+          color: cfg.backgroundColor ?? Theme.of(context).cardColor,
+          borderRadius: BorderRadius.circular(cfg.borderRadius),
+          boxShadow: cfg.enableShadows ? [
+            BoxShadow(
+              color: (cfg.shadowColor ?? Colors.black).withValues(alpha: 0.08),
+              blurRadius: 18,
+              offset: const Offset(0,8),
+            ),
+          ] : null,
+        ),
+        child: _buildThemedContentRow(context, cfg),
+      ),
+    );
+  }
+
+  Widget _buildThemedGradient(BuildContext context, ShopKitThemeConfig cfg) {
+    return _wrapPositioned(
+      context,
+      Container(
+        width: double.infinity,
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              _primary(cfg, context),
+              _primary(cfg, context).withValues(alpha: 0.6),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(cfg.borderRadius),
+        ),
+        child: _buildThemedContentRow(context, cfg),
+      ),
+    );
+  }
+
+  Widget _buildThemedMinimal(BuildContext context, ShopKitThemeConfig cfg) {
+    return _wrapPositioned(
+      context,
+      Container(
+        width: double.infinity,
+        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+        color: (cfg.backgroundColor ?? Colors.transparent),
+        child: _buildThemedContentRow(context, cfg),
+      ),
+    );
+  }
+
+  Widget _buildThemedOutlined(BuildContext context, ShopKitThemeConfig cfg) {
+    return _wrapPositioned(
+      context,
+      Container(
+        width: double.infinity,
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+        decoration: BoxDecoration(
+          color: (cfg.backgroundColor ?? Colors.transparent),
+          borderRadius: BorderRadius.circular(cfg.borderRadius),
+          border: Border.all(color: _primary(cfg, context)),
+        ),
+        child: _buildThemedContentRow(context, cfg),
+      ),
+    );
+  }
+
+  Widget _buildThemedContentRow(BuildContext context, ShopKitThemeConfig cfg) {
+    final announcement = _visibleAnnouncements[_currentIndex];
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Expanded(
+          child: _buildThemedAnnouncementContent(context, cfg, announcement, _currentIndex),
+        ),
+        if (widget.enableActions && announcement.actionText != null && announcement.actionUrl != null)
+          Padding(
+            padding: EdgeInsets.only(left: 8.w),
+            child: OutlinedButton(
+              style: OutlinedButton.styleFrom(
+                foregroundColor: _onColor(cfg),
+                side: BorderSide(color: _onColor(cfg).withValues(alpha: 0.5)),
+              ),
+              onPressed: () => widget.onActionTap?.call(announcement, announcement.actionUrl!),
+              child: Text(announcement.actionText!, style: TextStyle(fontSize: 12.sp)),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildThemedAnnouncementContent(BuildContext context, ShopKitThemeConfig cfg, AnnouncementModel announcement, int index) {
+    final textColor = _onColor(cfg);
+    return GestureDetector(
+      onTap: () => widget.onAnnouncementTap?.call(announcement, index),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            announcement.title,
+            style: TextStyle(
+              color: textColor,
+              fontSize: 14.sp,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          if (announcement.message.isNotEmpty)
+            Padding(
+              padding: EdgeInsets.only(top: 4.h),
+              child: Text(
+                announcement.message,
+                style: TextStyle(
+                  color: textColor.withValues(alpha: 0.85),
+                  fontSize: 12.sp,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  // Helper to position bar based on widget.position
+  Widget _wrapPositioned(BuildContext context, Widget child) {
+    switch (widget.position) {
+      case AnnouncementBarPosition.top:
+        return child;
+      case AnnouncementBarPosition.bottom:
+        return Align(alignment: Alignment.bottomCenter, child: child);
     }
   }
 

@@ -5,6 +5,7 @@ A comprehensive demonstration of all ShopKit widgets across multiple themes and 
 ## Features
 
 ### 🎨 Multi-Theme Support
+
 - **Material 3** - Google's latest design system with dynamic colors
 - **Neumorphism** - Soft UI with subtle shadows and depth
 - **Glassmorphism** - Modern transparent glass effects
@@ -12,23 +13,27 @@ A comprehensive demonstration of all ShopKit widgets across multiple themes and 
 ### 📱 Widget Categories
 
 #### Product Discovery
+
 - **ProductCard** - Multiple layouts (default, elevated, outlined)
 - **ProductGrid** - Responsive grid layouts (2-column, 3-column)
 - **ProductSearchBar** - Various search styles (basic, filters, pill)
 - **AddToCartButton** - Different states (default, icon, loading)
 
 #### Cart Management
+
 - **CartBubble** - Animated cart icon with item count
 - **CartSummary** - Complete cart overview
 - **Cart Controls** - Add/remove items functionality
 
 #### User Engagement
+
 - **WishlistButton** - Interactive wishlist functionality
 - **Rating System** - 5-star rating component
 - **Trust Badges** - Security and guarantee badges
 - **Customer Reviews** - Review display components
 
 ### 🔄 Theme Switching
+
 - Light/Dark mode support
 - Real-time theme switching
 - Persistent theme preferences
@@ -54,6 +59,7 @@ lib/
 ## Getting Started
 
 1. **Run the app:**
+
    ```bash
    flutter run lib/main_clean.dart
    ```
@@ -72,18 +78,21 @@ lib/
 ## Design Patterns
 
 ### Material 3 Theme
+
 - Dynamic color generation from seed colors
 - Rounded corners with consistent radius
 - Elevated surfaces with proper shadows
 - Modern button styles and animations
 
 ### Neumorphic Theme
+
 - Soft shadows with light/dark contrast
 - Subtle depth and 3D effects
 - Monochromatic color palettes
 - Smooth, organic shapes
 
 ### Glassmorphic Theme
+
 - Semi-transparent backgrounds
 - Blur effects and backdrop filters
 - Glowing borders and highlights
@@ -94,6 +103,7 @@ lib/
 Each screen showcases widgets in multiple variations:
 
 ### Product Discovery Screen
+
 ```dart
 // Different card styles
 ProductCard(style: 'default')
@@ -111,6 +121,7 @@ ProductSearchBar(style: 'pill')
 ```
 
 ### Cart Management Screen
+
 ```dart
 // Cart bubble with animations
 CartBubble(itemCount: count, animated: true)
@@ -121,6 +132,7 @@ CartBubble(theme: 'glassmorphic')
 ```
 
 ### User Engagement Screen
+
 ```dart
 // Interactive components
 WishlistButton(onToggle: callback)
@@ -134,6 +146,7 @@ ReviewWidget(reviews: data)
 The showcase demonstrates various customization approaches:
 
 ### Theme-Based Customization
+
 ```dart
 // Material 3 style
 FlexibleWidgetConfig(
@@ -158,6 +171,7 @@ FlexibleWidgetConfig(
 ```
 
 ### Widget-Specific Customization
+
 ```dart
 // Product card variations
 ProductCard(

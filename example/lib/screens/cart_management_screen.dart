@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:shopkit/shopkit.dart';
-import '../themes/theme_animated_widgets.dart';
 import 'dart:ui';
 
 class CartManagementScreen extends StatefulWidget {

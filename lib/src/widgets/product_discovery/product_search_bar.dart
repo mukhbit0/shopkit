@@ -395,7 +395,14 @@ class ProductSearchBarAdvancedState extends State<ProductSearchBarAdvanced>
       return widget.customBuilder!(context, this);
     }
 
-    final theme = ShopKitThemeProvider.of(context);
+    final useNewTheme = widget.themeStyle != null;
+    ShopKitThemeConfig? themeConfig;
+    if (useNewTheme) {
+      final style = ShopKitThemeStyleExtension.fromString(widget.themeStyle!);
+      themeConfig = ShopKitThemeConfig.forStyle(style, context);
+    }
+
+    final legacyTheme = ShopKitThemeProvider.of(context);
 
     return FadeTransition(
       opacity: _fadeAnimation,
@@ -403,11 +410,125 @@ class ProductSearchBarAdvancedState extends State<ProductSearchBarAdvanced>
         position: _slideAnimation,
         child: Column(
           children: [
-            _buildSearchBar(context, theme),
+            if (useNewTheme)
+              _buildThemedSearchBar(context, themeConfig!)
+            else
+              _buildSearchBar(context, legacyTheme),
             if (_showSuggestions)
-              _buildSuggestionsList(context, theme),
+              (useNewTheme
+                ? _buildThemedSuggestionsList(context, themeConfig!)
+                : _buildSuggestionsList(context, legacyTheme)),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildThemedSearchBar(BuildContext context, ShopKitThemeConfig cfg) {
+    final bg = cfg.backgroundColor ?? Theme.of(context).colorScheme.surface;
+    final radius = BorderRadius.circular(cfg.borderRadius);
+    return Container(
+      height: _getConfig('searchBarHeight', 56.0.h),
+      decoration: BoxDecoration(
+        color: bg.withValues(alpha: cfg.enableBlur ? 0.6 : 1.0),
+        borderRadius: radius,
+        border: cfg.enableGradients ? Border.all(color: (cfg.primaryColor ?? Colors.blue).withValues(alpha: 0.3)) : null,
+        boxShadow: cfg.enableShadows ? [
+          BoxShadow(
+            color: (cfg.shadowColor ?? Colors.black).withValues(alpha: 0.08),
+            blurRadius: 12,
+            offset: const Offset(0,4),
+          ),
+        ] : null,
+      ),
+      padding: EdgeInsets.symmetric(horizontal: 12.w),
+      child: Row(
+        children: [
+          Icon(Icons.search, color: cfg.onPrimaryColor ?? Colors.black54, size: 22.sp),
+          SizedBox(width: 8.w),
+          Expanded(
+            child: TextField(
+              controller: _controller,
+              focusNode: _focusNode,
+              onSubmitted: _handleSearchSubmit,
+              decoration: InputDecoration(
+                hintText: _getConfig('searchFieldHint', 'Search products'),
+                border: InputBorder.none,
+                isDense: true,
+              ),
+            ),
+          ),
+          if (_currentQuery.isNotEmpty)
+            GestureDetector(
+              onTap: _clearQuery,
+              child: Icon(Icons.clear, size: 20.sp, color: (cfg.onPrimaryColor ?? Colors.black54).withValues(alpha: 0.7)),
+            ),
+        ],
+      ),
+    );
+  }
+
+  void _handleSearchSubmit(String value) {
+    if (value.isNotEmpty) {
+      widget.onSearch?.call(value);
+      if (widget.enableHistory && !_filteredHistory.contains(value)) {
+        setState(() {
+          _filteredHistory.insert(0, value);
+        });
+      }
+    }
+  }
+
+  void _clearQuery() {
+    setState(() {
+      _controller.clear();
+      _currentQuery = '';
+      _filteredSuggestions.clear();
+      _showSuggestions = false;
+    });
+  }
+
+  Widget _buildThemedSuggestionsList(BuildContext context, ShopKitThemeConfig cfg) {
+    if (!_showSuggestions) return const SizedBox.shrink();
+    final maxHeight = _getConfig('suggestionsMaxHeight', 260.0.h);
+    final items = [
+      ..._filteredSuggestions.take(widget.maxSuggestions),
+      if (widget.enableHistory) ..._filteredHistory.take(widget.maxHistory),
+    ];
+    if (items.isEmpty) return const SizedBox.shrink();
+    return Container(
+      constraints: BoxConstraints(maxHeight: maxHeight),
+      margin: EdgeInsets.only(top: 8.h),
+      decoration: BoxDecoration(
+        color: (cfg.backgroundColor ?? Colors.white).withValues(alpha: cfg.enableBlur ? 0.9 : 1.0),
+        borderRadius: BorderRadius.circular(cfg.borderRadius * 0.7),
+        border: Border.all(color: (cfg.primaryColor ?? Colors.blue).withValues(alpha: 0.15)),
+      ),
+      child: ListView.builder(
+        shrinkWrap: true,
+        padding: EdgeInsets.symmetric(vertical: 4.h),
+        itemCount: items.length,
+        itemBuilder: (context, index) {
+          final suggestion = items[index];
+          return InkWell(
+            onTap: () => _handleSuggestionTap(suggestion),
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+              child: Row(
+                children: [
+                  Icon(Icons.search, size: 16.sp, color: (cfg.onPrimaryColor ?? Colors.black54).withValues(alpha: 0.6)),
+                  SizedBox(width: 8.w),
+                  Expanded(
+                    child: Text(
+                      suggestion,
+                      style: TextStyle(fontSize: 14.sp),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }

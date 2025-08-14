@@ -50,7 +50,8 @@ void main() {
         TestUtils.createTestApp(
           child: ProductCard(
             product: product,
-            onAddToCart: (item) =>  item,
+            // ProductCard still uses CartItemModel callback
+            onAddToCart: (_) {},
           ),
         ),
       );
@@ -68,7 +69,7 @@ void main() {
         TestUtils.createTestApp(
           child: AddToCartButton(
             product: product,
-            onAddToCart: (item) {},
+            onAddToCart: (p, q) {},
           ),
         ),
       );
@@ -84,7 +85,7 @@ void main() {
           child: AddToCartButton(
             product: product,
             isLoading: true,
-            onAddToCart: (item) {},
+            onAddToCart: (p, q) {},
           ),
         ),
       );
@@ -101,7 +102,7 @@ void main() {
           child: AddToCartButton(
             product: product,
             isLoading: false,
-            onAddToCart: (item) => pressed = true,
+            onAddToCart: (p, q) => pressed = true,
           ),
         ),
       );
@@ -119,7 +120,7 @@ void main() {
           child: AddToCartButton(
             product: product,
             text: 'Buy Now',
-            onAddToCart: (item) {},
+            onAddToCart: (p, q) {},
           ),
         ),
       );

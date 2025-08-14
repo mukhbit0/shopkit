@@ -160,7 +160,7 @@ export 'src/widgets/product_discovery/product_tabs.dart';
 export 'src/widgets/product_discovery/review_widget.dart';
 
 // Export widgets - Cart Management
-export 'src/widgets/cart_management/add_to_cart_button.dart';
+export 'src/widgets/add_to_cart_button.dart';
 export 'src/widgets/cart_management/cart_bubble.dart';
 export 'src/widgets/cart_management/cart_summary.dart';
 export 'src/widgets/cart_management/sticky_add_to_cart.dart';

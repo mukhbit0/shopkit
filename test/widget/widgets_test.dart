@@ -83,7 +83,8 @@ void main() {
         TestUtils.createTestApp(
           child: AddToCartButton(
             product: product,
-            isOutOfStock: true,
+            // Legacy isOutOfStock removed in unified button; simulate disabled state instead
+            isEnabled: false,
           ),
         ),
       );

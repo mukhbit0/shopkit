@@ -237,13 +237,236 @@ class VariantPickerState extends State<VariantPicker>
       return widget.customBuilder!(context, widget.variants, this);
     }
 
-    final theme = ShopKitThemeProvider.of(context);
+    final useNewTheme = widget.themeStyle != null;
+    ShopKitThemeConfig? cfg;
+    if (useNewTheme) {
+      final style = ShopKitThemeStyleExtension.fromString(widget.themeStyle!);
+      cfg = ShopKitThemeConfig.forStyle(style, context);
+    }
+
+    final theme = ShopKitThemeProvider.of(context); // legacy fallback
 
     return FadeTransition(
       opacity: _fadeAnimation,
       child: SlideTransition(
         position: _slideAnimation,
-        child: _buildVariantPicker(context, theme),
+        child: useNewTheme
+          ? _buildThemedVariantPicker(context, cfg!)
+          : _buildVariantPicker(context, theme),
+      ),
+    );
+  }
+
+  Widget _buildThemedVariantPicker(BuildContext context, ShopKitThemeConfig cfg) {
+    if (widget.variants.isEmpty) {
+      return _buildThemedEmptyState(context, cfg);
+    }
+    final bg = cfg.backgroundColor ?? Theme.of(context).colorScheme.surface;
+    return Container(
+      padding: EdgeInsets.all(16.w),
+      decoration: BoxDecoration(
+        color: bg.withValues(alpha: cfg.enableBlur ? 0.9 : 1.0),
+        borderRadius: BorderRadius.circular(cfg.borderRadius),
+        boxShadow: cfg.enableShadows ? [
+          BoxShadow(
+            color: (cfg.shadowColor ?? Colors.black).withValues(alpha: 0.08),
+            blurRadius: 18,
+            offset: const Offset(0,8),
+          ),
+        ] : null,
+        border: cfg.enableGradients ? Border.all(color: (cfg.primaryColor ?? Colors.blue).withValues(alpha: 0.2)) : null,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (_getConfig('showTitle', true))
+            Text(
+              _getConfig('title', 'Select Variant'),
+              style: TextStyle(
+                color: (cfg.onPrimaryColor ?? Colors.black),
+                fontSize: 18.sp,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          if (_getConfig('showTitle', true)) SizedBox(height: 12.h),
+          if (widget.groupByType && _groupedVariants.isNotEmpty)
+            _buildThemedGroupedVariants(context, cfg)
+          else
+            _buildThemedVariantsList(context, cfg),
+          if (_getConfig('showSelectedInfo', true) && _selectedVariants.isNotEmpty)
+            _buildThemedSelectedInfo(context, cfg),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildThemedVariantsList(BuildContext context, ShopKitThemeConfig cfg) {
+    switch (widget.layout) {
+      case VariantPickerLayout.grid:
+        final crossAxisCount = _getConfig('gridCrossAxisCount', 3);
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: widget.variants.length,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
+            mainAxisSpacing: 8.h,
+            crossAxisSpacing: 8.w,
+            childAspectRatio: 1.6,
+          ),
+          itemBuilder: (context, index) => _buildThemedVariantItem(context, cfg, widget.variants[index], index),
+        );
+      case VariantPickerLayout.chips:
+        return Wrap(
+          spacing: 8.w,
+          runSpacing: 8.h,
+          children: [for (int i = 0; i < widget.variants.length; i++) _buildThemedVariantItem(context, cfg, widget.variants[i], i)],
+        );
+      case VariantPickerLayout.list:
+        return Column(
+          children: [for (int i = 0; i < widget.variants.length; i++) Padding(padding: EdgeInsets.only(bottom: 8.h), child: _buildThemedVariantItem(context, cfg, widget.variants[i], i))],
+        );
+      case VariantPickerLayout.dropdown:
+      case VariantPickerLayout.carousel:
+      case VariantPickerLayout.buttons:
+        return Column(
+          children: [for (int i = 0; i < widget.variants.length; i++) Padding(padding: EdgeInsets.only(bottom: 8.h), child: _buildThemedVariantItem(context, cfg, widget.variants[i], i))],
+        );
+    }
+  }
+
+  Widget _buildThemedVariantItem(BuildContext context, ShopKitThemeConfig cfg, VariantModel variant, int index) {
+    final isSelected = _selectedVariants.contains(variant);
+    final selectedColor = (cfg.primaryColor ?? Theme.of(context).colorScheme.primary);
+    return GestureDetector(
+      onTap: () => _handleVariantSelection(variant),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+        decoration: BoxDecoration(
+          color: isSelected ? selectedColor : (cfg.backgroundColor ?? Colors.white).withValues(alpha: 0.6),
+          borderRadius: BorderRadius.circular(cfg.borderRadius * 0.5),
+          border: Border.all(color: isSelected ? selectedColor : selectedColor.withValues(alpha: 0.3)),
+          boxShadow: isSelected && cfg.enableShadows ? [
+            BoxShadow(
+              color: selectedColor.withValues(alpha: 0.4),
+              blurRadius: 12,
+              offset: const Offset(0,4),
+            ),
+          ] : null,
+        ),
+        child: _buildThemedVariantContent(context, cfg, variant, isSelected),
+      ),
+    );
+  }
+
+  Widget _buildThemedVariantContent(BuildContext context, ShopKitThemeConfig cfg, VariantModel variant, bool isSelected) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (widget.showLabels)
+                Text(
+                  variant.name,
+                  style: TextStyle(
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w600,
+                    color: isSelected ? (cfg.onPrimaryColor ?? Colors.white) : Colors.black87,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              if (widget.showPrices && variant.hasAdditionalCost)
+                Padding(
+                  padding: EdgeInsets.only(top: 4.h),
+                  child: Text(
+                    variant.getFormattedAdditionalPrice(_getConfig('currency', 'USD')),
+                    style: TextStyle(
+                      fontSize: 11.sp,
+                      color: isSelected ? (cfg.onPrimaryColor ?? Colors.white).withValues(alpha: 0.85) : Colors.black54,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+    if (widget.showAvailability)
+          Container(
+            width: 10.w,
+            height: 10.w,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+      color: variant.isInStock ? Colors.green : Colors.red,
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildThemedGroupedVariants(BuildContext context, ShopKitThemeConfig cfg) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: _groupedVariants.entries.map((entry) {
+        return Padding(
+          padding: EdgeInsets.only(bottom: 16.h),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(entry.key, style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600)),
+              SizedBox(height: 8.h),
+              Wrap(
+                spacing: 8.w,
+                runSpacing: 8.h,
+                children: [for (int i = 0; i < entry.value.length; i++) _buildThemedVariantItem(context, cfg, entry.value[i], i)],
+              ),
+            ],
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildThemedSelectedInfo(BuildContext context, ShopKitThemeConfig cfg) {
+    final primary = (cfg.primaryColor ?? Theme.of(context).colorScheme.primary);
+    return Container(
+      margin: EdgeInsets.only(top: 12.h),
+      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+      decoration: BoxDecoration(
+        color: primary.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(cfg.borderRadius * 0.5),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.check_circle, size: 18.sp, color: primary),
+          SizedBox(width: 8.w),
+          Expanded(
+            child: Text(
+              _selectedVariants.length == 1
+                ? _selectedVariants.first.name
+                : '${_selectedVariants.length} selected',
+              style: TextStyle(fontSize: 13.sp),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildThemedEmptyState(BuildContext context, ShopKitThemeConfig cfg) {
+    return Container(
+      padding: EdgeInsets.all(24.w),
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(cfg.borderRadius),
+        border: Border.all(color: (cfg.primaryColor ?? Colors.blue).withValues(alpha: 0.2)),
+      ),
+      child: Text(
+        _getConfig('emptyStateText', 'No variants available'),
+        style: TextStyle(fontSize: 14.sp, color: (cfg.onPrimaryColor ?? Colors.black54)),
+        textAlign: TextAlign.center,
       ),
     );
   }

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -310,17 +311,497 @@ class ImageCarouselState extends State<ImageCarousel>
       return widget.customBuilder!(context, widget.images, this);
     }
 
-    final theme = ShopKitThemeProvider.of(context);
+    final useNewTheme = widget.themeStyle != null;
+    ShopKitThemeConfig? cfg;
+    if (useNewTheme) {
+      final style = ShopKitThemeStyleExtension.fromString(widget.themeStyle!);
+      cfg = ShopKitThemeConfig.forStyle(style, context);
+    }
+
+    final legacyTheme = ShopKitThemeProvider.of(context);
 
     if (widget.images.isEmpty) {
-      return _buildEmptyState(context, theme);
+      return useNewTheme ? _buildThemedEmptyState(context, cfg!) : _buildEmptyState(context, legacyTheme);
     }
+
+    final child = useNewTheme
+        ? _buildThemedCarousel(context, cfg!)
+        : _buildCarousel(context, legacyTheme);
 
     return FadeTransition(
       opacity: _fadeAnimation,
-      child: SlideTransition(
-        position: _slideAnimation,
-        child: _buildCarousel(context, theme),
+      child: SlideTransition(position: _slideAnimation, child: child),
+    );
+  }
+
+  // ===================== New Themed Implementation =====================
+  Widget _buildThemedCarousel(BuildContext context, ShopKitThemeConfig cfg) {
+    switch (widget.layout) {
+      case CarouselLayout.stack:
+        return _buildThemedStackLayout(context, cfg);
+      case CarouselLayout.page:
+        return _buildThemedPageLayout(context, cfg);
+      case CarouselLayout.grid:
+        return _buildThemedGridLayout(context, cfg);
+      case CarouselLayout.list:
+        return _buildThemedListLayout(context, cfg);
+    }
+  }
+
+  Widget _buildThemedStackLayout(BuildContext context, ShopKitThemeConfig cfg) {
+    final bg = cfg.backgroundColor ?? Theme.of(context).colorScheme.surface;
+    final showBorder = cfg.enableGradients;
+    return Container(
+      height: widget.height ?? MediaQuery.of(context).size.width * widget.aspectRatio,
+      decoration: BoxDecoration(
+        color: bg.withValues(alpha: cfg.enableBlur ? 0.85 : 1.0),
+        borderRadius: BorderRadius.circular(cfg.borderRadius),
+        boxShadow: cfg.enableShadows ? [
+          BoxShadow(
+            color: (cfg.shadowColor ?? Colors.black).withValues(alpha: 0.12),
+            blurRadius: 24,
+            offset: const Offset(0, 10),
+          ),
+        ] : null,
+        border: showBorder ? Border.all(color: (cfg.primaryColor ?? Colors.blue).withValues(alpha: 0.25)) : null,
+        gradient: cfg.enableGradients ? LinearGradient(
+          colors: [
+            (cfg.primaryColor ?? Colors.blue).withValues(alpha: 0.12),
+            (cfg.primaryColor ?? Colors.blue).withValues(alpha: 0.04),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ) : null,
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(cfg.borderRadius),
+        child: Stack(
+          children: [
+            _buildThemedMainCarousel(context, cfg),
+            if (widget.showThumbnails) _buildThemedThumbnailNavigation(context, cfg),
+            if (widget.showIndicators && !widget.showThumbnails) _buildThemedIndicators(context, cfg),
+            if (widget.showZoomButton) _buildThemedZoomButton(context, cfg),
+            if (_getConfig('showNavigationArrows', true)) _buildThemedNavigationArrows(context, cfg),
+            if (_getConfig('showImageCounter', true)) _buildThemedImageCounter(context, cfg),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildThemedPageLayout(BuildContext context, ShopKitThemeConfig cfg) {
+    return SizedBox(
+      height: widget.height ?? MediaQuery.of(context).size.width * widget.aspectRatio,
+      child: PageView.builder(
+        controller: _pageController,
+        onPageChanged: _onPageChanged,
+        itemCount: widget.images.length,
+        itemBuilder: (context, index) {
+          final image = widget.images[index];
+          final isActive = index == _currentIndex;
+          return _buildThemedImageItem(context, cfg, image, index, isActive);
+        },
+      ),
+    );
+  }
+
+  Widget _buildThemedGridLayout(BuildContext context, ShopKitThemeConfig cfg) {
+    final crossAxisCount = _getConfig('gridCrossAxisCount', 2);
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: crossAxisCount,
+        childAspectRatio: _getConfig('gridAspectRatio', 1.0),
+        crossAxisSpacing: _getConfig('gridCrossAxisSpacing', 8.0),
+        mainAxisSpacing: _getConfig('gridMainAxisSpacing', 8.0),
+      ),
+      itemCount: widget.images.length,
+      itemBuilder: (context, index) {
+        final image = widget.images[index];
+        final isActive = index == _currentIndex;
+        return GestureDetector(
+          onTap: () => _onImageTap(image, index),
+          child: _buildThemedGridItem(context, cfg, image, index, isActive),
+        );
+      },
+    );
+  }
+
+  Widget _buildThemedListLayout(BuildContext context, ShopKitThemeConfig cfg) {
+    return SizedBox(
+      height: widget.height ?? _getConfig('listHeight', 120.0),
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: EdgeInsets.symmetric(horizontal: _getConfig('listPadding', 16.0)),
+        itemCount: widget.images.length,
+        separatorBuilder: (context, index) => SizedBox(width: _getConfig('listSpacing', 12.0)),
+        itemBuilder: (context, index) {
+          final image = widget.images[index];
+            final isActive = index == _currentIndex;
+            return GestureDetector(
+              onTap: () => _onImageTap(image, index),
+              child: _buildThemedListItem(context, cfg, image, index, isActive),
+            );
+        },
+      ),
+    );
+  }
+
+  Widget _buildThemedMainCarousel(BuildContext context, ShopKitThemeConfig cfg) {
+    return PageView.builder(
+      controller: _pageController,
+      onPageChanged: _onPageChanged,
+      itemCount: widget.images.length,
+      itemBuilder: (context, index) {
+        final image = widget.images[index];
+        final isActive = index == _currentIndex;
+        return _buildThemedImageItem(context, cfg, image, index, isActive);
+      },
+    );
+  }
+
+  Widget _buildThemedImageItem(BuildContext context, ShopKitThemeConfig cfg, ImageModel image, int index, bool isActive) {
+    final child = _buildThemedImage(context, cfg, image, index, isActive);
+    return GestureDetector(
+      onTap: () => _onImageTap(image, index),
+      child: AnimatedScale(
+        scale: isActive ? 1.0 : _getConfig('inactiveImageScale', 0.95),
+        duration: Duration(milliseconds: _getConfig('imageScaleAnimationDuration', 200)),
+        child: child,
+      ),
+    );
+  }
+
+  Widget _buildThemedImage(BuildContext context, ShopKitThemeConfig cfg, ImageModel image, int index, bool isActive) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(cfg.borderRadius * 0.6),
+        boxShadow: cfg.enableShadows ? [
+          BoxShadow(
+            color: (cfg.shadowColor ?? Colors.black).withValues(alpha: 0.18),
+            blurRadius: isActive ? 20 : 10,
+            offset: const Offset(0, 6),
+          ),
+        ] : null,
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(cfg.borderRadius * 0.6),
+        child: Image.network(
+          image.url,
+          fit: BoxFit.cover,
+          width: double.infinity,
+          height: double.infinity,
+          loadingBuilder: (context, child, progress) {
+            if (progress == null) return child;
+            return _buildThemedImagePlaceholder(context, cfg, progress);
+          },
+          errorBuilder: (context, error, stack) => _buildThemedImageError(context, cfg, image),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildThemedImagePlaceholder(BuildContext context, ShopKitThemeConfig cfg, ImageChunkEvent? loadingProgress) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: cfg.enableGradients ? LinearGradient(
+          colors: [
+            (cfg.primaryColor ?? Colors.blue).withValues(alpha: 0.15),
+            (cfg.primaryColor ?? Colors.blue).withValues(alpha: 0.05),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ) : null,
+        color: (cfg.backgroundColor ?? Colors.grey.shade200).withValues(alpha: 0.6),
+      ),
+      child: Center(
+        child: SizedBox(
+          width: 28.w,
+          height: 28.w,
+          child: CircularProgressIndicator(
+            strokeWidth: 3,
+            value: loadingProgress?.expectedTotalBytes != null
+              ? loadingProgress!.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+              : null,
+            color: cfg.primaryColor ?? Colors.blue,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildThemedImageError(BuildContext context, ShopKitThemeConfig cfg, ImageModel image) {
+    return Container(
+      color: (cfg.backgroundColor ?? Colors.grey.shade200).withValues(alpha: 0.7),
+      child: Center(
+        child: Icon(Icons.broken_image, color: cfg.primaryColor ?? Colors.redAccent, size: 42.sp),
+      ),
+    );
+  }
+
+  Widget _buildThemedGridItem(BuildContext context, ShopKitThemeConfig cfg, ImageModel image, int index, bool isActive) {
+    return AnimatedContainer(
+      duration: Duration(milliseconds: _getConfig('listItemAnimationDuration', 200)),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(cfg.borderRadius * 0.5),
+        border: isActive ? Border.all(color: (cfg.primaryColor ?? Colors.blue), width: 2) : null,
+        boxShadow: isActive && cfg.enableShadows ? [
+          BoxShadow(
+            color: (cfg.shadowColor ?? Colors.black).withValues(alpha: 0.25),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
+          ),
+        ] : null,
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(cfg.borderRadius * 0.5),
+        child: Image.network(
+          image.url,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stack) => _buildThemedImageError(context, cfg, image),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildThemedListItem(BuildContext context, ShopKitThemeConfig cfg, ImageModel image, int index, bool isActive) {
+    return AnimatedContainer(
+      duration: Duration(milliseconds: _getConfig('listItemAnimationDuration', 200)),
+      width: _getConfig('listItemWidth', 100.0),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(cfg.borderRadius * 0.5),
+        border: isActive ? Border.all(color: (cfg.primaryColor ?? Colors.blue), width: 2) : null,
+        boxShadow: isActive && cfg.enableShadows ? [
+          BoxShadow(
+            color: (cfg.shadowColor ?? Colors.black).withValues(alpha: 0.25),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ] : null,
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(cfg.borderRadius * 0.5),
+        child: Image.network(
+          image.url,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stack) => _buildThemedImageError(context, cfg, image),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildThemedThumbnailNavigation(BuildContext context, ShopKitThemeConfig cfg) {
+    return Positioned(
+      bottom: 0,
+      left: 0,
+      right: 0,
+      child: ClipRRect(
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(cfg.borderRadius)),
+        child: BackdropFilter(
+          filter: cfg.enableBlur ? ImageFilter.blur(sigmaX: 10, sigmaY: 10) : ImageFilter.blur(sigmaX: 0, sigmaY: 0),
+          child: Container(
+            height: _getConfig('thumbnailNavigationHeight', 80.0),
+            padding: EdgeInsets.all(_getConfig('thumbnailNavigationPadding', 8.0)),
+            decoration: BoxDecoration(
+              color: (cfg.backgroundColor ?? Colors.black).withValues(alpha: 0.55),
+            ),
+            child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          itemCount: widget.images.length,
+          separatorBuilder: (context, index) => SizedBox(width: _getConfig('thumbnailSpacing', 8.0)),
+          itemBuilder: (context, index) {
+            final image = widget.images[index];
+            final isActive = index == _currentIndex;
+            return GestureDetector(
+              onTap: () => _onThumbnailTap(index),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                width: _getConfig('thumbnailWidth', 60.0),
+                height: _getConfig('thumbnailHeight', 60.0),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(cfg.borderRadius * 0.4),
+                  border: Border.all(
+                    color: isActive ? (cfg.primaryColor ?? Colors.blue) : Colors.transparent,
+                    width: isActive ? 2 : 0,
+                  ),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(cfg.borderRadius * 0.4),
+                  child: Stack(
+                    children: [
+                      Image.network(
+                        image.url,
+                        fit: BoxFit.cover,
+                        width: double.infinity,
+                        height: double.infinity,
+                      ),
+                      if (!isActive) Container(color: Colors.black.withValues(alpha: 0.4)),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildThemedIndicators(BuildContext context, ShopKitThemeConfig cfg) {
+    if (widget.images.length <= 1) return const SizedBox.shrink();
+    return Positioned(
+      bottom: 12,
+      left: 0,
+      right: 0,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: List.generate(widget.images.length, (index) {
+          final isActive = index == _currentIndex;
+          return AnimatedContainer(
+            duration: const Duration(milliseconds: 250),
+            margin: EdgeInsets.symmetric(horizontal: 4.w),
+            width: isActive ? 22.w : 8.w,
+            height: 8.h,
+            decoration: BoxDecoration(
+              color: isActive
+                  ? (cfg.primaryColor ?? Colors.blue)
+                  : (cfg.primaryColor ?? Colors.blue).withValues(alpha: 0.35),
+              borderRadius: BorderRadius.circular(40),
+            ),
+          );
+        }),
+      ),
+    );
+  }
+
+  Widget _buildThemedZoomButton(BuildContext context, ShopKitThemeConfig cfg) {
+    return Positioned(
+      top: 12,
+      right: 12,
+      child: GestureDetector(
+        onTap: _toggleZoom,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: EdgeInsets.all(10.w),
+          decoration: BoxDecoration(
+            color: (cfg.primaryColor ?? Colors.blue).withValues(alpha: 0.85),
+            shape: BoxShape.circle,
+            boxShadow: cfg.enableShadows ? [
+              BoxShadow(
+                color: (cfg.primaryColor ?? Colors.blue).withValues(alpha: 0.5),
+                blurRadius: 12,
+                offset: const Offset(0, 6),
+              )
+            ] : null,
+          ),
+          child: Icon(_isZoomed ? Icons.zoom_out : Icons.zoom_in, size: 18.sp, color: cfg.onPrimaryColor ?? Colors.white),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildThemedNavigationArrows(BuildContext context, ShopKitThemeConfig cfg) {
+    if (widget.images.length <= 1) return const SizedBox.shrink();
+    return Positioned.fill(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          _buildThemedNavArrow(context, cfg, Icons.arrow_back_ios, _previousImage),
+          _buildThemedNavArrow(context, cfg, Icons.arrow_forward_ios, _nextImage),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildThemedNavArrow(BuildContext context, ShopKitThemeConfig cfg, IconData icon, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: EdgeInsets.all(12.w),
+        padding: EdgeInsets.all(8.w),
+        decoration: BoxDecoration(
+          color: (cfg.primaryColor ?? Colors.blue).withValues(alpha: 0.65),
+          shape: BoxShape.circle,
+          boxShadow: cfg.enableShadows ? [
+            BoxShadow(
+              color: (cfg.primaryColor ?? Colors.blue).withValues(alpha: 0.4),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ] : null,
+        ),
+        child: Icon(icon, size: 18.sp, color: cfg.onPrimaryColor ?? Colors.white),
+      ),
+    );
+  }
+
+  Widget _buildThemedImageCounter(BuildContext context, ShopKitThemeConfig cfg) {
+    return Positioned(
+      top: 12,
+      left: 12,
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+        decoration: BoxDecoration(
+          color: (cfg.primaryColor ?? Colors.black).withValues(alpha: 0.65),
+          borderRadius: BorderRadius.circular(40),
+        ),
+        child: Text(
+          '${_currentIndex + 1} / ${widget.images.length}',
+          style: TextStyle(
+            color: cfg.onPrimaryColor ?? Colors.white,
+            fontSize: 12.sp,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.5,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildThemedEmptyState(BuildContext context, ShopKitThemeConfig cfg) {
+    final bg = cfg.backgroundColor ?? Theme.of(context).colorScheme.surface;
+    return Container(
+      height: widget.height ?? MediaQuery.of(context).size.width * widget.aspectRatio,
+      decoration: BoxDecoration(
+        color: bg.withValues(alpha: cfg.enableBlur ? 0.9 : 1.0),
+        borderRadius: BorderRadius.circular(cfg.borderRadius),
+        border: cfg.enableGradients ? Border.all(color: (cfg.primaryColor ?? Colors.blue).withValues(alpha: 0.2)) : null,
+        boxShadow: cfg.enableShadows ? [
+          BoxShadow(
+            color: (cfg.shadowColor ?? Colors.black).withValues(alpha: 0.08),
+            blurRadius: 18,
+            offset: const Offset(0,8),
+          ),
+        ] : null,
+      ),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.image_outlined, size: 48.sp, color: (cfg.primaryColor ?? Colors.blue).withValues(alpha: 0.7)),
+            SizedBox(height: 12.h),
+            Text(
+              _getConfig('emptyStateTitle', 'No Images'),
+              style: TextStyle(
+                color: cfg.onPrimaryColor ?? Colors.black87,
+                fontSize: 16.sp,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            SizedBox(height: 6.h),
+            Text(
+              _getConfig('emptyStateSubtitle', 'No images available to display'),
+              style: TextStyle(
+                color: (cfg.onPrimaryColor ?? Colors.black87).withValues(alpha: 0.7),
+                fontSize: 12.sp,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       ),
     );
   }

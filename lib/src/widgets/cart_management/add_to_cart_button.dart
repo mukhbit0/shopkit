@@ -164,6 +164,7 @@ class FlexibleAddToCartButtonConfig {
 }
 
 /// An animated button for adding products to cart
+@Deprecated('Use AddToCartButton (unified theming-aware version) from package:shopkit/shopkit.dart. This legacy implementation will be removed in a future major release.')
 class AddToCartButton extends StatefulWidget {
   const AddToCartButton({
     super.key,

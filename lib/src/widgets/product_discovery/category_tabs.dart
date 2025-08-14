@@ -188,15 +188,106 @@ class CategoryTabsState extends State<CategoryTabs>
       return widget.customBuilder!(context, widget.categories, this);
     }
 
-    final theme = ShopKitTheme.light();
+    // Determine theming path: if themeStyle provided, use new system, else fallback
+    final useNewTheme = widget.themeStyle != null;
+    ShopKitThemeConfig? themeConfig;
+    if (useNewTheme) {
+      final style = ShopKitThemeStyleExtension.fromString(widget.themeStyle!);
+      themeConfig = ShopKitThemeConfig.forStyle(style, context);
+    }
 
-    return FadeTransition(
+    final theme = ShopKitTheme.light(); // legacy fallback
+
+    final content = FadeTransition(
       opacity: _fadeAnimation,
       child: SlideTransition(
         position: _slideAnimation,
-        child: _buildTabsContainer(context, theme),
+        child: useNewTheme
+          ? _buildThemedTabsContainer(context, themeConfig!)
+          : _buildTabsContainer(context, theme),
       ),
     );
+
+    return content;
+  }
+
+  Widget _buildThemedTabsContainer(BuildContext context, ShopKitThemeConfig cfg) {
+    // Reuse existing structure but map colors from cfg
+    final baseColor = cfg.backgroundColor ?? Theme.of(context).colorScheme.surface;
+    final primary = cfg.primaryColor ?? Theme.of(context).colorScheme.primary;
+    return Container(
+      height: _getConfig('tabBarHeight', 48.0),
+      decoration: BoxDecoration(
+        color: baseColor,
+        borderRadius: BorderRadius.circular(cfg.borderRadius),
+        boxShadow: cfg.enableShadows ? [
+          BoxShadow(
+            color: (cfg.shadowColor ?? Colors.black).withValues(alpha: 0.08),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ] : null,
+      ),
+      child: TabBar(
+        controller: _tabController,
+        isScrollable: widget.isScrollable,
+        tabAlignment: widget.alignment,
+        padding: _config?.getEdgeInsets('tabBarPadding') ?? EdgeInsets.zero,
+        indicator: UnderlineTabIndicator(
+          borderSide: BorderSide(
+            color: primary,
+            width: 3,
+          ),
+          insets: const EdgeInsets.symmetric(horizontal: 12),
+        ),
+        labelColor: primary,
+        unselectedLabelColor: (cfg.onPrimaryColor ?? Colors.black).withValues(alpha: 0.6),
+        labelStyle: TextStyle(
+          fontSize: _getConfig('activeFontSize', 16.0),
+          fontWeight: FontWeight.w600,
+        ),
+        unselectedLabelStyle: TextStyle(
+          fontSize: _getConfig('inactiveFontSize', 14.0),
+          fontWeight: FontWeight.w400,
+        ),
+        tabs: _buildThemedTabs(context, cfg),
+      ),
+    );
+  }
+
+  List<Widget> _buildThemedTabs(BuildContext context, ShopKitThemeConfig cfg) {
+    return List.generate(widget.categories.length, (index) {
+      final category = widget.categories[index];
+      final isSelected = index == _selectedIndex;
+      return Tab(
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+            padding: EdgeInsets.symmetric(
+              horizontal: 12.w,
+              vertical: 8.h,
+            ),
+          decoration: isSelected && cfg.enableGradients ? BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                (cfg.primaryColor ?? Theme.of(context).colorScheme.primary),
+                (cfg.primaryColor ?? Theme.of(context).colorScheme.primary).withValues(alpha: 0.8),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(cfg.borderRadius * 0.6),
+          ) : null,
+          child: Text(
+            category.name,
+            style: TextStyle(
+              color: isSelected
+                ? (cfg.onPrimaryColor ?? Colors.white)
+                : (cfg.onPrimaryColor ?? Colors.black).withValues(alpha: 0.7),
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+              fontSize: 14.sp,
+            ),
+          ),
+        ),
+      );
+    });
   }
 
   Widget _buildTabsContainer(BuildContext context, ShopKitTheme theme) {

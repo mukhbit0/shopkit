@@ -12,15 +12,15 @@ import '../../models/product_model.dart';
 // deprecate the legacy cart_management/add_to_cart_button.dart and expose a
 // single AddToCartButton API. Temporary name kept unique to avoid export
 // collisions – will be renamed to AddToCartButton after migration.
-class AddToCartButtonUnified extends StatefulWidget {
-  const AddToCartButtonUnified({
+class AddToCartButton extends StatefulWidget {
+  const AddToCartButton({
     super.key,
     this.product,
     this.config,
-    this.customBuilder,
+  this.customBuilder,
     this.customIconBuilder,
     this.customTextBuilder,
-    this.customQuantityBuilder,
+  this.customQuantityBuilder,
     this.onAddToCart,
     this.onQuantityChanged,
     this.onPressed,
@@ -51,7 +51,7 @@ class AddToCartButtonUnified extends StatefulWidget {
   final FlexibleWidgetConfig? config;
 
   /// Custom builder for complete control
-  final Widget Function(BuildContext, AddToCartButtonUnifiedState)? customBuilder;
+  final Widget Function(BuildContext, AddToCartButtonState)? customBuilder;
 
   /// Custom icon builder
   final Widget Function(BuildContext, bool isLoading, bool wasAdded)? customIconBuilder;
@@ -60,7 +60,7 @@ class AddToCartButtonUnified extends StatefulWidget {
   final Widget Function(BuildContext, String text, bool isLoading, bool wasAdded)? customTextBuilder;
 
   /// Custom quantity selector builder
-  final Widget Function(BuildContext, int quantity, AddToCartButtonUnifiedState)? customQuantityBuilder;
+  final Widget Function(BuildContext, int quantity, AddToCartButtonState)? customQuantityBuilder;
 
   /// Callback when product is added to cart
   final Function(ProductModel? product, int quantity)? onAddToCart;
@@ -126,10 +126,10 @@ class AddToCartButtonUnified extends StatefulWidget {
   final String? themeStyle;
 
   @override
-  State<AddToCartButtonUnified> createState() => AddToCartButtonUnifiedState();
+  State<AddToCartButton> createState() => AddToCartButtonState();
 }
 
-class AddToCartButtonUnifiedState extends State<AddToCartButtonUnified>
+class AddToCartButtonState extends State<AddToCartButton>
     with TickerProviderStateMixin {
   late AnimationController _pressController;
   late AnimationController _successController;
@@ -258,7 +258,7 @@ class AddToCartButtonUnifiedState extends State<AddToCartButtonUnified>
   }
 
   @override
-  void didUpdateWidget(AddToCartButtonUnified oldWidget) {
+  void didUpdateWidget(AddToCartButton oldWidget) {
     super.didUpdateWidget(oldWidget);
     
     if (widget.quantity != oldWidget.quantity) {
@@ -738,7 +738,7 @@ class AddToCartButtonUnifiedState extends State<AddToCartButtonUnified>
               height: 32.0.h,
               decoration: BoxDecoration(
                 color: _currentQuantity > widget.minQuantity 
-                  ? Theme.of(context).primaryColor.withOpacity(0.1)
+                  ? Theme.of(context).primaryColor.withValues(alpha: 0.1)
                   : Colors.transparent,
                 borderRadius: BorderRadius.circular(4.0),
               ),
@@ -774,7 +774,7 @@ class AddToCartButtonUnifiedState extends State<AddToCartButtonUnified>
               height: 32.0.h,
               decoration: BoxDecoration(
                 color: _currentQuantity < widget.maxQuantity 
-                  ? Theme.of(context).primaryColor.withOpacity(0.1)
+                  ? Theme.of(context).primaryColor.withValues(alpha: 0.1)
                   : Colors.transparent,
                 borderRadius: BorderRadius.circular(4.0),
               ),
@@ -801,7 +801,7 @@ class AddToCartButtonUnifiedState extends State<AddToCartButtonUnified>
         return _getConfig('smallButtonHeight', 32.0.h);
       case AddToCartButtonSize.large:
         return _getConfig('largeButtonHeight', 56.0.h);
-      case AddToCartButtonSize.medium:
+  case AddToCartButtonSize.medium:
         return _getConfig('mediumButtonHeight', 44.0.h);
     }
   }
@@ -812,7 +812,7 @@ class AddToCartButtonUnifiedState extends State<AddToCartButtonUnified>
         return _getConfig('smallButtonHorizontalPadding', 12.0.w);
       case AddToCartButtonSize.large:
         return _getConfig('largeButtonHorizontalPadding', 24.0.w);
-      case AddToCartButtonSize.medium:
+  case AddToCartButtonSize.medium:
         return _getConfig('mediumButtonHorizontalPadding', 16.0.w);
     }
   }
@@ -823,7 +823,7 @@ class AddToCartButtonUnifiedState extends State<AddToCartButtonUnified>
         return _getConfig('smallButtonVerticalPadding', 6.0.h);
       case AddToCartButtonSize.large:
         return _getConfig('largeButtonVerticalPadding', 12.0.h);
-      case AddToCartButtonSize.medium:
+  case AddToCartButtonSize.medium:
         return _getConfig('mediumButtonVerticalPadding', 8.0.h);
     }
   }
@@ -834,7 +834,7 @@ class AddToCartButtonUnifiedState extends State<AddToCartButtonUnified>
         return _getConfig('smallButtonIconSize', 16.0.sp);
       case AddToCartButtonSize.large:
         return _getConfig('largeButtonIconSize', 24.0.sp);
-      case AddToCartButtonSize.medium:
+  case AddToCartButtonSize.medium:
         return _getConfig('mediumButtonIconSize', 20.0.sp);
     }
   }
@@ -857,7 +857,7 @@ class AddToCartButtonUnifiedState extends State<AddToCartButtonUnified>
         return _getConfig('smallButtonTextSize', 12.0);
       case AddToCartButtonSize.large:
         return _getConfig('largeButtonTextSize', 16.0);
-      case AddToCartButtonSize.medium:
+  case AddToCartButtonSize.medium:
         return _getConfig('mediumButtonTextSize', 14.0);
     }
   }
@@ -907,7 +907,6 @@ class AddToCartButtonUnifiedState extends State<AddToCartButtonUnified>
 }
 
 /// Public API alias. Use AddToCartButton going forward.
-typedef AddToCartButton = AddToCartButtonUnified;
 
 /// Style options for add to cart button
 enum AddToCartButtonStyle {
