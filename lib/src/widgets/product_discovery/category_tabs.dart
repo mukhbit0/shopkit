@@ -255,12 +255,12 @@ class CategoryTabsState extends State<CategoryTabs>
   }
 
   Widget _buildPillTabs(BuildContext context, ShopKitTheme theme) {
-    return Container(
+    return SizedBox(
       height: _getConfig('tabBarHeight', 48.0),
       child: ListView.separated(
         controller: widget.scrollController,
         scrollDirection: Axis.horizontal,
-        padding: _config?.getEdgeInsets('tabBarPadding', EdgeInsets.symmetric(horizontal: 16)) ?? EdgeInsets.symmetric(horizontal: 16),
+        padding: _config?.getEdgeInsets('tabBarPadding', const EdgeInsets.symmetric(horizontal: 16)) ?? const EdgeInsets.symmetric(horizontal: 16),
         itemCount: widget.categories.length,
         separatorBuilder: (context, index) => SizedBox(width: _getConfig('tabSpacing', 8.0)),
         itemBuilder: (context, index) {
@@ -279,9 +279,9 @@ class CategoryTabsState extends State<CategoryTabs>
         _tabController.animateTo(index);
       },
       child: AnimatedContainer(
-        duration: _config?.getDuration('pillAnimationDuration', Duration(milliseconds: 200)) ?? Duration(milliseconds: 200),
+        duration: _config?.getDuration('pillAnimationDuration', const Duration(milliseconds: 200)) ?? const Duration(milliseconds: 200),
         curve: _config?.getCurve('pillAnimationCurve', Curves.easeInOut) ?? Curves.easeInOut,
-        padding: _config?.getEdgeInsets('pillPadding', EdgeInsets.symmetric(horizontal: 16, vertical: 8)) ?? EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: _config?.getEdgeInsets('pillPadding', const EdgeInsets.symmetric(horizontal: 16, vertical: 8)) ?? const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
           color: isSelected 
             ? (_config?.getColor('activePillColor', theme.primaryColor) ?? theme.primaryColor)
@@ -324,7 +324,7 @@ class CategoryTabsState extends State<CategoryTabs>
   Widget _buildUnderlineTabs(BuildContext context, ShopKitTheme theme) {
     return Column(
       children: [
-        Container(
+        SizedBox(
           height: _getConfig('tabBarHeight', 48.0),
           child: TabBar(
             controller: _tabController,
@@ -336,7 +336,7 @@ class CategoryTabsState extends State<CategoryTabs>
                 color: _config?.getColor('underlineColor', theme.primaryColor) ?? theme.primaryColor,
                 width: _getConfig('underlineWidth', 3.0),
               ),
-              insets: _config?.getEdgeInsets('underlineInsets', EdgeInsets.symmetric(horizontal: 16)) ?? EdgeInsets.symmetric(horizontal: 16),
+              insets: _config?.getEdgeInsets('underlineInsets', const EdgeInsets.symmetric(horizontal: 16)) ?? const EdgeInsets.symmetric(horizontal: 16),
             ),
             labelColor: _config?.getColor('activeTextColor', theme.primaryColor) ?? theme.primaryColor,
             unselectedLabelColor: _config?.getColor('inactiveTextColor', theme.onSurfaceColor.withValues(alpha: 0.6)) ?? theme.onSurfaceColor.withValues(alpha: 0.6),
@@ -375,12 +375,12 @@ class CategoryTabsState extends State<CategoryTabs>
   }
 
   Widget _buildCardTabs(BuildContext context, ShopKitTheme theme) {
-    return Container(
+    return SizedBox(
       height: _getConfig('tabBarHeight', 60.0),
       child: ListView.separated(
         controller: widget.scrollController,
         scrollDirection: Axis.horizontal,
-        padding: _config?.getEdgeInsets('tabBarPadding', EdgeInsets.symmetric(horizontal: 16)) ?? EdgeInsets.symmetric(horizontal: 16),
+        padding: _config?.getEdgeInsets('tabBarPadding', const EdgeInsets.symmetric(horizontal: 16)) ?? const EdgeInsets.symmetric(horizontal: 16),
         itemCount: widget.categories.length,
         separatorBuilder: (context, index) => SizedBox(width: _getConfig('tabSpacing', 12.0)),
         itemBuilder: (context, index) {
@@ -397,8 +397,8 @@ class CategoryTabsState extends State<CategoryTabs>
     return GestureDetector(
       onTap: () => _tabController.animateTo(index),
       child: AnimatedContainer(
-        duration: _config?.getDuration('cardAnimationDuration', Duration(milliseconds: 200)) ?? Duration(milliseconds: 200),
-        padding: _config?.getEdgeInsets('cardTabPadding', EdgeInsets.symmetric(horizontal: 16, vertical: 12)) ?? EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        duration: _config?.getDuration('cardAnimationDuration', const Duration(milliseconds: 200)) ?? const Duration(milliseconds: 200),
+        padding: _config?.getEdgeInsets('cardTabPadding', const EdgeInsets.symmetric(horizontal: 16, vertical: 12)) ?? const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           color: isSelected
             ? (_config?.getColor('activeCardColor', theme.primaryColor) ?? theme.primaryColor)
@@ -416,7 +416,7 @@ class CategoryTabsState extends State<CategoryTabs>
           mainAxisSize: MainAxisSize.min,
           children: [
             if (category.iconUrl != null || _getConfig('showCategoryIcons', false)) ...[
-              Container(
+              SizedBox(
                 width: _getConfig('cardIconSize', 24.0),
                 height: _getConfig('cardIconSize', 24.0),
                 child: category.iconUrl != null
@@ -452,12 +452,12 @@ class CategoryTabsState extends State<CategoryTabs>
   }
 
   Widget _buildChipTabs(BuildContext context, ShopKitTheme theme) {
-    return Container(
+    return SizedBox(
       height: _getConfig('tabBarHeight', 40.0),
       child: ListView.separated(
         controller: widget.scrollController,
         scrollDirection: Axis.horizontal,
-        padding: _config?.getEdgeInsets('tabBarPadding', EdgeInsets.symmetric(horizontal: 16)) ?? EdgeInsets.symmetric(horizontal: 16),
+        padding: _config?.getEdgeInsets('tabBarPadding', const EdgeInsets.symmetric(horizontal: 16)) ?? const EdgeInsets.symmetric(horizontal: 16),
         itemCount: widget.categories.length,
         separatorBuilder: (context, index) => SizedBox(width: _getConfig('tabSpacing', 8.0)),
         itemBuilder: (context, index) {
@@ -494,7 +494,7 @@ class CategoryTabsState extends State<CategoryTabs>
       return widget.customTabBuilder?.call(context, category, isSelected, index) ??
         Tab(
           child: Container(
-            padding: _config?.getEdgeInsets('tabPadding', EdgeInsets.symmetric(horizontal: 8)) ?? EdgeInsets.symmetric(horizontal: 8),
+            padding: _config?.getEdgeInsets('tabPadding', const EdgeInsets.symmetric(horizontal: 8)) ?? const EdgeInsets.symmetric(horizontal: 8),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -517,7 +517,7 @@ class CategoryTabsState extends State<CategoryTabs>
                 if (_getConfig('showProductCount', false) && category.itemCount > 0) ...[
                   SizedBox(width: _getConfig('countSpacing', 4.0)),
                   Container(
-                    padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
                       color: isSelected
                         ? (_config?.getColor('activeCountBadgeColor', theme.onPrimaryColor.withValues(alpha: 0.2)) ?? theme.onPrimaryColor.withValues(alpha: 0.2))

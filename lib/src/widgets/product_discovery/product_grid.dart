@@ -324,7 +324,7 @@ class ProductGridState extends State<ProductGrid>
     }
 
     // Use a placeholder favorite state since ProductModel doesn't have isFavorite
-    final isFavorite = true; // This would typically be managed by parent state
+    const isFavorite = true; // This would typically be managed by parent state
     widget.onProductFavorite?.call(product, isFavorite);
   }
 
@@ -440,14 +440,14 @@ class ProductGridState extends State<ProductGrid>
       child: Row(
         children: [
           Icon(Icons.filter_list, color: theme.onSurfaceColor.withValues(alpha: 0.6)),
-          SizedBox(width: 8),
+          const SizedBox(width: 8),
           Text(
             _getConfig('filterText', 'Filters'),
             style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.onSurfaceColor.withValues(alpha: 0.8),
             ),
           ),
-          Spacer(),
+          const Spacer(),
           // Add filter chips here based on your filter implementation
         ],
       ),
@@ -467,7 +467,7 @@ class ProductGridState extends State<ProductGrid>
               fontWeight: FontWeight.w500,
             ),
           ),
-          Spacer(),
+          const Spacer(),
           TextButton(
             onPressed: () {
               setState(() {
@@ -661,7 +661,7 @@ class ProductGridState extends State<ProductGrid>
         ),
         child: Row(
           children: [
-            Container(
+            SizedBox(
               width: _getConfig('listImageWidth', 100.0),
               height: double.infinity,
               child: _buildProductImage(context, theme, product),
@@ -742,7 +742,7 @@ class ProductGridState extends State<ProductGrid>
                   color: Colors.amber,
                   size: _getConfig('ratingStarSize', 16.0),
                 ),
-                SizedBox(width: 4),
+                const SizedBox(width: 4),
                 Text(
                   product.rating!.toStringAsFixed(1),
                   style: theme.textTheme.bodySmall?.copyWith(
@@ -750,7 +750,7 @@ class ProductGridState extends State<ProductGrid>
                   ),
                 ),
                 if (product.reviewCount != null && product.reviewCount! > 0) ...[
-                  SizedBox(width: 4),
+                  const SizedBox(width: 4),
                   Text(
                     '(${product.reviewCount!})',
                     style: theme.textTheme.bodySmall?.copyWith(
@@ -761,7 +761,7 @@ class ProductGridState extends State<ProductGrid>
               ],
             ),
           
-          Spacer(),
+          const Spacer(),
           
           // Pricing
           if (widget.showPricing)
@@ -777,7 +777,7 @@ class ProductGridState extends State<ProductGrid>
                   ),
                 
                 if (product.hasDiscount)
-                  SizedBox(width: 8),
+                  const SizedBox(width: 8),
                 
                 Text(
                   product.formattedPrice,
@@ -870,7 +870,7 @@ class ProductGridState extends State<ProductGrid>
           CircularProgressIndicator(
             valueColor: AlwaysStoppedAnimation<Color>(theme.primaryColor),
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           Text(
             _getConfig('loadingText', 'Loading products...'),
             style: theme.textTheme.bodyMedium?.copyWith(
@@ -907,7 +907,7 @@ class ProductGridState extends State<ProductGrid>
             size: _getConfig('emptyStateIconSize', 64.0),
             color: theme.onSurfaceColor.withValues(alpha: 0.4),
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           Text(
             _isSearching 
               ? _getConfig('noSearchResultsText', 'No products found')
@@ -917,7 +917,7 @@ class ProductGridState extends State<ProductGrid>
             ),
           ),
           if (_isSearching) ...[
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             Text(
               _getConfig('searchSuggestionText', 'Try a different search term'),
               style: theme.textTheme.bodyMedium?.copyWith(
@@ -944,7 +944,7 @@ class ProductGridState extends State<ProductGrid>
             size: _getConfig('errorStateIconSize', 64.0),
             color: theme.errorColor,
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           Text(
             widget.errorMessage ?? _getConfig('errorStateText', 'Something went wrong'),
             style: theme.textTheme.titleMedium?.copyWith(
@@ -952,7 +952,7 @@ class ProductGridState extends State<ProductGrid>
             ),
             textAlign: TextAlign.center,
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           ElevatedButton(
             onPressed: () {
               // Trigger refresh or retry

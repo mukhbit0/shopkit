@@ -44,13 +44,13 @@ void main() {
 
     testWidgets('should handle add to cart callback', (WidgetTester tester) async {
       final product = TestUtils.createMockProduct();
-      CartItemModel? addedItem;
+     
 
       await tester.pumpWidget(
         TestUtils.createTestApp(
           child: ProductCard(
             product: product,
-            onAddToCart: (item) => addedItem = item,
+            onAddToCart: (item) =>  item,
           ),
         ),
       );
@@ -131,7 +131,7 @@ void main() {
   group('ImageCarousel Widget Tests', () {
     testWidgets('should display single image', (WidgetTester tester) async {
       final images = [
-        ImageModel(id: '1', url: 'test1.jpg', altText: 'Test Image 1'),
+        const ImageModel(id: '1', url: 'test1.jpg', altText: 'Test Image 1'),
       ];
 
       await tester.pumpWidget(
@@ -147,8 +147,8 @@ void main() {
 
     testWidgets('should display multiple images', (WidgetTester tester) async {
       final images = [
-        ImageModel(id: '1', url: 'test1.jpg', altText: 'Test Image 1'),
-        ImageModel(id: '2', url: 'test2.jpg', altText: 'Test Image 2'),
+        const ImageModel(id: '1', url: 'test1.jpg', altText: 'Test Image 1'),
+        const ImageModel(id: '2', url: 'test2.jpg', altText: 'Test Image 2'),
       ];
 
       await tester.pumpWidget(
@@ -165,7 +165,7 @@ void main() {
     testWidgets('should handle empty image list', (WidgetTester tester) async {
       await tester.pumpWidget(
         TestUtils.createTestApp(
-          child: ImageCarousel(
+          child: const ImageCarousel(
             images: [],
           ),
         ),

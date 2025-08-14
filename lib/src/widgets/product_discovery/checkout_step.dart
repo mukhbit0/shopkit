@@ -378,6 +378,7 @@ class CheckoutStepNewState extends State<CheckoutStepNew>
 
   Widget _buildVerticalSteps(BuildContext context, ShopKitTheme theme) {
     return Column(
+      mainAxisSize: MainAxisSize.min, // CRITICAL FIX: Prevents unbounded height
       children: [
         if (widget.showProgress) _buildProgressIndicator(context, theme),
         
@@ -398,6 +399,7 @@ class CheckoutStepNewState extends State<CheckoutStepNew>
 
   Widget _buildHorizontalSteps(BuildContext context, ShopKitTheme theme) {
     return Column(
+      mainAxisSize: MainAxisSize.min, // CRITICAL FIX: Prevents unbounded height
       children: [
         if (widget.showProgress) _buildHorizontalStepIndicator(context, theme),
         

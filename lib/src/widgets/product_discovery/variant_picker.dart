@@ -248,7 +248,7 @@ class VariantPickerState extends State<VariantPicker>
     }
 
     return Container(
-      padding: _config?.getEdgeInsets('containerPadding', EdgeInsets.all(16)) ?? EdgeInsets.all(16),
+      padding: _config?.getEdgeInsets('containerPadding', const EdgeInsets.all(16)) ?? const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: _config?.getColor('backgroundColor', theme.surfaceColor) ?? theme.surfaceColor,
         borderRadius: _config?.getBorderRadius('borderRadius', BorderRadius.circular(12)) ?? BorderRadius.circular(12),
@@ -297,7 +297,7 @@ class VariantPickerState extends State<VariantPicker>
 
   Widget _buildEmptyState(BuildContext context, ShopKitTheme theme) {
     return Container(
-      padding: _config?.getEdgeInsets('emptyStatePadding', EdgeInsets.all(32)) ?? EdgeInsets.all(32),
+      padding: _config?.getEdgeInsets('emptyStatePadding', const EdgeInsets.all(32)) ?? const EdgeInsets.all(32),
       child: Column(
         children: [
           Icon(
@@ -410,7 +410,7 @@ class VariantPickerState extends State<VariantPicker>
           borderRadius: _config?.getBorderRadius('listItemBorderRadius', BorderRadius.circular(8)) ?? BorderRadius.circular(8),
           child: AnimatedContainer(
             duration: Duration(milliseconds: _getConfig('listItemAnimationDuration', 200)),
-            padding: _config?.getEdgeInsets('listItemPadding', EdgeInsets.all(12)) ?? EdgeInsets.all(12),
+            padding: _config?.getEdgeInsets('listItemPadding', const EdgeInsets.all(12)) ?? const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: isSelected
                 ? (_config?.getColor('selectedListItemColor', theme.primaryColor.withValues(alpha: 0.1)) ?? theme.primaryColor.withValues(alpha: 0.1))
@@ -578,7 +578,7 @@ class VariantPickerState extends State<VariantPicker>
                             ),
                           
                           if (widget.showPrices && variant.additionalPrice != null) ...[
-                            SizedBox(height: 2),
+                            const SizedBox(height: 2),
                             Text(
                               variant.getFormattedAdditionalPrice('USD'),
                               style: TextStyle(
@@ -649,7 +649,7 @@ class VariantPickerState extends State<VariantPicker>
           ? (_config?.getFontWeight('chipSelectedFontWeight', FontWeight.w500) ?? FontWeight.w500)
           : (_config?.getFontWeight('chipFontWeight', FontWeight.w400) ?? FontWeight.w400),
       ),
-      padding: _config?.getEdgeInsets('chipPadding', EdgeInsets.symmetric(horizontal: 12, vertical: 8)) ?? EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: _config?.getEdgeInsets('chipPadding', const EdgeInsets.symmetric(horizontal: 12, vertical: 8)) ?? const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       shape: RoundedRectangleBorder(
         borderRadius: _config?.getBorderRadius('chipBorderRadius', BorderRadius.circular(20)) ?? BorderRadius.circular(20),
       ),
@@ -659,7 +659,7 @@ class VariantPickerState extends State<VariantPicker>
   Widget _buildDropdownLayout(BuildContext context, ShopKitTheme theme, List<VariantModel> variants) {
     final selectedVariant = _selectedVariants.isNotEmpty ? _selectedVariants.first : null;
     
-    return Container(
+    return SizedBox(
       width: double.infinity,
       child: DropdownButtonFormField<VariantModel>(
         value: selectedVariant,
@@ -668,7 +668,7 @@ class VariantPickerState extends State<VariantPicker>
           border: OutlineInputBorder(
             borderRadius: _config?.getBorderRadius('dropdownBorderRadius', BorderRadius.circular(8)) ?? BorderRadius.circular(8),
           ),
-          contentPadding: _config?.getEdgeInsets('dropdownPadding', EdgeInsets.symmetric(horizontal: 12, vertical: 16)) ?? EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+          contentPadding: _config?.getEdgeInsets('dropdownPadding', const EdgeInsets.symmetric(horizontal: 12, vertical: 16)) ?? const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
         ),
         items: variants.map((variant) {
           return DropdownMenuItem<VariantModel>(
@@ -687,7 +687,7 @@ class VariantPickerState extends State<VariantPicker>
                   ),
                 
                 if (_getConfig('showDropdownColors', true))
-                  SizedBox(width: 12),
+                  const SizedBox(width: 12),
                 
                 Expanded(
                   child: Text(
@@ -783,7 +783,7 @@ class VariantPickerState extends State<VariantPicker>
               ),
             
             if (widget.showPrices && variant.additionalPrice != null) ...[
-              SizedBox(height: 4),
+              const SizedBox(height: 4),
               Text(
                 variant.getFormattedAdditionalPrice('USD'),
                 style: TextStyle(
@@ -834,7 +834,7 @@ class VariantPickerState extends State<VariantPicker>
             width: _getConfig('buttonBorderWidth', 1.0),
           ),
         ),
-        padding: _config?.getEdgeInsets('buttonPadding', EdgeInsets.symmetric(vertical: 16, horizontal: 20)) ?? EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+        padding: _config?.getEdgeInsets('buttonPadding', const EdgeInsets.symmetric(vertical: 16, horizontal: 20)) ?? const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
         elevation: isSelected ? _getConfig('selectedButtonElevation', 2.0) : _getConfig('unselectedButtonElevation', 0.0),
       ),
       child: Row(
@@ -851,7 +851,7 @@ class VariantPickerState extends State<VariantPicker>
             ),
           
           if (_getConfig('showButtonColors', true))
-            SizedBox(width: 12),
+            const SizedBox(width: 12),
           
           Expanded(
             child: Text(
@@ -919,7 +919,7 @@ class VariantPickerState extends State<VariantPicker>
   Widget _buildSelectedInfo(BuildContext context, ShopKitTheme theme) {
     return Container(
       margin: EdgeInsets.only(top: _getConfig('selectedInfoTopSpacing', 16.0)),
-      padding: _config?.getEdgeInsets('selectedInfoPadding', EdgeInsets.all(12)) ?? EdgeInsets.all(12),
+      padding: _config?.getEdgeInsets('selectedInfoPadding', const EdgeInsets.all(12)) ?? const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: _config?.getColor('selectedInfoBackgroundColor', theme.primaryColor.withValues(alpha: 0.1)) ?? theme.primaryColor.withValues(alpha: 0.1),
         borderRadius: _config?.getBorderRadius('selectedInfoBorderRadius', BorderRadius.circular(8)) ?? BorderRadius.circular(8),

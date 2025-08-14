@@ -91,7 +91,7 @@ void main() {
 
     testWidgets('search performance test', (WidgetTester tester) async {
       // Provide zero debounce via config to eliminate pending timers
-      await tester.pumpWidget(TestUtils.createTestApp(child: ProductSearchBarAdvanced(debounceDelay: Duration.zero, suggestions: const ['phone','laptop','camera'])));
+      await tester.pumpWidget(TestUtils.createTestApp(child: const ProductSearchBarAdvanced(debounceDelay: Duration.zero, suggestions: ['phone','laptop','camera'])));
       final searchQueries = ['phone','laptop','camera'];
       await TestUtils.performanceTest(() async {
         for (final query in searchQueries) {
@@ -127,8 +127,8 @@ void main() {
     });
 
     testWidgets('search bar accessibility', (WidgetTester tester) async {
-      await tester.pumpWidget(TestUtils.createTestApp(child: ProductSearchBarAdvanced(debounceDelay: Duration.zero)));
-      await TestUtils.testAccessibilityFeatures(tester, ProductSearchBarAdvanced(debounceDelay: Duration.zero));
+      await tester.pumpWidget(TestUtils.createTestApp(child: const ProductSearchBarAdvanced(debounceDelay: Duration.zero)));
+      await TestUtils.testAccessibilityFeatures(tester, const ProductSearchBarAdvanced(debounceDelay: Duration.zero));
       expect(find.byType(ProductSearchBarAdvanced), findsOneWidget);
     });
 

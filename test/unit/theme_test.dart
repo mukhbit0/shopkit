@@ -62,13 +62,13 @@ void main() {
       expect(lightTheme.style, equals(ShopKitThemeStyle.material3));
       expect(darkTheme.style, equals(ShopKitThemeStyle.material3));
       // Colors should be different between light and dark
-      expect(lightTheme.primaryColor.value, isNot(equals(darkTheme.primaryColor.value)));
+      expect(lightTheme.primaryColor.r, isNot(equals(darkTheme.primaryColor.r)));
     });
   });
 
   group('FlexibleWidgetConfig Tests', () {
     test('should create default configuration', () {
-      final config = FlexibleWidgetConfig();
+      const config = FlexibleWidgetConfig();
 
       expect(config.get<bool>('enableAnimations'), isTrue);
       expect(config.get<int>('animationDuration'), equals(300));
@@ -88,21 +88,21 @@ void main() {
     });
 
     test('should handle missing properties gracefully', () {
-      final config = FlexibleWidgetConfig();
+      const config = FlexibleWidgetConfig();
 
       expect(() => config.get<String>('nonexistent'), throwsA(isA<Exception>()));
       expect(config.getOr<String>('nonexistent', 'default'), equals('default'));
     });
 
     test('should check if properties exist', () {
-      final config = FlexibleWidgetConfig();
+      const config = FlexibleWidgetConfig();
 
       expect(config.has('enableAnimations'), isTrue);
       expect(config.has('nonexistentProperty'), isFalse);
     });
 
     test('should merge configurations correctly', () {
-      final config1 = FlexibleWidgetConfig(config: {'prop1': 'value1', 'prop2': 'value2'});
+      const config1 = FlexibleWidgetConfig(config: {'prop1': 'value1', 'prop2': 'value2'});
       final additionalConfig = {'prop2': 'newValue2', 'prop3': 'value3'};
 
       final merged = config1.merge(additionalConfig);
@@ -113,7 +113,7 @@ void main() {
     });
 
     test('should copy configuration with new values', () {
-      final originalConfig = FlexibleWidgetConfig(config: {
+      const originalConfig = FlexibleWidgetConfig(config: {
         'originalProp': 'originalValue',
       });
 

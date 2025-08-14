@@ -332,7 +332,7 @@ class StickyHeaderNewState extends State<StickyHeaderNew>
                 ),
                 child: ClipRRect(
                   borderRadius: _config?.getBorderRadius('cardBorderRadius', BorderRadius.circular(12)) ?? BorderRadius.circular(12),
-                  child: Container(
+                  child: SizedBox(
                     height: _calculateHeaderHeight(),
                     child: _buildHeaderContent(context, theme),
                   ),
@@ -357,7 +357,7 @@ class StickyHeaderNewState extends State<StickyHeaderNew>
             controller: _scrollController,
             slivers: [
               SliverToBoxAdapter(
-                child: Container(
+                child: SizedBox(
                   height: widget.maxHeaderHeight,
                   child: _buildContent(context, theme),
                 ),

@@ -366,6 +366,7 @@ class CartSummaryAdvancedState extends State<CartSummaryAdvanced>
           : null,
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min, // CRITICAL FIX: Prevents unbounded height
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (widget.showHeader) _buildHeader(context, theme),
@@ -397,6 +398,7 @@ class CartSummaryAdvancedState extends State<CartSummaryAdvanced>
         ),
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min, // CRITICAL FIX: Prevents unbounded height
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -848,9 +850,9 @@ class CartSummaryAdvancedState extends State<CartSummaryAdvanced>
                     ),
                     
                     if (item.product.description?.isNotEmpty == true) ...[
-                      SizedBox(height: 4.0),
+                      const SizedBox(height: 4.0),
                       Text(
-                        item.product.description ?? "",
+                        item.product.description ?? '',
                         style: TextStyle(
                           color: _config?.getColor('detailedItemDescriptionColor', theme.onSurfaceColor.withValues(alpha: 0.7)) ?? theme.onSurfaceColor.withValues(alpha: 0.7),
                           fontSize: _getConfig('detailedItemDescriptionFontSize', 12.0),
@@ -860,7 +862,7 @@ class CartSummaryAdvancedState extends State<CartSummaryAdvanced>
                       ),
                     ],
                     
-                    SizedBox(height: 8.0),
+                    const SizedBox(height: 8.0),
                     
                     Text(
                       '${widget.currency}${item.pricePerItem.toStringAsFixed(2)}',

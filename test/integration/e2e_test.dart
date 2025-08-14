@@ -95,10 +95,10 @@ void main() {
     });
 
     testWidgets('invalid product data handling', (WidgetTester tester) async {
-      final invalid =
+      const invalid =
           ProductModel(id: '', name: '', price: -1, currency: 'USD');
       await tester.pumpWidget(
-          TestUtils.createTestApp(child: ProductCard(product: invalid)));
+          TestUtils.createTestApp(child: const ProductCard(product: invalid)));
       expect(tester.takeException(), isNull);
     });
   });

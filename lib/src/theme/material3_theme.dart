@@ -292,7 +292,7 @@ class ShopKitMaterial3Theme extends ShopKitBaseTheme {
       onErrorContainer: scheme.onErrorContainer,
       surface: scheme.surface,
       onSurface: scheme.onSurface,
-      surfaceVariant: scheme.surfaceVariant,
+      surfaceVariant: scheme.surfaceContainerHighest,
       onSurfaceVariant: scheme.onSurfaceVariant,
       outline: scheme.outline,
       outlineVariant: scheme.outlineVariant,

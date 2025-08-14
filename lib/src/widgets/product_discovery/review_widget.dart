@@ -96,7 +96,7 @@ class ReviewWidgetNewState extends State<ReviewWidgetNew>
 
   FlexibleWidgetConfig? _config;
   ReviewSortOption _currentSort = ReviewSortOption.newest;
-  ReviewFilter _currentFilter = ReviewFilter();
+  ReviewFilter _currentFilter = const ReviewFilter();
   int _currentPage = 0;
   List<ReviewModel> _filteredReviews = [];
   ReviewSummary _summary = ReviewSummary.empty();
@@ -339,6 +339,7 @@ class ReviewWidgetNewState extends State<ReviewWidgetNew>
           : null,
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min, // CRITICAL FIX: Prevents unbounded height
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (widget.showSummary) _buildSummarySection(context, theme),
@@ -368,11 +369,13 @@ class ReviewWidgetNewState extends State<ReviewWidgetNew>
         borderRadius: BorderRadius.circular(_getConfig('summaryBorderRadius', 8.0)),
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min, // CRITICAL FIX: Prevents unbounded height
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               Column(
+                mainAxisSize: MainAxisSize.min, // CRITICAL FIX: Prevents unbounded height
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
@@ -533,7 +536,7 @@ class ReviewWidgetNewState extends State<ReviewWidgetNew>
           if (widget.enableFiltering)
             _buildFilterButton(context, theme),
           
-          Spacer(),
+          const Spacer(),
           
           Text(
             '${_filteredReviews.length} reviews',
@@ -921,7 +924,7 @@ class ReviewWidgetNewState extends State<ReviewWidgetNew>
           ),
         ),
         
-        Spacer(),
+        const Spacer(),
         
         if (widget.enableReporting)
           _buildReportButton(context, theme, review),
@@ -1085,7 +1088,7 @@ class ReviewWidgetNewState extends State<ReviewWidgetNew>
           TextButton(
             onPressed: () {
               Navigator.of(context).pop();
-              _handleFilterChanged(ReviewFilter()); // Clear filters
+              _handleFilterChanged(const ReviewFilter()); // Clear filters
             },
             child: Text(_getConfig('clearFiltersText', 'Clear')),
           ),

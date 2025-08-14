@@ -96,9 +96,7 @@ void main() {
     testWidgets('should create test app wrapper correctly', (WidgetTester tester) async {
       await tester.pumpWidget(
         TestUtils.createTestApp(
-          child: Container(
-            child: Text('Test Content'),
-          ),
+          child: const Text('Test Content'),
         ),
       );
 

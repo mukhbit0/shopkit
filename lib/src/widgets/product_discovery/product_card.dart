@@ -120,13 +120,19 @@ class ProductCardState extends State<ProductCard>
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(theme.borderRadius),
                 ),
-                // FIX 1: Use mainAxisSize.min to prevent unbounded height issues
+                // FIX 1: Use Flexible to ensure content fits within constrained height
                 child: Column(
                   mainAxisSize: MainAxisSize.min, // CRITICAL FIX
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildImageSection(context, theme),
-                    _buildContentSection(context, theme),
+                    Flexible(
+                      flex: 3,
+                      child: _buildImageSection(context, theme),
+                    ),
+                    Flexible(
+                      flex: 2,
+                      child: _buildContentSection(context, theme),
+                    ),
                   ],
                 ),
               ),
