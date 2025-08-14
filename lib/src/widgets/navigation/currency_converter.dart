@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/currency_model.dart';
+import '../../config/flexible_widget_config.dart';
 
 /// A widget for currency conversion and display
 class CurrencyConverter extends StatefulWidget {
@@ -19,6 +20,7 @@ class CurrencyConverter extends StatefulWidget {
     this.borderRadius,
     this.padding,
     this.compact = false,
+  this.flexibleConfig,
   });
 
   /// Amount to convert
@@ -63,6 +65,11 @@ class CurrencyConverter extends StatefulWidget {
   /// Whether to use compact layout
   final bool compact;
 
+  /// Flexible configuration (currencyConverter.*) keys: backgroundColor, borderRadius,
+  /// padding, compact, showDropdown, showSymbol, showCode, decimalPlaces, headerText,
+  /// fromLabel, toLabel, iconColor, amountStyle, convertedAmountStyle
+  final FlexibleWidgetConfig? flexibleConfig;
+
   @override
   State<CurrencyConverter> createState() => _CurrencyConverterState();
 }
@@ -89,32 +96,60 @@ class _CurrencyConverterState extends State<CurrencyConverter> {
     final theme = Theme.of(context);
     final convertedAmount = _convertAmount();
 
-    if (widget.compact) {
-      return _buildCompactView(theme, convertedAmount);
+    T _cfg<T>(String key, T fallback) {
+      final fc = widget.flexibleConfig;
+      if (fc != null) {
+        if (fc.has('currencyConverter.' + key)) { try { return fc.get<T>('currencyConverter.' + key, fallback); } catch (_) {} }
+        if (fc.has(key)) { try { return fc.get<T>(key, fallback); } catch (_) {} }
+      }
+      return fallback;
     }
 
-    return Container(
-      padding: widget.padding ?? const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: widget.backgroundColor ?? theme.colorScheme.surface,
-        borderRadius: widget.borderRadius ?? BorderRadius.circular(8),
-        border: Border.all(
-          color: theme.colorScheme.outline.withValues(alpha: 0.2),
+    final compact = _cfg<bool>('compact', widget.compact);
+    final showDropdown = _cfg<bool>('showDropdown', widget.showDropdown);
+    final showSymbol = _cfg<bool>('showSymbol', widget.showSymbol);
+    final showCode = _cfg<bool>('showCode', widget.showCode);
+    final decimalPlaces = _cfg<int>('decimalPlaces', widget.decimalPlaces);
+    final padding = widget.padding ?? _cfg<EdgeInsets>('padding', const EdgeInsets.all(12));
+    final bgColor = widget.backgroundColor ?? _cfg<Color>('backgroundColor', theme.colorScheme.surface);
+    final borderRadius = widget.borderRadius ?? _cfg<BorderRadius>('borderRadius', BorderRadius.circular(8));
+    final headerText = _cfg<String>('headerText', 'Currency Converter');
+    final fromLabel = _cfg<String>('fromLabel', 'From');
+    final toLabel = _cfg<String>('toLabel', 'To');
+    final iconColor = _cfg<Color>('iconColor', theme.colorScheme.primary);
+    final amountStyle = widget.style ?? _cfg<TextStyle>('amountStyle', theme.textTheme.bodyMedium ?? const TextStyle());
+    final convertedStyle = _cfg<TextStyle>('convertedAmountStyle', amountStyle.copyWith(fontWeight: FontWeight.bold, color: theme.colorScheme.primary));
+
+    _currentDecimalPlaces = decimalPlaces; // override for this build
+
+    Widget out;
+    if (compact) {
+      out = _buildCompactView(theme, convertedAmount, showDropdown, showSymbol, showCode, amountStyle);
+    } else {
+      out = Container(
+        padding: padding,
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: borderRadius,
+          border: Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.2)),
         ),
-      ),
-      child: _buildFullView(theme, convertedAmount),
-    );
+        child: _buildFullView(theme, convertedAmount, showDropdown, showSymbol, showCode, headerText, fromLabel, toLabel, iconColor, amountStyle, convertedStyle),
+      );
+    }
+    return out;
   }
 
-  Widget _buildCompactView(ThemeData theme, double convertedAmount) {
+  int? _currentDecimalPlaces;
+
+  Widget _buildCompactView(ThemeData theme, double convertedAmount, bool showDropdown, bool showSymbol, bool showCode, TextStyle amountStyle) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
-          _formatAmount(convertedAmount),
-          style: widget.style ?? theme.textTheme.bodyMedium,
+          _formatAmount(convertedAmount, showSymbol: showSymbol, showCode: showCode),
+          style: amountStyle,
         ),
-        if (widget.showDropdown && widget.availableCurrencies.isNotEmpty) ...[
+        if (showDropdown && widget.availableCurrencies.isNotEmpty) ...[
           const SizedBox(width: 4),
           _buildCurrencyDropdown(theme, isCompact: true),
         ],
@@ -122,7 +157,7 @@ class _CurrencyConverterState extends State<CurrencyConverter> {
     );
   }
 
-  Widget _buildFullView(ThemeData theme, double convertedAmount) {
+  Widget _buildFullView(ThemeData theme, double convertedAmount, bool showDropdown, bool showSymbol, bool showCode, String headerText, String fromLabel, String toLabel, Color iconColor, TextStyle amountStyle, TextStyle convertedStyle) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -132,12 +167,12 @@ class _CurrencyConverterState extends State<CurrencyConverter> {
           children: [
             Icon(
               Icons.currency_exchange,
-              color: theme.colorScheme.primary,
+              color: iconColor,
               size: 20,
             ),
             const SizedBox(width: 8),
             Text(
-              'Currency Converter',
+              headerText,
               style: theme.textTheme.titleSmall?.copyWith(
                 fontWeight: FontWeight.w600,
               ),
@@ -162,7 +197,7 @@ class _CurrencyConverterState extends State<CurrencyConverter> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'From',
+                      fromLabel,
                       style: theme.textTheme.bodySmall?.copyWith(
                         color:
                             theme.colorScheme.onSurface.withValues(alpha: 0.6),
@@ -170,8 +205,7 @@ class _CurrencyConverterState extends State<CurrencyConverter> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      _formatAmount(widget.amount,
-                          currency: widget.fromCurrency),
+                      _formatAmount(widget.amount, currency: widget.fromCurrency, showSymbol: showSymbol, showCode: showCode),
                       style: theme.textTheme.bodyLarge?.copyWith(
                         fontWeight: FontWeight.w500,
                       ),
@@ -232,26 +266,22 @@ class _CurrencyConverterState extends State<CurrencyConverter> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'To',
+                      toLabel,
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.primary,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      _formatAmount(convertedAmount),
-                      style:
-                          (widget.style ?? theme.textTheme.bodyLarge)?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.primary,
-                      ),
+                      _formatAmount(convertedAmount, showSymbol: showSymbol, showCode: showCode),
+                      style: convertedStyle,
                     ),
                   ],
                 ),
               ),
 
               // Currency dropdown
-              if (widget.showDropdown && widget.availableCurrencies.isNotEmpty)
+              if (showDropdown && widget.availableCurrencies.isNotEmpty)
                 _buildCurrencyDropdown(theme)
               else
                 Column(
@@ -350,9 +380,16 @@ class _CurrencyConverterState extends State<CurrencyConverter> {
     return toRate / fromRate;
   }
 
-  String _formatAmount(double amount, {CurrencyModel? currency}) {
+  String _formatAmount(double amount, {CurrencyModel? currency, bool? showSymbol, bool? showCode}) {
     final curr = currency ?? _currentCurrency;
-    return curr.formatAmount(amount);
+    final decimals = _currentDecimalPlaces ?? widget.decimalPlaces;
+    final symbol = (showSymbol ?? widget.showSymbol) ? curr.symbol : '';
+    final code = (showCode ?? widget.showCode) ? curr.code : '';
+    final base = amount.toStringAsFixed(decimals);
+    if (symbol.isNotEmpty && code.isNotEmpty) return '$symbol$base $code';
+    if (symbol.isNotEmpty) return '$symbol$base';
+    if (code.isNotEmpty) return '$base $code';
+    return base;
   }
 }
 

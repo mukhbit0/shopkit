@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../models/address_model.dart';
 import '../../models/cart_model.dart';
+import '../../config/flexible_widget_config.dart';
 
 /// A widget for calculating shipping costs
 class ShippingCalculator extends StatefulWidget {
@@ -16,6 +17,7 @@ class ShippingCalculator extends StatefulWidget {
     this.backgroundColor,
     this.borderRadius,
     this.padding,
+  this.flexibleConfig,
   });
 
   /// Callback when shipping is calculated
@@ -44,6 +46,12 @@ class ShippingCalculator extends StatefulWidget {
 
   /// Internal padding
   final EdgeInsets? padding;
+
+  /// Flexible configuration (shippingCalc.*) keys:
+  ///  backgroundColor, borderRadius, padding, showAddressForm, showShippingMethods,
+  ///  calculateButtonLabel, headerText, addressHeaderText, methodsHeaderText,
+  ///  showEstimatedDelivery, loadingIndicatorSize (double), enableAnimations
+  final FlexibleWidgetConfig? flexibleConfig;
 
   @override
   State<ShippingCalculator> createState() => _ShippingCalculatorState();
@@ -88,11 +96,31 @@ class _ShippingCalculatorState extends State<ShippingCalculator> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
+    T _cfg<T>(String key, T fallback) {
+      final fc = widget.flexibleConfig;
+      if (fc != null) {
+        if (fc.has('shippingCalc.' + key)) { try { return fc.get<T>('shippingCalc.' + key, fallback); } catch (_) {} }
+        if (fc.has(key)) { try { return fc.get<T>(key, fallback); } catch (_) {} }
+      }
+      return fallback;
+    }
+
+    final padding = widget.padding ?? _cfg<EdgeInsets>('padding', const EdgeInsets.all(16));
+    final bgColor = widget.backgroundColor ?? _cfg<Color>('backgroundColor', colorScheme.surface);
+    final borderRadius = widget.borderRadius ?? _cfg<BorderRadius>('borderRadius', BorderRadius.circular(12));
+    final showAddressForm = _cfg<bool>('showAddressForm', widget.showAddressForm);
+    final showShippingMethods = _cfg<bool>('showShippingMethods', widget.showShippingMethods);
+    final calcLabel = _cfg<String>('calculateButtonLabel', 'Calculate Shipping');
+    final headerText = _cfg<String>('headerText', 'Shipping Calculator');
+    final addressHeaderText = _cfg<String>('addressHeaderText', 'Shipping Address');
+    final methodsHeaderText = _cfg<String>('methodsHeaderText', 'Shipping Methods');
+    final loadingSize = _cfg<double>('loadingIndicatorSize', 20);
+
     return Container(
-      padding: widget.padding ?? const EdgeInsets.all(16),
+      padding: padding,
       decoration: BoxDecoration(
-        color: widget.backgroundColor ?? colorScheme.surface,
-        borderRadius: widget.borderRadius ?? BorderRadius.circular(12),
+        color: bgColor,
+        borderRadius: borderRadius,
         border: Border.all(color: colorScheme.outline.withValues(alpha: 0.2)),
       ),
       child: Form(
@@ -102,7 +130,7 @@ class _ShippingCalculatorState extends State<ShippingCalculator> {
           children: [
             // Header
             Text(
-              'Shipping Calculator',
+              headerText,
               style: theme.textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
@@ -111,8 +139,8 @@ class _ShippingCalculatorState extends State<ShippingCalculator> {
             const SizedBox(height: 16),
 
             // Address form
-            if (widget.showAddressForm) ...[
-              _buildAddressForm(theme),
+            if (showAddressForm) ...[
+              _buildAddressForm(theme, addressHeaderText),
               const SizedBox(height: 16),
             ],
 
@@ -122,12 +150,12 @@ class _ShippingCalculatorState extends State<ShippingCalculator> {
               child: ElevatedButton(
                 onPressed: _isCalculating ? null : _calculateShipping,
                 child: _isCalculating
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
+                    ? SizedBox(
+                        height: loadingSize,
+                        width: loadingSize,
+                        child: const CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Text('Calculate Shipping'),
+                    : Text(calcLabel),
               ),
             ),
 
@@ -162,9 +190,9 @@ class _ShippingCalculatorState extends State<ShippingCalculator> {
             ],
 
             // Shipping methods
-            if (widget.showShippingMethods && _availableMethods.isNotEmpty) ...[
+            if (showShippingMethods && _availableMethods.isNotEmpty) ...[
               const SizedBox(height: 16),
-              _buildShippingMethods(theme),
+              _buildShippingMethods(theme, methodsHeaderText),
             ],
           ],
         ),
@@ -172,12 +200,12 @@ class _ShippingCalculatorState extends State<ShippingCalculator> {
     );
   }
 
-  Widget _buildAddressForm(ThemeData theme) {
+  Widget _buildAddressForm(ThemeData theme, String addressHeaderText) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Shipping Address',
+          addressHeaderText,
           style: theme.textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.w600,
           ),
@@ -286,12 +314,12 @@ class _ShippingCalculatorState extends State<ShippingCalculator> {
     );
   }
 
-  Widget _buildShippingMethods(ThemeData theme) {
+  Widget _buildShippingMethods(ThemeData theme, String methodsHeaderText) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Shipping Methods',
+          methodsHeaderText,
           style: theme.textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.w600,
           ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../config/flexible_widget_config.dart';
 import '../../models/product_model.dart';
 import 'product_card.dart';
 
@@ -22,6 +23,7 @@ class ProductRecommendation extends StatelessWidget {
     this.borderRadius,
     this.cardAspectRatio = 0.75,
     this.cardElevation = 2.0,
+  this.flexibleConfig,
   });
 
   /// List of recommended products
@@ -71,6 +73,7 @@ class ProductRecommendation extends StatelessWidget {
 
   /// Elevation for product cards
   final double cardElevation;
+  final FlexibleWidgetConfig? flexibleConfig;
 
   @override
   Widget build(BuildContext context) {
@@ -84,31 +87,55 @@ class ProductRecommendation extends StatelessWidget {
     final displayProducts =
         itemCount != null ? products.take(itemCount!).toList() : products;
 
+    T _cfg<T>(String key, T fallback) {
+      final fc = flexibleConfig;
+      if (fc != null) {
+        if (fc.has('recommendation.' + key)) { try { return fc.get<T>('recommendation.' + key, fallback); } catch (_) {} }
+        if (fc.has(key)) { try { return fc.get<T>(key, fallback); } catch (_) {} }
+      }
+      return fallback;
+    }
+
+    final resolvedPadding = _cfg<EdgeInsets>('padding', padding ?? const EdgeInsets.all(16));
+    final bg = _cfg<Color>('backgroundColor', backgroundColor ?? colorScheme.surface);
+    final radius = _cfg<BorderRadius>('borderRadius', borderRadius ?? BorderRadius.circular(12));
+    final spacingVal = _cfg<double>('spacing', spacing);
+    final scrollable = _cfg<bool>('isScrollable', isScrollable);
+    final showViewAll = _cfg<bool>('showViewAllButton', showViewAllButton);
+    final sectionTitle = _cfg<String>('title', title);
+    final sectionSubtitle = _cfg<String>('subtitle', subtitle ?? '');
+    final cardAspect = _cfg<double>('cardAspectRatio', cardAspectRatio);
+    final cardElev = _cfg<double>('cardElevation', cardElevation);
+    final itemCountOverride = _cfg<int>('itemCount', itemCount ?? -1);
+    final effectiveProducts = itemCountOverride > -1
+        ? displayProducts.take(itemCountOverride).toList()
+        : displayProducts;
+
     return Container(
-      padding: padding ?? const EdgeInsets.all(16),
+      padding: resolvedPadding,
       decoration: BoxDecoration(
-        color: backgroundColor ?? colorScheme.surface,
-        borderRadius: borderRadius ?? BorderRadius.circular(12),
+        color: bg,
+        borderRadius: radius,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header
-          _buildHeader(theme),
+          _buildHeader(theme, sectionTitle, sectionSubtitle, showViewAll),
 
           const SizedBox(height: 16),
 
           // Products
-          if (isScrollable)
-            _buildScrollableProducts(displayProducts, theme)
+      if (scrollable)
+    _buildScrollableProducts(effectiveProducts, theme, spacingVal, cardAspect, cardElev)
           else
-            _buildGridProducts(displayProducts, theme, context),
+    _buildGridProducts(effectiveProducts, theme, context, spacingVal, cardAspect, cardElev),
         ],
       ),
     );
   }
 
-  Widget _buildHeader(ThemeData theme) {
+  Widget _buildHeader(ThemeData theme, String titleText, String subtitleText, bool showViewAll) {
     return Row(
       children: [
         Expanded(
@@ -116,16 +143,16 @@ class ProductRecommendation extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                title,
+        titleText,
                 style: theme.textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              if (subtitle != null)
+      if (subtitleText.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.only(top: 4),
                   child: Text(
-                    subtitle!,
+        subtitleText,
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                     ),
@@ -134,7 +161,7 @@ class ProductRecommendation extends StatelessWidget {
             ],
           ),
         ),
-        if (showViewAllButton && onViewAllTap != null)
+    if (showViewAll && onViewAllTap != null)
           TextButton(
             onPressed: onViewAllTap,
             child: const Text('View All'),
@@ -143,10 +170,9 @@ class ProductRecommendation extends StatelessWidget {
     );
   }
 
-  Widget _buildScrollableProducts(
-      List<ProductModel> products, ThemeData theme) {
+  Widget _buildScrollableProducts(List<ProductModel> products, ThemeData theme, double spacing, double aspect, double elevation) {
     return SizedBox(
-      height: 280, // Fixed height for horizontal scroll
+  height: 280,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: products.length,
@@ -154,16 +180,15 @@ class ProductRecommendation extends StatelessWidget {
         itemBuilder: (context, index) {
           final product = products[index];
           return SizedBox(
-            width: 200, // Fixed width for consistency
-            child: _buildProductCard(product, theme),
+    width: 200,
+    child: _buildProductCard(product, theme, aspect, elevation),
           );
         },
       ),
     );
   }
 
-  Widget _buildGridProducts(
-      List<ProductModel> products, ThemeData theme, BuildContext context) {
+  Widget _buildGridProducts(List<ProductModel> products, ThemeData theme, BuildContext context, double spacing, double aspect, double elevation) {
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -171,19 +196,19 @@ class ProductRecommendation extends StatelessWidget {
         crossAxisCount: _getCrossAxisCount(BoxConstraints(
           maxWidth: MediaQuery.of(context).size.width,
         )),
-        childAspectRatio: cardAspectRatio,
+    childAspectRatio: aspect,
         crossAxisSpacing: spacing,
         mainAxisSpacing: spacing,
       ),
       itemCount: products.length,
       itemBuilder: (context, index) {
         final product = products[index];
-        return _buildProductCard(product, theme);
+    return _buildProductCard(product, theme, aspect, elevation);
       },
     );
   }
 
-  Widget _buildProductCard(ProductModel product, ThemeData theme) {
+  Widget _buildProductCard(ProductModel product, ThemeData theme, double aspect, double elevation) {
     return ProductCard(
       product: product,
       onTap: () => onProductTap?.call(product),

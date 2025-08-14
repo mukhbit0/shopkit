@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../config/flexible_widget_config.dart';
 
 /// A widget that shows a "back to top" button when scrolling
 class BackToTop extends StatefulWidget {
@@ -20,55 +21,28 @@ class BackToTop extends StatefulWidget {
     this.showProgressIndicator = false,
     this.curve = Curves.easeOut,
     this.child,
+    this.config,
+    this.buttonBuilder,
   });
 
-  /// Scroll controller to monitor (if null, will find nearest Scrollable)
   final ScrollController? scrollController;
-
-  /// Offset after which to show the button
   final double showAfterOffset;
-
-  /// Animation duration for show/hide
   final Duration animationDuration;
-
-  /// Duration for scroll to top animation
   final Duration scrollDuration;
-
-  /// Position of the button
   final BackToTopPosition position;
-
-  /// Margin from edges
   final EdgeInsets margin;
-
-  /// Size of the button
   final double buttonSize;
-
-  /// Size of the icon
   final double iconSize;
-
-  /// Background color of the button
   final Color? backgroundColor;
-
-  /// Foreground color of the button
   final Color? foregroundColor;
-
-  /// Icon to display
   final IconData icon;
-
-  /// Tooltip text
   final String tooltip;
-
-  /// Custom onPressed callback
   final VoidCallback? onPressed;
-
-  /// Whether to show progress indicator
   final bool showProgressIndicator;
-
-  /// Animation curve
   final Curve curve;
-
-  /// Child widget to wrap
   final Widget? child;
+  final FlexibleWidgetConfig? config;
+  final Widget Function(BuildContext, VoidCallback, double, bool)? buttonBuilder;
 
   @override
   State<BackToTop> createState() => _BackToTopState();
@@ -78,43 +52,28 @@ class _BackToTopState extends State<BackToTop> with TickerProviderStateMixin {
   ScrollController? _scrollController;
   bool _isVisible = false;
   double _scrollProgress = 0.0;
-
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
   late Animation<double> _fadeAnimation;
+  late FlexibleWidgetConfig _config;
 
   @override
   void initState() {
     super.initState();
-
-    _animationController = AnimationController(
-      duration: widget.animationDuration,
-      vsync: this,
-    );
-
-    _scaleAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: widget.curve,
-    ));
-
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: widget.curve,
-    ));
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _attachScrollController();
+    _animationController = AnimationController(duration: widget.animationDuration, vsync: this);
+    _scaleAnimation = Tween(begin: 0.0, end: 1.0).animate(CurvedAnimation(parent: _animationController, curve: widget.curve));
+    _fadeAnimation = Tween(begin: 0.0, end: 1.0).animate(CurvedAnimation(parent: _animationController, curve: widget.curve));
+    _config = widget.config ?? FlexibleWidgetConfig.forWidget('back_to_top', context: context, overrides: {
+      'showAfterOffset': widget.showAfterOffset,
+      'buttonSize': widget.buttonSize,
+      'iconSize': widget.iconSize,
+      'tooltip': widget.tooltip,
     });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _attachScrollController());
   }
 
   @override
-  void didUpdateWidget(BackToTop oldWidget) {
+  void didUpdateWidget(covariant BackToTop oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.scrollController != oldWidget.scrollController) {
       _detachScrollController();
@@ -130,34 +89,22 @@ class _BackToTopState extends State<BackToTop> with TickerProviderStateMixin {
   }
 
   void _attachScrollController() {
-    _scrollController = widget.scrollController ??
-        Scrollable.maybeOf(context)?.widget.controller;
-
-    if (_scrollController != null) {
-      _scrollController!.addListener(_onScroll);
-      _onScroll(); // Check initial state
-    }
+    _scrollController = widget.scrollController ?? Scrollable.maybeOf(context)?.widget.controller;
+    _scrollController?.addListener(_onScroll);
+    _onScroll();
   }
 
-  void _detachScrollController() {
-    _scrollController?.removeListener(_onScroll);
-  }
+  void _detachScrollController() => _scrollController?.removeListener(_onScroll);
 
   void _onScroll() {
-    if (_scrollController == null || !mounted) return;
-
+    if (!mounted || _scrollController == null) return;
     final offset = _scrollController!.offset;
-    final maxScroll = _scrollController!.position.maxScrollExtent;
-
-    // Calculate progress
-    final progress = maxScroll > 0 ? (offset / maxScroll).clamp(0.0, 1.0) : 0.0;
-
-    // Check visibility
-    final shouldShow = offset > widget.showAfterOffset;
-
+    final max = _scrollController!.position.maxScrollExtent;
+    final progress = max > 0 ? (offset / max).clamp(0.0, 1.0) : 0.0;
+    final threshold = _config.get<double>('showAfterOffset', widget.showAfterOffset);
+    final shouldShow = offset > threshold;
     setState(() {
       _scrollProgress = progress;
-
       if (shouldShow != _isVisible) {
         _isVisible = shouldShow;
         if (_isVisible) {
@@ -170,101 +117,66 @@ class _BackToTopState extends State<BackToTop> with TickerProviderStateMixin {
   }
 
   void _scrollToTop() {
-    if (widget.onPressed != null) {
-      widget.onPressed!();
-      return;
-    }
-
-    _scrollController?.animateTo(
-      0,
-      duration: widget.scrollDuration,
-      curve: widget.curve,
-    );
+    if (widget.onPressed != null) return widget.onPressed!();
+    _scrollController?.animateTo(0, duration: widget.scrollDuration, curve: widget.curve);
   }
 
   @override
   Widget build(BuildContext context) {
-    if (widget.child == null) {
-      return _buildButton(context);
-    }
-
-    return Stack(
-      children: [
-        widget.child!,
-        _buildPositionedButton(context),
-      ],
-    );
+    if (widget.child == null) return _buildButton(context);
+    return Stack(children: [widget.child!, _buildPositionedButton(context)]);
   }
 
-  Widget _buildPositionedButton(BuildContext context) {
-    return Positioned(
-      top: _getTop(),
-      bottom: _getBottom(),
-      left: _getLeft(),
-      right: _getRight(),
-      child: _buildButton(context),
-    );
-  }
+  Widget _buildPositionedButton(BuildContext context) => Positioned(
+        top: _getTop(),
+        bottom: _getBottom(),
+        left: _getLeft(),
+        right: _getRight(),
+        child: _buildButton(context),
+      );
 
   Widget _buildButton(BuildContext context) {
     final theme = Theme.of(context);
-
+    if (widget.buttonBuilder != null) {
+      return widget.buttonBuilder!(context, _scrollToTop, _scrollProgress, _isVisible);
+    }
     return AnimatedBuilder(
       animation: _animationController,
-      builder: (context, child) {
-        return Transform.scale(
-          scale: _scaleAnimation.value,
-          child: Opacity(
-            opacity: _fadeAnimation.value,
-            child: FloatingActionButton(
-              onPressed: _scrollToTop,
-              backgroundColor:
-                  widget.backgroundColor ?? theme.colorScheme.primary,
-              foregroundColor:
-                  widget.foregroundColor ?? theme.colorScheme.onPrimary,
-              tooltip: widget.tooltip,
-              mini: widget.buttonSize < 56,
-              child: widget.showProgressIndicator
-                  ? _buildProgressIndicator(theme)
-                  : Icon(
-                      widget.icon,
-                      size: widget.iconSize,
-                    ),
-            ),
+      builder: (_, __) => Transform.scale(
+        scale: _scaleAnimation.value,
+        child: Opacity(
+          opacity: _fadeAnimation.value,
+          child: FloatingActionButton(
+            onPressed: _scrollToTop,
+            backgroundColor: widget.backgroundColor ?? _config.getColor('backgroundColor', theme.colorScheme.primary),
+            foregroundColor: widget.foregroundColor ?? _config.getColor('foregroundColor', theme.colorScheme.onPrimary),
+            tooltip: _config.get<String>('tooltip', widget.tooltip),
+            mini: _config.get<double>('buttonSize', widget.buttonSize) < 56,
+            child: widget.showProgressIndicator
+                ? _buildProgressIndicator(theme)
+                : Icon(widget.icon, size: _config.get<double>('iconSize', widget.iconSize)),
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 
-  Widget _buildProgressIndicator(ThemeData theme) {
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        // Progress ring
-        SizedBox(
-          width: widget.iconSize + 8,
-          height: widget.iconSize + 8,
-          child: CircularProgressIndicator(
-            value: _scrollProgress,
-            strokeWidth: 2,
-            backgroundColor:
-                (widget.foregroundColor ?? theme.colorScheme.onPrimary)
-                    .withValues(alpha: 0.3),
-            valueColor: AlwaysStoppedAnimation<Color>(
-              widget.foregroundColor ?? theme.colorScheme.onPrimary,
+  Widget _buildProgressIndicator(ThemeData theme) => Stack(
+        alignment: Alignment.center,
+        children: [
+          SizedBox(
+            width: _config.get<double>('iconSize', widget.iconSize) + 8,
+            height: _config.get<double>('iconSize', widget.iconSize) + 8,
+            child: CircularProgressIndicator(
+              value: _scrollProgress,
+              strokeWidth: 2,
+              backgroundColor: (widget.foregroundColor ?? theme.colorScheme.onPrimary).withValues(alpha: 0.3),
+              valueColor: AlwaysStoppedAnimation<Color>(widget.foregroundColor ?? theme.colorScheme.onPrimary),
             ),
           ),
-        ),
-
-        // Icon
-        Icon(
-          widget.icon,
-          size: widget.iconSize * 0.7,
-        ),
-      ],
-    );
-  }
+          Icon(widget.icon, size: _config.get<double>('iconSize', widget.iconSize) * 0.7),
+        ],
+      );
 
   double? _getTop() {
     switch (widget.position) {
@@ -293,9 +205,6 @@ class _BackToTopState extends State<BackToTop> with TickerProviderStateMixin {
       case BackToTopPosition.topLeft:
       case BackToTopPosition.bottomLeft:
         return widget.margin.left;
-      case BackToTopPosition.topCenter:
-      case BackToTopPosition.bottomCenter:
-        return null;
       default:
         return null;
     }
@@ -306,9 +215,6 @@ class _BackToTopState extends State<BackToTop> with TickerProviderStateMixin {
       case BackToTopPosition.topRight:
       case BackToTopPosition.bottomRight:
         return widget.margin.right;
-      case BackToTopPosition.topCenter:
-      case BackToTopPosition.bottomCenter:
-        return null;
       default:
         return null;
     }
@@ -343,6 +249,7 @@ class AdvancedBackToTop extends StatefulWidget {
     this.customBuilder,
     this.onPressed,
     this.child,
+    this.config,
   });
 
   /// Scroll controller to monitor
@@ -388,13 +295,13 @@ class AdvancedBackToTop extends StatefulWidget {
 
   /// Child widget to wrap
   final Widget? child;
+  final FlexibleWidgetConfig? config;
 
   @override
   State<AdvancedBackToTop> createState() => _AdvancedBackToTopState();
 }
 
-class _AdvancedBackToTopState extends State<AdvancedBackToTop>
-    with TickerProviderStateMixin {
+class _AdvancedBackToTopState extends State<AdvancedBackToTop> with TickerProviderStateMixin {
   ScrollController? _scrollController;
   bool _isVisible = false;
   double _scrollProgress = 0.0;
@@ -404,7 +311,8 @@ class _AdvancedBackToTopState extends State<AdvancedBackToTop>
   late Animation<double> _slideAnimation;
   late Animation<double> _pulseAnimation;
 
-  @override
+  late FlexibleWidgetConfig _config;
+
   void initState() {
     super.initState();
 
@@ -434,9 +342,13 @@ class _AdvancedBackToTopState extends State<AdvancedBackToTop>
       curve: Curves.easeInOut,
     ));
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _attachScrollController();
+    _config = widget.config ?? FlexibleWidgetConfig.forWidget('advanced_back_to_top', context: context, overrides: {
+      'showAfterOffset': widget.showAfterOffset,
+      'showLabel': widget.showLabel,
+      'label': widget.label,
+      'showProgress': widget.showProgress,
     });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _attachScrollController());
   }
 
   @override
@@ -468,7 +380,8 @@ class _AdvancedBackToTopState extends State<AdvancedBackToTop>
     final maxScroll = _scrollController!.position.maxScrollExtent;
 
     final progress = maxScroll > 0 ? (offset / maxScroll).clamp(0.0, 1.0) : 0.0;
-    final shouldShow = offset > widget.showAfterOffset;
+  final threshold = _config.get<double>('showAfterOffset', widget.showAfterOffset);
+  final shouldShow = offset > threshold;
 
     setState(() {
       _scrollProgress = progress;
@@ -552,7 +465,7 @@ class _AdvancedBackToTopState extends State<AdvancedBackToTop>
 
   Widget _buildButton(BuildContext context) {
     if (widget.customBuilder != null) {
-      return widget.customBuilder!(context, _scrollToTop, _scrollProgress);
+  return widget.customBuilder!(context, _scrollToTop, _scrollProgress);
     }
 
     return AnimatedBuilder(
@@ -575,17 +488,16 @@ class _AdvancedBackToTopState extends State<AdvancedBackToTop>
           onPressed: _scrollToTop,
           icon: Icon(
             Icons.keyboard_arrow_up,
-            color: theme.colorScheme.onPrimary,
+            color: _config.getColor('iconColor', theme.colorScheme.onPrimary),
           ),
-          label:
-              widget.showLabel ? Text(widget.label) : const SizedBox.shrink(),
-          backgroundColor: theme.colorScheme.primary,
+          label: _config.get<bool>('showLabel', widget.showLabel) ? Text(_config.get<String>('label', widget.label)) : const SizedBox.shrink(),
+          backgroundColor: _config.getColor('backgroundColor', theme.colorScheme.primary),
         );
 
       case BackToTopStyle.minimal:
         return Container(
           decoration: BoxDecoration(
-            color: theme.colorScheme.surface.withValues(alpha: 0.9),
+            color: _config.getColor('minimalBackgroundColor', theme.colorScheme.surface.withValues(alpha: 0.9)),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
               color: theme.colorScheme.outline.withValues(alpha: 0.2),
@@ -600,7 +512,7 @@ class _AdvancedBackToTopState extends State<AdvancedBackToTop>
 
       case BackToTopStyle.pill:
         return Material(
-          color: theme.colorScheme.primary,
+          color: _config.getColor('pillBackgroundColor', theme.colorScheme.primary),
           borderRadius: BorderRadius.circular(25),
           elevation: 4,
           child: InkWell(
@@ -611,19 +523,10 @@ class _AdvancedBackToTopState extends State<AdvancedBackToTop>
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(
-                    Icons.keyboard_arrow_up,
-                    color: theme.colorScheme.onPrimary,
-                  ),
-                  if (widget.showLabel) ...[
+                  Icon(Icons.keyboard_arrow_up, color: _config.getColor('pillIconColor', theme.colorScheme.onPrimary)),
+                  if (_config.get<bool>('showLabel', widget.showLabel)) ...[
                     const SizedBox(width: 8),
-                    Text(
-                      widget.label,
-                      style: TextStyle(
-                        color: theme.colorScheme.onPrimary,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
+                    Text(_config.get<String>('label', widget.label), style: TextStyle(color: _config.getColor('pillLabelColor', theme.colorScheme.onPrimary), fontWeight: FontWeight.w500)),
                   ],
                 ],
               ),

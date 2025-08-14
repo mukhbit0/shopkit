@@ -3,6 +3,7 @@ import '../../models/cart_model.dart';
 import '../../models/address_model.dart';
 import '../../models/payment_model.dart';
 import '../../theme/ecommerce_theme.dart';
+import '../../config/flexible_widget_config.dart';
 
 /// Enum for checkout steps
 enum CheckoutStep {
@@ -47,6 +48,11 @@ class CheckoutStepper extends StatefulWidget {
     this.stepActiveColor,
     this.stepCompletedColor,
     this.stepInactiveColor,
+  this.config,
+  this.progressBarBuilder,
+  this.stepCircleBuilder,
+  this.navigationBuilder,
+  this.stepContentBuilder,
   });
 
   /// Cart containing items to checkout
@@ -94,6 +100,21 @@ class CheckoutStepper extends StatefulWidget {
   /// Custom inactive step color
   final Color? stepInactiveColor;
 
+  /// Flexible configuration object for advanced customization
+  final FlexibleWidgetConfig? config;
+
+  /// Optional builder to override the entire progress bar
+  final Widget Function(BuildContext context, List<CheckoutStepModel> steps, CheckoutStep currentStep, void Function(CheckoutStep) goToStep)? progressBarBuilder;
+
+  /// Optional builder to override individual step circle
+  final Widget Function(BuildContext context, CheckoutStepModel step, CheckoutStep currentStep, void Function(CheckoutStep) goToStep)? stepCircleBuilder;
+
+  /// Optional builder for navigation buttons section
+  final Widget Function(BuildContext context, CheckoutStep currentStep, VoidCallback next, VoidCallback previous, bool canProceed, bool isProcessing)? navigationBuilder;
+
+  /// Optional builder for step content (per step)
+  final Widget Function(BuildContext context, CheckoutStep step, ECommerceTheme theme, Widget defaultContent)? stepContentBuilder;
+
   @override
   State<CheckoutStepper> createState() => _CheckoutStepperState();
 }
@@ -105,6 +126,9 @@ class _CheckoutStepperState extends State<CheckoutStepper> {
   PaymentMethodModel? _selectedPaymentMethod;
   Map<String, dynamic>? _selectedShippingOption;
   bool _isProcessing = false;
+  late FlexibleWidgetConfig _config;
+
+  T _cfg<T>(String key, T fallback) => _config.get<T>(key, fallback);
 
   @override
   void initState() {
@@ -113,6 +137,14 @@ class _CheckoutStepperState extends State<CheckoutStepper> {
     _selectedShippingAddress = widget.shippingAddress;
     _selectedBillingAddress = widget.billingAddress;
     _selectedPaymentMethod = widget.paymentMethod;
+    _config = widget.config ?? FlexibleWidgetConfig.forWidget('checkout_stepper', context: context, overrides: {
+      if (widget.showProgressBar != true) 'showProgressBar': widget.showProgressBar,
+      'allowStepNavigation': widget.allowStepNavigation,
+      if (widget.backgroundColor != null) 'backgroundColor': widget.backgroundColor!,
+      if (widget.stepActiveColor != null) 'stepActiveColor': widget.stepActiveColor!,
+      if (widget.stepCompletedColor != null) 'stepCompletedColor': widget.stepCompletedColor!,
+      if (widget.stepInactiveColor != null) 'stepInactiveColor': widget.stepInactiveColor!,
+    });
   }
 
   List<CheckoutStepModel> get _steps => [
@@ -224,12 +256,13 @@ class _CheckoutStepperState extends State<CheckoutStepper> {
 
     return Container(
       decoration: BoxDecoration(
-        color: widget.backgroundColor ?? theme.backgroundColor,
+  color: widget.backgroundColor ?? _config.getColor('backgroundColor', theme.backgroundColor),
       ),
       child: Column(
         children: [
           // Progress Bar
-          if (widget.showProgressBar) _buildProgressBar(theme),
+          if (_cfg<bool>('showProgressBar', widget.showProgressBar))
+            (widget.progressBarBuilder?.call(context, _steps, _currentStep, _goToStep) ?? _buildProgressBar(theme)),
 
           // Step Content
           Expanded(
@@ -284,16 +317,19 @@ class _CheckoutStepperState extends State<CheckoutStepper> {
   }
 
   Widget _buildStepCircle(CheckoutStepModel step, ECommerceTheme theme) {
+    if (widget.stepCircleBuilder != null) {
+      return widget.stepCircleBuilder!(context, step, _currentStep, _goToStep);
+    }
     Color backgroundColor;
     Color iconColor;
     Widget icon;
 
     if (step.isCompleted) {
-      backgroundColor = widget.stepCompletedColor ?? theme.successColor;
+  backgroundColor = widget.stepCompletedColor ?? _config.getColor('stepCompletedColor', theme.successColor);
       iconColor = Colors.white;
       icon = const Icon(Icons.check, size: 16, color: Colors.white);
     } else if (step.isActive) {
-      backgroundColor = widget.stepActiveColor ?? theme.primaryColor;
+  backgroundColor = widget.stepActiveColor ?? _config.getColor('stepActiveColor', theme.primaryColor);
       iconColor = Colors.white;
       icon = Text(
         '${_steps.indexOf(step) + 1}',
@@ -304,7 +340,7 @@ class _CheckoutStepperState extends State<CheckoutStepper> {
         ),
       );
     } else {
-      backgroundColor = widget.stepInactiveColor ?? theme.effectiveBorderColor;
+  backgroundColor = widget.stepInactiveColor ?? _config.getColor('stepInactiveColor', theme.effectiveBorderColor);
       iconColor = theme.onSurfaceColor.withValues(alpha: 0.5);
       icon = Text(
         '${_steps.indexOf(step) + 1}',
@@ -346,14 +382,15 @@ class _CheckoutStepperState extends State<CheckoutStepper> {
   }
 
   Widget _buildStepContent(ECommerceTheme theme) {
-    switch (_currentStep) {
-      case CheckoutStep.shipping:
-        return _buildShippingStep(theme);
-      case CheckoutStep.payment:
-        return _buildPaymentStep(theme);
-      case CheckoutStep.review:
-        return _buildReviewStep(theme);
+    final defaultContent = switch (_currentStep) {
+      CheckoutStep.shipping => _buildShippingStep(theme),
+      CheckoutStep.payment => _buildPaymentStep(theme),
+      CheckoutStep.review => _buildReviewStep(theme),
+    };
+    if (widget.stepContentBuilder != null) {
+      return widget.stepContentBuilder!(context, _currentStep, theme, defaultContent);
     }
+    return defaultContent;
   }
 
   Widget _buildShippingStep(ECommerceTheme theme) {
@@ -713,6 +750,16 @@ class _CheckoutStepperState extends State<CheckoutStepper> {
   }
 
   Widget _buildNavigationButtons(ECommerceTheme theme) {
+    if (widget.navigationBuilder != null) {
+      return widget.navigationBuilder!(
+        context,
+        _currentStep,
+        _nextStep,
+        _previousStep,
+        _canProceedToNextStep(),
+        _isProcessing,
+      );
+    }
     return Container(
       padding: EdgeInsets.all(theme.spacing),
       decoration: BoxDecoration(

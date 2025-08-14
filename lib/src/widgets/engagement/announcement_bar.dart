@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/announcement_model.dart';
 import '../../theme/ecommerce_theme.dart';
+import '../../config/flexible_widget_config.dart';
 
 /// Position options for announcement bar
 enum AnnouncementPosition {
@@ -25,6 +26,7 @@ class AnnouncementBar extends StatefulWidget {
     this.animationDuration,
     this.autoHide = false,
     this.autoHideDuration,
+  this.config,
   });
 
   /// Announcement data to display
@@ -66,6 +68,9 @@ class AnnouncementBar extends StatefulWidget {
   /// Duration before auto-hiding
   final Duration? autoHideDuration;
 
+  /// Optional flexible config (overrides individual params when provided)
+  final FlexibleWidgetConfig? config;
+
   @override
   State<AnnouncementBar> createState() => _AnnouncementBarState();
 }
@@ -80,8 +85,20 @@ class _AnnouncementBarState extends State<AnnouncementBar>
   void initState() {
     super.initState();
 
+    final cfg = widget.config ?? FlexibleWidgetConfig.forWidget(
+      'announcement_bar',
+      context: context,
+      overrides: {
+        if (widget.animationDuration != null)
+          'animationDuration': widget.animationDuration!.inMilliseconds,
+        if (widget.height != null) 'height': widget.height,
+      },
+    );
+
+    final animMs = cfg.get<int>('animationDuration', 300);
+
     _animationController = AnimationController(
-      duration: widget.animationDuration ?? const Duration(milliseconds: 300),
+      duration: Duration(milliseconds: animMs),
       vsync: this,
     );
 
@@ -100,12 +117,12 @@ class _AnnouncementBarState extends State<AnnouncementBar>
 
     // Auto-hide if enabled
     if (widget.autoHide || widget.announcement.autoHide) {
-      final duration = widget.autoHideDuration ??
+      final cfg = widget.config;
+      final autoHideMs = widget.autoHideDuration?.inMilliseconds ??
           (widget.announcement.autoHideDuration != null
-              ? Duration(seconds: widget.announcement.autoHideDuration!)
-              : const Duration(seconds: 5));
-
-      Future.delayed(duration, _dismiss);
+              ? widget.announcement.autoHideDuration! * 1000
+              : (cfg?.get<int>('autoHideDuration', 5000) ?? 5000));
+      Future.delayed(Duration(milliseconds: autoHideMs), _dismiss);
     }
   }
 
@@ -127,13 +144,14 @@ class _AnnouncementBarState extends State<AnnouncementBar>
   }
 
   Color _getBackgroundColor(ECommerceTheme theme) {
-    if (widget.backgroundColor != null) {
-      return widget.backgroundColor!;
+    final cfg = widget.config;
+    if (widget.backgroundColor != null) return widget.backgroundColor!;
+    if (cfg?.has('backgroundColor') == true) {
+      final dynamic val = cfg!.get<dynamic>('backgroundColor');
+      if (val is Color) return val;
     }
-
     if (widget.announcement.backgroundColor != null) {
-      return _parseColor(widget.announcement.backgroundColor!) ??
-          theme.primaryColor;
+      return _parseColor(widget.announcement.backgroundColor!) ?? theme.primaryColor;
     }
 
     switch (widget.announcement.type) {
@@ -154,20 +172,22 @@ class _AnnouncementBarState extends State<AnnouncementBar>
   }
 
   Color _getTextColor(ECommerceTheme theme) {
-    if (widget.textColor != null) {
-      return widget.textColor!;
+    final cfg = widget.config;
+    if (widget.textColor != null) return widget.textColor!;
+    if (cfg?.has('textColor') == true) {
+      final dynamic val = cfg!.get<dynamic>('textColor');
+      if (val is Color) return val;
     }
-
     if (widget.announcement.textColor != null) {
       return _parseColor(widget.announcement.textColor!) ?? Colors.white;
     }
-
     return Colors.white;
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = context.ecommerceTheme;
+    final cfg = widget.config;
     final backgroundColor = _getBackgroundColor(theme);
     final textColor = _getTextColor(theme);
     final showClose =
@@ -177,12 +197,15 @@ class _AnnouncementBarState extends State<AnnouncementBar>
       return const SizedBox.shrink();
     }
 
-    return SlideTransition(
+  return SlideTransition(
       position: _slideAnimation,
       child: Container(
         width: double.infinity,
         constraints: BoxConstraints(
-          minHeight: widget.height ?? 48,
+      minHeight: widget.height ??
+        (cfg?.has('minHeight') == true
+          ? (cfg?.get<double>('minHeight', 48) ?? 48)
+          : 48),
         ),
         decoration: BoxDecoration(
           color: backgroundColor,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/payment_model.dart';
+import '../../config/flexible_widget_config.dart';
 
 /// A widget for selecting payment methods
 class PaymentMethodSelector extends StatefulWidget {
@@ -15,6 +16,7 @@ class PaymentMethodSelector extends StatefulWidget {
     this.borderRadius,
     this.padding,
     this.itemSpacing = 12.0,
+  this.flexibleConfig,
   });
 
   /// List of available payment methods
@@ -47,6 +49,12 @@ class PaymentMethodSelector extends StatefulWidget {
   /// Spacing between payment method items
   final double itemSpacing;
 
+  /// Flexible configuration (namespaced paymentMethods.) keys:
+  ///  backgroundColor, borderRadius, padding, itemSpacing, showAddButton,
+  ///  allowMultipleSelection, headerText, addButtonLabel, emptyStateTitle,
+  ///  emptyStateSubtitle, enableAnimations
+  final FlexibleWidgetConfig? flexibleConfig;
+
   @override
   State<PaymentMethodSelector> createState() => _PaymentMethodSelectorState();
 }
@@ -74,11 +82,30 @@ class _PaymentMethodSelectorState extends State<PaymentMethodSelector> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
+    T _cfg<T>(String key, T fallback) {
+      final fc = widget.flexibleConfig;
+      if (fc != null) {
+        if (fc.has('paymentMethods.' + key)) { try { return fc.get<T>('paymentMethods.' + key, fallback); } catch (_) {} }
+        if (fc.has(key)) { try { return fc.get<T>(key, fallback); } catch (_) {} }
+      }
+      return fallback;
+    }
+
+    final padding = widget.padding ?? _cfg<EdgeInsets>('padding', const EdgeInsets.all(16));
+    final bgColor = widget.backgroundColor ?? _cfg<Color>('backgroundColor', colorScheme.surface);
+    final borderRadius = widget.borderRadius ?? _cfg<BorderRadius>('borderRadius', BorderRadius.circular(12));
+    final itemSpacing = _cfg<double>('itemSpacing', widget.itemSpacing);
+    final showAdd = _cfg<bool>('showAddButton', widget.showAddPaymentMethod);
+    final headerText = _cfg<String>('headerText', 'Payment Method');
+    final addLabel = _cfg<String>('addButtonLabel', 'Add');
+    final emptyTitle = _cfg<String>('emptyStateTitle', 'No Payment Methods');
+    final emptySubtitle = _cfg<String>('emptyStateSubtitle', 'Add a payment method to continue');
+
     return Container(
-      padding: widget.padding ?? const EdgeInsets.all(16),
+      padding: padding,
       decoration: BoxDecoration(
-        color: widget.backgroundColor ?? colorScheme.surface,
-        borderRadius: widget.borderRadius ?? BorderRadius.circular(12),
+        color: bgColor,
+        borderRadius: borderRadius,
         border: Border.all(color: colorScheme.outline.withValues(alpha: 0.2)),
       ),
       child: Column(
@@ -89,18 +116,17 @@ class _PaymentMethodSelectorState extends State<PaymentMethodSelector> {
             children: [
               Expanded(
                 child: Text(
-                  'Payment Method',
+                  headerText,
                   style: theme.textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
-              if (widget.showAddPaymentMethod &&
-                  widget.onAddPaymentMethod != null)
+              if (showAdd && widget.onAddPaymentMethod != null)
                 TextButton.icon(
                   onPressed: widget.onAddPaymentMethod,
                   icon: const Icon(Icons.add, size: 18),
-                  label: const Text('Add'),
+                  label: Text(addLabel),
                 ),
             ],
           ),
@@ -109,12 +135,12 @@ class _PaymentMethodSelectorState extends State<PaymentMethodSelector> {
 
           // Payment methods list
           if (widget.paymentMethods.isEmpty)
-            _buildEmptyState(theme)
+            _buildEmptyState(theme, emptyTitle, emptySubtitle)
           else
             Column(
               children: widget.paymentMethods
                   .map((method) => Padding(
-                        padding: EdgeInsets.only(bottom: widget.itemSpacing),
+                        padding: EdgeInsets.only(bottom: itemSpacing),
                         child: _buildPaymentMethodItem(method, theme),
                       ))
                   .toList(),
@@ -277,7 +303,7 @@ class _PaymentMethodSelectorState extends State<PaymentMethodSelector> {
     );
   }
 
-  Widget _buildEmptyState(ThemeData theme) {
+  Widget _buildEmptyState(ThemeData theme, String title, String subtitle) {
     return Container(
       padding: const EdgeInsets.all(32),
       child: Center(
@@ -290,20 +316,19 @@ class _PaymentMethodSelectorState extends State<PaymentMethodSelector> {
             ),
             const SizedBox(height: 16),
             Text(
-              'No Payment Methods',
+              title,
               style: theme.textTheme.titleLarge?.copyWith(
                 color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
               ),
             ),
             const SizedBox(height: 8),
             Text(
-              'Add a payment method to continue',
+              subtitle,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
               ),
             ),
-            if (widget.showAddPaymentMethod &&
-                widget.onAddPaymentMethod != null) ...[
+            if (widget.showAddPaymentMethod && widget.onAddPaymentMethod != null) ...[
               const SizedBox(height: 16),
               ElevatedButton.icon(
                 onPressed: widget.onAddPaymentMethod,

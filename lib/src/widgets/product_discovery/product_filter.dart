@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/filter_model.dart';
+import '../../config/flexible_widget_config.dart';
 
 /// A customizable product filter widget for filtering and sorting products
 class ProductFilter extends StatefulWidget {
@@ -16,6 +17,7 @@ class ProductFilter extends StatefulWidget {
     this.borderRadius,
     this.padding,
     this.spacing = 16.0,
+  this.flexibleConfig,
   });
 
   /// List of available filters
@@ -51,6 +53,19 @@ class ProductFilter extends StatefulWidget {
   /// Spacing between filter items
   final double spacing;
 
+  /// Universal flexible configuration. Supported keys (prefix productFilter.):
+  ///  - productFilter.backgroundColor / borderRadius / padding / spacing
+  ///  - productFilter.isExpanded (bool) initial expansion state
+  ///  - productFilter.showSortOptions / showFilterCount
+  ///  - productFilter.chipSpacing (double)
+  ///  - productFilter.headerIcon (IconData)
+  ///  - productFilter.clearAllText (String)
+  ///  - productFilter.sortLabel (String)
+  ///  - productFilter.filtersLabel (String)
+  ///  - productFilter.rangeDivisions (int)
+  ///  - productFilter.enableAnimations (bool)
+  final FlexibleWidgetConfig? flexibleConfig;
+
   @override
   State<ProductFilter> createState() => _ProductFilterState();
 }
@@ -64,8 +79,8 @@ class _ProductFilterState extends State<ProductFilter> {
   void initState() {
     super.initState();
     _activeFilters = List.from(widget.filters);
-    _selectedSort = widget.initialSortOption;
-    _isExpanded = widget.isExpanded;
+  _selectedSort = widget.initialSortOption;
+  _isExpanded = widget.flexibleConfig?.getOr<bool>('productFilter.isExpanded', widget.isExpanded) ?? widget.isExpanded;
   }
 
   @override
@@ -73,10 +88,37 @@ class _ProductFilterState extends State<ProductFilter> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
+    // Helper to resolve config
+    T _cfg<T>(String key, T fallback) {
+      final fc = widget.flexibleConfig;
+      if (fc != null) {
+        if (fc.has('productFilter.$key')) {
+          try { return fc.get<T>('productFilter.$key', fallback); } catch (_) {}
+        }
+        if (fc.has(key)) {
+          try { return fc.get<T>(key, fallback); } catch (_) {}
+        }
+      }
+      return fallback;
+    }
+
+    final padding = widget.padding ?? _cfg<EdgeInsets>('padding', const EdgeInsets.all(16));
+    final spacing = _cfg<double>('spacing', widget.spacing);
+    final bgColor = widget.backgroundColor ?? _cfg<Color>('backgroundColor', colorScheme.surface);
+    final borderRadius = widget.borderRadius ?? _cfg<BorderRadius>('borderRadius', BorderRadius.circular(12));
+    final showSortOptions = _cfg<bool>('showSortOptions', widget.showSortOptions);
+    final showFilterCount = _cfg<bool>('showFilterCount', widget.showFilterCount);
+    final chipSpacing = _cfg<double>('chipSpacing', 8.0);
+    final clearAllText = _cfg<String>('clearAllText', 'Clear All');
+    final filtersLabel = _cfg<String>('filtersLabel', 'Filters');
+    final sortLabel = _cfg<String>('sortLabel', 'Sort By');
+    final headerIcon = _cfg<IconData>('headerIcon', Icons.tune);
+    final rangeDivisions = _cfg<int>('rangeDivisions', 20);
+
     return Container(
       decoration: BoxDecoration(
-        color: widget.backgroundColor ?? colorScheme.surface,
-        borderRadius: widget.borderRadius ?? BorderRadius.circular(12),
+        color: bgColor,
+        borderRadius: borderRadius,
         border: Border.all(color: colorScheme.outline.withValues(alpha: 0.2)),
       ),
       child: Column(
@@ -85,23 +127,20 @@ class _ProductFilterState extends State<ProductFilter> {
           // Header with expand/collapse
           InkWell(
             onTap: () => setState(() => _isExpanded = !_isExpanded),
-            borderRadius: widget.borderRadius ?? BorderRadius.circular(12),
+            borderRadius: borderRadius,
             child: Padding(
-              padding: widget.padding ?? const EdgeInsets.all(16),
+              padding: padding,
               child: Row(
                 children: [
-                  Icon(
-                    Icons.tune,
-                    color: colorScheme.primary,
-                  ),
+                  Icon(headerIcon, color: colorScheme.primary),
                   const SizedBox(width: 8),
                   Text(
-                    'Filters',
+                    filtersLabel,
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  if (widget.showFilterCount &&
+                  if (showFilterCount &&
                       _getActiveFilterCount() > 0) ...[
                     const SizedBox(width: 8),
                     Container(
@@ -125,10 +164,7 @@ class _ProductFilterState extends State<ProductFilter> {
                   if (_getActiveFilterCount() > 0)
                     TextButton(
                       onPressed: _clearAllFilters,
-                      child: Text(
-                        'Clear All',
-                        style: TextStyle(color: colorScheme.error),
-                      ),
+                      child: Text(clearAllText, style: TextStyle(color: colorScheme.error)),
                     ),
                   Icon(
                     _isExpanded ? Icons.expand_less : Icons.expand_more,
@@ -143,20 +179,20 @@ class _ProductFilterState extends State<ProductFilter> {
           if (_isExpanded) ...[
             Divider(color: colorScheme.outline.withValues(alpha: 0.2)),
             Padding(
-              padding: widget.padding ?? const EdgeInsets.all(16),
+              padding: padding,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Sort options
-                  if (widget.showSortOptions) ...[
-                    _buildSortSection(theme),
-                    SizedBox(height: widget.spacing),
+                  if (showSortOptions) ...[
+                    _buildSortSection(theme, sortLabel, chipSpacing),
+                    SizedBox(height: spacing),
                   ],
 
                   // Filters
                   ..._activeFilters.map((filter) => Padding(
-                        padding: EdgeInsets.only(bottom: widget.spacing),
-                        child: _buildFilterSection(filter, theme),
+                        padding: EdgeInsets.only(bottom: spacing),
+                        child: _buildFilterSection(filter, theme, chipSpacing, rangeDivisions),
                       )),
                 ],
               ),
@@ -167,20 +203,20 @@ class _ProductFilterState extends State<ProductFilter> {
     );
   }
 
-  Widget _buildSortSection(ThemeData theme) {
+  Widget _buildSortSection(ThemeData theme, String sortLabel, double chipSpacing) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Sort By',
+          sortLabel,
           style: theme.textTheme.titleSmall?.copyWith(
             fontWeight: FontWeight.w600,
           ),
         ),
         const SizedBox(height: 8),
         Wrap(
-          spacing: 8,
-          runSpacing: 8,
+          spacing: chipSpacing,
+          runSpacing: chipSpacing,
           children: _sortOptions.map((option) {
             final isSelected = _selectedSort == option.value;
             return FilterChip(
@@ -199,22 +235,22 @@ class _ProductFilterState extends State<ProductFilter> {
     );
   }
 
-  Widget _buildFilterSection(FilterModel filter, ThemeData theme) {
+  Widget _buildFilterSection(FilterModel filter, ThemeData theme, double chipSpacing, int rangeDivisions) {
     switch (filter.type) {
       case FilterType.range:
-        return _buildRangeFilter(filter, theme);
+        return _buildRangeFilter(filter, theme, rangeDivisions);
       case FilterType.multiSelect:
-        return _buildCheckboxFilter(filter, theme);
+        return _buildCheckboxFilter(filter, theme, chipSpacing);
       case FilterType.singleSelect:
         return _buildDropdownFilter(filter, theme);
       case FilterType.boolean:
       case FilterType.rating:
       case FilterType.price:
-        return _buildCheckboxFilter(filter, theme);
+        return _buildCheckboxFilter(filter, theme, chipSpacing);
     }
   }
 
-  Widget _buildRangeFilter(FilterModel filter, ThemeData theme) {
+  Widget _buildRangeFilter(FilterModel filter, ThemeData theme, int rangeDivisions) {
     final currentRange = filter.selectedValues.isNotEmpty
         ? filter.selectedValues
         : [filter.minValue, filter.maxValue];
@@ -229,14 +265,14 @@ class _ProductFilterState extends State<ProductFilter> {
           ),
         ),
         const SizedBox(height: 8),
-        RangeSlider(
+  RangeSlider(
           values: RangeValues(
             (currentRange[0] as num).toDouble(),
             (currentRange[1] as num).toDouble(),
           ),
           min: (filter.minValue as num).toDouble(),
           max: (filter.maxValue as num).toDouble(),
-          divisions: 20,
+    divisions: rangeDivisions,
           labels: RangeLabels(
             '\$${currentRange[0]}',
             '\$${currentRange[1]}',
@@ -249,7 +285,7 @@ class _ProductFilterState extends State<ProductFilter> {
     );
   }
 
-  Widget _buildCheckboxFilter(FilterModel filter, ThemeData theme) {
+  Widget _buildCheckboxFilter(FilterModel filter, ThemeData theme, double chipSpacing) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -261,8 +297,8 @@ class _ProductFilterState extends State<ProductFilter> {
         ),
         const SizedBox(height: 8),
         Wrap(
-          spacing: 8,
-          runSpacing: 8,
+    spacing: chipSpacing,
+    runSpacing: chipSpacing,
           children: (filter.options as List<String>).map((option) {
             final isSelected = filter.selectedValues.contains(option);
             return FilterChip(

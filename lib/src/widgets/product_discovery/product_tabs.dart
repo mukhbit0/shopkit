@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/product_detail_model.dart';
+import '../../config/flexible_widget_config.dart';
 
 /// A tabbed widget for displaying product detail information
 class ProductTabs extends StatefulWidget {
@@ -16,6 +17,7 @@ class ProductTabs extends StatefulWidget {
     this.contentPadding,
     this.isScrollable = true,
     this.borderRadius,
+    this.flexibleConfig,
   });
 
   /// List of tabs to display
@@ -50,6 +52,7 @@ class ProductTabs extends StatefulWidget {
 
   /// Border radius for the tab container
   final BorderRadius? borderRadius;
+  final FlexibleWidgetConfig? flexibleConfig;
 
   @override
   State<ProductTabs> createState() => _ProductTabsState();
@@ -96,10 +99,29 @@ class _ProductTabsState extends State<ProductTabs>
       return const SizedBox.shrink();
     }
 
+    T _cfg<T>(String key, T fallback) {
+      final fc = widget.flexibleConfig;
+      if (fc != null) {
+        if (fc.has('productTabs.' + key)) { try { return fc.get<T>('productTabs.' + key, fallback); } catch (_) {} }
+        if (fc.has(key)) { try { return fc.get<T>(key, fallback); } catch (_) {} }
+      }
+      return fallback;
+    }
+
+    final tabBarHeight = _cfg<double>('tabBarHeight', widget.tabBarHeight);
+    final isScrollable = _cfg<bool>('isScrollable', widget.isScrollable);
+    final backgroundColor = _cfg<Color>('backgroundColor', widget.backgroundColor ?? colorScheme.surface);
+    final selectedColor = _cfg<Color>('selectedTabColor', widget.selectedTabColor ?? colorScheme.primary);
+    final unselectedColor = _cfg<Color>('unselectedTabColor', widget.unselectedTabColor ?? colorScheme.onSurface.withValues(alpha: 0.6));
+    final indicatorColor = _cfg<Color>('indicatorColor', widget.indicatorColor ?? colorScheme.primary);
+    final tabPadding = _cfg<EdgeInsets>('tabPadding', widget.tabPadding ?? const EdgeInsets.symmetric(horizontal: 16));
+    final contentPadding = _cfg<EdgeInsets>('contentPadding', widget.contentPadding ?? const EdgeInsets.all(16));
+    final radius = _cfg<BorderRadius>('borderRadius', widget.borderRadius ?? BorderRadius.circular(12));
+
     return Container(
       decoration: BoxDecoration(
-        color: widget.backgroundColor ?? colorScheme.surface,
-        borderRadius: widget.borderRadius ?? BorderRadius.circular(12),
+        color: backgroundColor,
+        borderRadius: radius,
         border: Border.all(
           color: colorScheme.outline.withValues(alpha: 0.2),
         ),
@@ -108,28 +130,25 @@ class _ProductTabsState extends State<ProductTabs>
         children: [
           // Tab Bar
           Container(
-            height: widget.tabBarHeight,
+            height: tabBarHeight,
             decoration: BoxDecoration(
               color: colorScheme.surface,
               borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(widget.borderRadius?.topLeft.x ?? 12),
-                topRight:
-                    Radius.circular(widget.borderRadius?.topRight.x ?? 12),
+                topLeft: Radius.circular(radius.topLeft.x),
+                topRight: Radius.circular(radius.topRight.x),
               ),
             ),
             child: TabBar(
               controller: _tabController,
-              isScrollable: widget.isScrollable,
-              indicatorColor: widget.indicatorColor ?? colorScheme.primary,
-              labelColor: widget.selectedTabColor ?? colorScheme.primary,
-              unselectedLabelColor: widget.unselectedTabColor ??
-                  colorScheme.onSurface.withValues(alpha: 0.6),
+              isScrollable: isScrollable,
+              indicatorColor: indicatorColor,
+              labelColor: selectedColor,
+              unselectedLabelColor: unselectedColor,
               labelStyle: theme.textTheme.titleSmall?.copyWith(
                 fontWeight: FontWeight.w600,
               ),
               unselectedLabelStyle: theme.textTheme.titleSmall,
-              labelPadding: widget.tabPadding ??
-                  const EdgeInsets.symmetric(horizontal: 16),
+              labelPadding: tabPadding,
               indicatorSize: TabBarIndicatorSize.tab,
               dividerColor: Colors.transparent,
               tabs: widget.tabs.map((tab) => _buildTab(tab, theme)).toList(),
@@ -147,7 +166,7 @@ class _ProductTabsState extends State<ProductTabs>
             child: TabBarView(
               controller: _tabController,
               children: widget.tabs
-                  .map((tab) => _buildTabContent(tab, theme))
+                  .map((tab) => _buildTabContent(tab, theme, contentPadding))
                   .toList(),
             ),
           ),
@@ -179,9 +198,9 @@ class _ProductTabsState extends State<ProductTabs>
     );
   }
 
-  Widget _buildTabContent(ProductTabModel tab, ThemeData theme) {
+  Widget _buildTabContent(ProductTabModel tab, ThemeData theme, EdgeInsets contentPadding) {
     return SingleChildScrollView(
-      padding: widget.contentPadding ?? const EdgeInsets.all(16),
+      padding: contentPadding,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../config/flexible_widget_config.dart';
 import '../../models/badge_model.dart';
 
 /// A widget for displaying trust badges and security seals
@@ -12,6 +13,7 @@ class TrustBadge extends StatelessWidget {
     this.borderRadius,
     this.elevation = 2.0,
     this.customSize,
+  this.flexibleConfig,
   });
 
   /// Badge configuration
@@ -34,6 +36,7 @@ class TrustBadge extends StatelessWidget {
 
   /// Custom size override
   final Size? customSize;
+  final FlexibleWidgetConfig? flexibleConfig;
 
   @override
   Widget build(BuildContext context) {
@@ -267,6 +270,7 @@ class TrustBadgeCollection extends StatelessWidget {
               title,
               style: theme.textTheme.titleSmall?.copyWith(
                 fontWeight: FontWeight.w600,
+    this.flexibleConfig,
                 color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
               ),
             ),
@@ -308,6 +312,7 @@ class TrustBadgeCollection extends StatelessWidget {
               onTap: onBadgeTap != null ? () => onBadgeTap!(badge) : null,
             ),
           );
+  final FlexibleWidgetConfig? flexibleConfig;
         }).toList(),
       ),
     );

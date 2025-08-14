@@ -3,6 +3,165 @@ import '../../models/product_model.dart';
 import '../../models/cart_model.dart';
 import '../../models/variant_model.dart';
 import '../../theme/ecommerce_theme.dart';
+import '../../config/flexible_widget_config.dart';
+
+/// Configuration class for AddToCartButton widget customization
+class FlexibleAddToCartButtonConfig {
+  const FlexibleAddToCartButtonConfig({
+    this.padding,
+    this.margin,
+    this.borderRadius,
+    this.backgroundColor,
+    this.textColor,
+    this.disabledColor,
+    this.loadingColor,
+    this.successColor,
+    this.borderColor,
+    this.borderWidth,
+    this.elevation,
+    this.shadowColor,
+    this.width,
+    this.height,
+    this.textStyle,
+    this.iconSize,
+    this.iconColor,
+    this.loadingIndicatorColor,
+    this.animationDuration,
+    this.showIcon,
+    this.showQuantitySelector,
+    this.showLoadingIndicator,
+    this.text,
+    this.inCartText,
+    this.outOfStockText,
+    this.loadingText,
+    this.addIcon,
+    this.inCartIcon,
+    this.minQuantity,
+    this.maxQuantity,
+    this.buttonBuilder,
+    this.quantitySelectorBuilder,
+    this.loadingBuilder,
+  });
+
+  final EdgeInsets? padding;
+  final EdgeInsets? margin;
+  final BorderRadius? borderRadius;
+  final Color? backgroundColor;
+  final Color? textColor;
+  final Color? disabledColor;
+  final Color? loadingColor;
+  final Color? successColor;
+  final Color? borderColor;
+  final double? borderWidth;
+  final double? elevation;
+  final Color? shadowColor;
+  final double? width;
+  final double? height;
+  final TextStyle? textStyle;
+  final double? iconSize;
+  final Color? iconColor;
+  final Color? loadingIndicatorColor;
+  final Duration? animationDuration;
+  final bool? showIcon;
+  final bool? showQuantitySelector;
+  final bool? showLoadingIndicator;
+  final String? text;
+  final String? inCartText;
+  final String? outOfStockText;
+  final String? loadingText;
+  final IconData? addIcon;
+  final IconData? inCartIcon;
+  final int? minQuantity;
+  final int? maxQuantity;
+
+  // Builder functions for complete customization
+  final Widget Function(BuildContext context, VoidCallback? onPressed,
+      bool isLoading, bool isInCart, bool isOutOfStock)? buttonBuilder;
+  final Widget Function(
+      BuildContext context,
+      int quantity,
+      VoidCallback onIncrement,
+      VoidCallback onDecrement)? quantitySelectorBuilder;
+  final Widget Function(BuildContext context)? loadingBuilder;
+
+  FlexibleAddToCartButtonConfig copyWith({
+    EdgeInsets? padding,
+    EdgeInsets? margin,
+    BorderRadius? borderRadius,
+    Color? backgroundColor,
+    Color? textColor,
+    Color? disabledColor,
+    Color? loadingColor,
+    Color? successColor,
+    Color? borderColor,
+    double? borderWidth,
+    double? elevation,
+    Color? shadowColor,
+    double? width,
+    double? height,
+    TextStyle? textStyle,
+    double? iconSize,
+    Color? iconColor,
+    Color? loadingIndicatorColor,
+    Duration? animationDuration,
+    bool? showIcon,
+    bool? showQuantitySelector,
+    bool? showLoadingIndicator,
+    String? text,
+    String? inCartText,
+    String? outOfStockText,
+    String? loadingText,
+    IconData? addIcon,
+    IconData? inCartIcon,
+    int? minQuantity,
+    int? maxQuantity,
+    Widget Function(BuildContext context, VoidCallback? onPressed,
+            bool isLoading, bool isInCart, bool isOutOfStock)?
+        buttonBuilder,
+    Widget Function(BuildContext context, int quantity,
+            VoidCallback onIncrement, VoidCallback onDecrement)?
+        quantitySelectorBuilder,
+    Widget Function(BuildContext context)? loadingBuilder,
+  }) {
+    return FlexibleAddToCartButtonConfig(
+      padding: padding ?? this.padding,
+      margin: margin ?? this.margin,
+      borderRadius: borderRadius ?? this.borderRadius,
+      backgroundColor: backgroundColor ?? this.backgroundColor,
+      textColor: textColor ?? this.textColor,
+      disabledColor: disabledColor ?? this.disabledColor,
+      loadingColor: loadingColor ?? this.loadingColor,
+      successColor: successColor ?? this.successColor,
+      borderColor: borderColor ?? this.borderColor,
+      borderWidth: borderWidth ?? this.borderWidth,
+      elevation: elevation ?? this.elevation,
+      shadowColor: shadowColor ?? this.shadowColor,
+      width: width ?? this.width,
+      height: height ?? this.height,
+      textStyle: textStyle ?? this.textStyle,
+      iconSize: iconSize ?? this.iconSize,
+      iconColor: iconColor ?? this.iconColor,
+      loadingIndicatorColor:
+          loadingIndicatorColor ?? this.loadingIndicatorColor,
+      animationDuration: animationDuration ?? this.animationDuration,
+      showIcon: showIcon ?? this.showIcon,
+      showQuantitySelector: showQuantitySelector ?? this.showQuantitySelector,
+      showLoadingIndicator: showLoadingIndicator ?? this.showLoadingIndicator,
+      text: text ?? this.text,
+      inCartText: inCartText ?? this.inCartText,
+      outOfStockText: outOfStockText ?? this.outOfStockText,
+      loadingText: loadingText ?? this.loadingText,
+      addIcon: addIcon ?? this.addIcon,
+      inCartIcon: inCartIcon ?? this.inCartIcon,
+      minQuantity: minQuantity ?? this.minQuantity,
+      maxQuantity: maxQuantity ?? this.maxQuantity,
+      buttonBuilder: buttonBuilder ?? this.buttonBuilder,
+      quantitySelectorBuilder:
+          quantitySelectorBuilder ?? this.quantitySelectorBuilder,
+      loadingBuilder: loadingBuilder ?? this.loadingBuilder,
+    );
+  }
+}
 
 /// An animated button for adding products to cart
 class AddToCartButton extends StatefulWidget {
@@ -32,6 +191,7 @@ class AddToCartButton extends StatefulWidget {
     this.showQuantitySelector = false,
     this.minQuantity = 1,
     this.maxQuantity = 99,
+    this.config,
   });
 
   /// Product to add to cart
@@ -106,6 +266,9 @@ class AddToCartButton extends StatefulWidget {
   /// Maximum quantity allowed
   final int maxQuantity;
 
+  /// Generic flexible configuration (new). When provided it augments/overrides the legacy individual properties.
+  final FlexibleWidgetConfig? config;
+
   @override
   State<AddToCartButton> createState() => _AddToCartButtonState();
 }
@@ -116,6 +279,7 @@ class _AddToCartButtonState extends State<AddToCartButton>
   late AnimationController _checkController;
   late Animation<double> _scaleAnimation;
   late Animation<double> _checkAnimation;
+  FlexibleWidgetConfig? _config;
 
   int _currentQuantity = 1;
   bool _showSuccessState = false;
@@ -124,6 +288,29 @@ class _AddToCartButtonState extends State<AddToCartButton>
   void initState() {
     super.initState();
     _currentQuantity = widget.quantity;
+    _config = widget.config ??
+        FlexibleWidgetConfig.forWidget('add_to_cart_button_legacy',
+            context: context,
+            overrides: {
+              // Seed overrides with any explicitly passed widget properties so they win over theme defaults
+              if (widget.width != null) 'width': widget.width!,
+              if (widget.height != null) 'height': widget.height!,
+              if (widget.backgroundColor != null)
+                'backgroundColor': widget.backgroundColor!,
+              if (widget.textColor != null) 'textColor': widget.textColor!,
+              if (widget.disabledColor != null)
+                'disabledColor': widget.disabledColor!,
+              if (widget.loadingColor != null)
+                'loadingColor': widget.loadingColor!,
+              if (widget.successColor != null)
+                'successColor': widget.successColor!,
+              if (widget.borderRadius != null)
+                'borderRadius': widget.borderRadius!,
+              'showIcon': widget.showIcon,
+              'showQuantitySelector': widget.showQuantitySelector,
+              'minQuantity': widget.minQuantity,
+              'maxQuantity': widget.maxQuantity,
+            });
 
     _scaleController = AnimationController(
       duration: const Duration(milliseconds: 150),
@@ -222,8 +409,11 @@ class _AddToCartButtonState extends State<AddToCartButton>
     return ScaleTransition(
       scale: _scaleAnimation,
       child: SizedBox(
-        width: widget.width,
-        height: widget.height ?? theme.buttonHeight,
+        width:
+            widget.width ?? _config?.get<double>('width', null) ?? widget.width,
+        height: (widget.height ??
+            _config?.get<double>('height', theme.buttonHeight) ??
+            theme.buttonHeight),
         child: ElevatedButton(
           onPressed:
               widget.isLoading || widget.isOutOfStock ? null : _handleAddToCart,
@@ -287,26 +477,40 @@ class _AddToCartButtonState extends State<AddToCartButton>
     Color backgroundColor;
 
     if (widget.isOutOfStock) {
-      backgroundColor = widget.disabledColor ?? theme.effectiveDisabledColor;
+      backgroundColor = widget.disabledColor ??
+          _config?.getColor('disabledColor', theme.effectiveDisabledColor) ??
+          theme.effectiveDisabledColor;
     } else if (widget.isLoading) {
-      backgroundColor =
-          widget.loadingColor ?? theme.primaryColor.withValues(alpha: 0.7);
+      backgroundColor = widget.loadingColor ??
+          _config?.getColor(
+              'loadingColor', theme.primaryColor.withValues(alpha: 0.7)) ??
+          theme.primaryColor.withValues(alpha: 0.7);
     } else if (_showSuccessState || widget.isInCart) {
-      backgroundColor = widget.successColor ?? theme.successColor;
+      backgroundColor = widget.successColor ??
+          _config?.getColor('successColor', theme.successColor) ??
+          theme.successColor;
     } else {
-      backgroundColor = widget.backgroundColor ?? theme.primaryColor;
+      backgroundColor = widget.backgroundColor ??
+          _config?.getColor('backgroundColor', theme.primaryColor) ??
+          theme.primaryColor;
     }
 
     return ElevatedButton.styleFrom(
       backgroundColor: backgroundColor,
-      foregroundColor: widget.textColor ?? Colors.white,
+      foregroundColor: widget.textColor ??
+          _config?.getColor('textColor', Colors.white) ??
+          Colors.white,
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(
-          widget.borderRadius ?? theme.buttonRadius,
+          widget.borderRadius ??
+              _config?.get<double>('borderRadius', theme.buttonRadius) ??
+              theme.buttonRadius,
         ),
       ),
-      minimumSize: Size.fromHeight(widget.height ?? theme.buttonHeight),
+      minimumSize: Size.fromHeight(widget.height ??
+          _config?.get<double>('height', theme.buttonHeight) ??
+          theme.buttonHeight),
     );
   }
 
@@ -315,16 +519,20 @@ class _AddToCartButtonState extends State<AddToCartButton>
       return Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const SizedBox(
+           SizedBox(
             width: 16,
             height: 16,
             child: CircularProgressIndicator(
               strokeWidth: 2,
-              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+              valueColor: AlwaysStoppedAnimation<Color>(
+                  _config?.getColor('loadingIndicatorColor', Colors.white) ??
+                      Colors.white),
             ),
           ),
           const SizedBox(width: 8),
-          Text(widget.loadingText ?? 'Adding...'),
+          Text(widget.loadingText ??
+              _config?.get<String>('loadingText', 'Adding...') ??
+              'Adding...'),
         ],
       );
     }
@@ -337,7 +545,9 @@ class _AddToCartButtonState extends State<AddToCartButton>
             const Icon(Icons.block, size: 16),
             const SizedBox(width: 8),
           ],
-          Text(widget.outOfStockText ?? 'Out of Stock'),
+          Text(widget.outOfStockText ??
+              _config?.get<String>('outOfStockText', 'Out of Stock') ??
+              'Out of Stock'),
         ],
       );
     }
@@ -354,7 +564,7 @@ class _AddToCartButtonState extends State<AddToCartButton>
                 child: const Icon(Icons.check, size: 16),
               ),
               const SizedBox(width: 8),
-              const Text('Added!'),
+              Text(_config?.get<String>('successText', 'Added!') ?? 'Added!'),
             ],
           );
         },
@@ -369,7 +579,9 @@ class _AddToCartButtonState extends State<AddToCartButton>
             const Icon(Icons.check_circle, size: 16),
             const SizedBox(width: 8),
           ],
-          Text(widget.inCartText ?? 'In Cart'),
+          Text(widget.inCartText ??
+              _config?.get<String>('inCartText', 'In Cart') ??
+              'In Cart'),
         ],
       );
     }
@@ -377,12 +589,19 @@ class _AddToCartButtonState extends State<AddToCartButton>
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        if (widget.showIcon) ...[
+        if ((widget.showIcon ||
+            _config?.get<bool>('showIcon', widget.showIcon) == true)) ...[
           const Icon(Icons.add_shopping_cart, size: 16),
           const SizedBox(width: 8),
         ],
-        Text(widget.text ?? 'Add to Cart'),
-        if (widget.showQuantitySelector && _currentQuantity > 1) ...[
+        Text(widget.text ??
+            _config?.get<String>('text', 'Add to Cart') ??
+            'Add to Cart'),
+        if ((widget.showQuantitySelector ||
+                _config?.get<bool>(
+                        'showQuantitySelector', widget.showQuantitySelector) ==
+                    true) &&
+            _currentQuantity > 1) ...[
           const SizedBox(width: 4),
           Text('($_currentQuantity)'),
         ],

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/popup_model.dart';
+import '../../config/flexible_widget_config.dart';
 
 /// A widget that displays an exit intent popup when user attempts to leave
 class ExitIntentPopup extends StatefulWidget {
@@ -13,6 +14,7 @@ class ExitIntentPopup extends StatefulWidget {
     this.blurBackground = true,
     this.animationDuration = const Duration(milliseconds: 300),
     this.child,
+  this.flexibleConfig,
   });
 
   /// Popup configuration
@@ -38,6 +40,13 @@ class ExitIntentPopup extends StatefulWidget {
 
   /// Child widget to wrap (typically the main app content)
   final Widget? child;
+
+  /// Universal flexible configuration (exitPopup.*) keys:
+  ///  overlayColor (Color), backgroundColor (Color), borderRadius (double/BorderRadius),
+  ///  padding (EdgeInsets), maxWidth (double), showCloseButton (bool),
+  ///  primaryButtonLabel, secondaryButtonLabel, autoCloseMs (int), enableScale (bool),
+  ///  enableFade (bool), enableSlide (bool), elevation (double)
+  final FlexibleWidgetConfig? flexibleConfig;
 
   @override
   State<ExitIntentPopup> createState() => _ExitIntentPopupState();
@@ -117,6 +126,25 @@ class _ExitIntentPopupState extends State<ExitIntentPopup>
 
   @override
   Widget build(BuildContext context) {
+    T _cfg<T>(String key, T fallback) {
+      final fc = widget.flexibleConfig;
+      if (fc != null) {
+        if (fc.has('exitPopup.' + key)) { try { return fc.get<T>('exitPopup.' + key, fallback); } catch (_) {} }
+        if (fc.has(key)) { try { return fc.get<T>(key, fallback); } catch (_) {} }
+      }
+      return fallback;
+    }
+
+    final overlayColor = _cfg<Color>('overlayColor', Colors.black.withValues(alpha: 0.5));
+    final showClose = _cfg<bool>('showCloseButton', true);
+    final enableScale = _cfg<bool>('enableScale', true);
+    final enableFade = _cfg<bool>('enableFade', true);
+    final enableSlide = _cfg<bool>('enableSlide', true);
+    final autoCloseMs = _cfg<int>('autoCloseMs', widget.autoCloseAfter?.inMilliseconds ?? -1);
+    if (autoCloseMs > 0) {
+      Future.delayed(Duration(milliseconds: autoCloseMs), () { if (mounted && _isVisible) _hidePopup(); });
+    }
+
     return MouseRegion(
       onExit: (_) => _handleExitIntent(),
       child: Stack(
@@ -127,21 +155,21 @@ class _ExitIntentPopupState extends State<ExitIntentPopup>
               child: AnimatedBuilder(
                 animation: _animationController,
                 builder: (context, child) {
-                  return Opacity(
-                    opacity: _fadeAnimation.value,
-                    child: Container(
-                      color: Colors.black.withValues(alpha: 0.5),
-                      child: Center(
-                        child: Transform.scale(
-                          scale: _scaleAnimation.value,
-                          child: SlideTransition(
-                            position: _slideAnimation,
-                            child: _buildPopupContent(),
-                          ),
-                        ),
-                      ),
+                  final core = Center(
+                    child: Builder(
+                      builder: (context) {
+                        Widget content = _buildPopupContent(showClose: showClose);
+                        if (enableSlide) {
+                          content = SlideTransition(position: _slideAnimation, child: content);
+                        }
+                        if (enableScale) {
+                          content = Transform.scale(scale: _scaleAnimation.value, child: content);
+                        }
+                        return content;
+                      },
                     ),
                   );
+                  return enableFade ? Opacity(opacity: _fadeAnimation.value, child: Container(color: overlayColor, child: core)) : Container(color: overlayColor, child: core);
                 },
               ),
             ),
@@ -150,23 +178,35 @@ class _ExitIntentPopupState extends State<ExitIntentPopup>
     );
   }
 
-  Widget _buildPopupContent() {
+  Widget _buildPopupContent({bool showClose = true}) {
     final theme = Theme.of(context);
+    T _cfg<T>(String key, T fallback) {
+      final fc = widget.flexibleConfig;
+      if (fc != null) {
+        if (fc.has('exitPopup.' + key)) { try { return fc.get<T>('exitPopup.' + key, fallback); } catch (_) {} }
+        if (fc.has(key)) { try { return fc.get<T>(key, fallback); } catch (_) {} }
+      }
+      return fallback;
+    }
+
+    final backgroundColor = _cfg<Color>('backgroundColor', _parseColor(widget.popup.backgroundColor) ?? theme.colorScheme.surface);
+    final borderRadius = _cfg<BorderRadius>('borderRadius', BorderRadius.circular(16));
+    final padding = _cfg<EdgeInsets>('padding', const EdgeInsets.all(24));
+    final maxWidth = _cfg<double>('maxWidth', 500);
+    final elevation = _cfg<double>('elevation', 20);
+    final primaryLabel = _cfg<String>('primaryButtonLabel', widget.popup.buttonText ?? 'Claim Offer');
+    final secondaryLabel = _cfg<String>('secondaryButtonLabel', widget.popup.secondaryButtonText ?? '');
 
     return Container(
       margin: const EdgeInsets.all(20),
-      constraints: const BoxConstraints(
-        maxWidth: 500,
-        maxHeight: 600,
-      ),
+      constraints: BoxConstraints(maxWidth: maxWidth, maxHeight: 600),
       decoration: BoxDecoration(
-        color: _parseColor(widget.popup.backgroundColor) ??
-            theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
+        color: backgroundColor,
+        borderRadius: borderRadius,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.2),
-            blurRadius: 20,
+            blurRadius: elevation,
             spreadRadius: 2,
           ),
         ],
@@ -197,13 +237,14 @@ class _ExitIntentPopupState extends State<ExitIntentPopup>
                     ),
                   ),
                 ),
-                IconButton(
-                  onPressed: _hidePopup,
-                  icon: const Icon(Icons.close),
-                  style: IconButton.styleFrom(
-                    backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                if (showClose)
+                  IconButton(
+                    onPressed: _hidePopup,
+                    icon: const Icon(Icons.close),
+                    style: IconButton.styleFrom(
+                      backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                    ),
                   ),
-                ),
               ],
             ),
           ),
@@ -211,7 +252,7 @@ class _ExitIntentPopupState extends State<ExitIntentPopup>
           // Content
           Flexible(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
+              padding: padding,
               child: Column(
                 children: [
                   // Image if provided
@@ -300,7 +341,7 @@ class _ExitIntentPopupState extends State<ExitIntentPopup>
 
           // Action buttons
           Container(
-            padding: const EdgeInsets.all(24),
+            padding: padding,
             child: Column(
               children: [
                 // Primary button
@@ -323,7 +364,7 @@ class _ExitIntentPopupState extends State<ExitIntentPopup>
                       ),
                     ),
                     child: Text(
-                      widget.popup.buttonText ?? 'Claim Offer',
+                      primaryLabel,
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -333,7 +374,7 @@ class _ExitIntentPopupState extends State<ExitIntentPopup>
                 ),
 
                 // Secondary button
-                if (widget.popup.secondaryButtonText != null) ...[
+                if (widget.popup.secondaryButtonText != null || secondaryLabel.isNotEmpty) ...[
                   const SizedBox(height: 12),
                   SizedBox(
                     width: double.infinity,
@@ -346,7 +387,7 @@ class _ExitIntentPopupState extends State<ExitIntentPopup>
                         padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
                       child: Text(
-                        widget.popup.secondaryButtonText!,
+                        secondaryLabel.isNotEmpty ? secondaryLabel : widget.popup.secondaryButtonText!,
                         style: TextStyle(
                           color: _parseColor(widget.popup.textColor)
                                   ?.withValues(alpha: 0.7) ??

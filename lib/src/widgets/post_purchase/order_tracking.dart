@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../config/flexible_widget_config.dart';
 import '../../models/order_model.dart';
 
 /// A widget for displaying order tracking information
@@ -15,6 +16,7 @@ class OrderTracking extends StatefulWidget {
     this.backgroundColor,
     this.borderRadius,
     this.padding,
+  this.flexibleConfig,
   });
 
   /// Order to track
@@ -46,6 +48,8 @@ class OrderTracking extends StatefulWidget {
 
   /// Internal padding
   final EdgeInsets? padding;
+  /// Flexible configuration (orderTracking.* keys)
+  final FlexibleWidgetConfig? flexibleConfig;
 
   @override
   State<OrderTracking> createState() => _OrderTrackingState();
@@ -57,11 +61,28 @@ class _OrderTrackingState extends State<OrderTracking> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
+    T _cfg<T>(String key, T fallback) {
+      final fc = widget.flexibleConfig;
+      if (fc != null) {
+        if (fc.has('orderTracking.' + key)) { try { return fc.get<T>('orderTracking.' + key, fallback); } catch (_) {} }
+        if (fc.has(key)) { try { return fc.get<T>(key, fallback); } catch (_) {} }
+      }
+      return fallback;
+    }
+
+    final showTracking = _cfg<bool>('showTrackingNumber', widget.showTrackingNumber);
+    final showEta = _cfg<bool>('showEstimatedDelivery', widget.showEstimatedDelivery);
+    final showTimeline = _cfg<bool>('showTrackingUpdates', widget.showTrackingUpdates);
+    final showSummary = _cfg<bool>('showOrderSummary', widget.showOrderSummary);
+    final resolvedPadding = _cfg<EdgeInsets>('padding', widget.padding ?? const EdgeInsets.all(16));
+    final bgColor = _cfg<Color>('backgroundColor', widget.backgroundColor ?? colorScheme.surface);
+    final radius = _cfg<BorderRadius>('borderRadius', widget.borderRadius ?? BorderRadius.circular(12));
+
     return Container(
-      padding: widget.padding ?? const EdgeInsets.all(16),
+      padding: resolvedPadding,
       decoration: BoxDecoration(
-        color: widget.backgroundColor ?? colorScheme.surface,
-        borderRadius: widget.borderRadius ?? BorderRadius.circular(12),
+        color: bgColor,
+        borderRadius: radius,
         border: Border.all(color: colorScheme.outline.withValues(alpha: 0.2)),
       ),
       child: Column(
@@ -78,28 +99,25 @@ class _OrderTrackingState extends State<OrderTracking> {
           const SizedBox(height: 16),
 
           // Tracking number
-          if (widget.showTrackingNumber &&
-              widget.order.trackingNumber != null) ...[
+          if (showTracking && widget.order.trackingNumber != null) ...[
             _buildTrackingNumber(theme),
             const SizedBox(height: 16),
           ],
 
           // Estimated delivery
-          if (widget.showEstimatedDelivery &&
-              widget.order.estimatedDelivery != null) ...[
+          if (showEta && widget.order.estimatedDelivery != null) ...[
             _buildEstimatedDelivery(theme),
             const SizedBox(height: 16),
           ],
 
           // Tracking timeline
-          if (widget.showTrackingUpdates &&
-              widget.order.trackingUpdates?.isNotEmpty == true) ...[
+          if (showTimeline && widget.order.trackingUpdates?.isNotEmpty == true) ...[
             _buildTrackingTimeline(theme),
             const SizedBox(height: 16),
           ],
 
           // Order summary
-          if (widget.showOrderSummary) ...[
+          if (showSummary) ...[
             _buildOrderSummary(theme),
             const SizedBox(height: 16),
           ],
@@ -184,9 +202,9 @@ class _OrderTrackingState extends State<OrderTracking> {
   }
 
   Widget _buildStatusCard(ThemeData theme) {
-    final latestUpdate = widget.order.trackingUpdates?.isNotEmpty == true
-        ? widget.order.trackingUpdates!.first
-        : null;
+  final latestUpdate = widget.order.trackingUpdates?.isNotEmpty == true
+    ? widget.order.trackingUpdates!.first
+    : null;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -204,7 +222,7 @@ class _OrderTrackingState extends State<OrderTracking> {
             height: 48,
             decoration: BoxDecoration(
               color: theme.colorScheme.primary,
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
               _getStatusIcon(widget.order.status.toLowerCase()),
@@ -218,20 +236,20 @@ class _OrderTrackingState extends State<OrderTracking> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  latestUpdate?.description ??
-                      _getStatusDescription(widget.order.status.toLowerCase()),
+                  '${widget.order.status}...',
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
                 ),
                 const SizedBox(height: 4),
-                if (latestUpdate != null)
+                if (latestUpdate != null) ...[
                   Text(
                     _formatDateTime(latestUpdate.timestamp),
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                     ),
                   ),
+                ],
                 if (latestUpdate?.location != null) ...[
                   const SizedBox(height: 2),
                   Row(
@@ -239,15 +257,13 @@ class _OrderTrackingState extends State<OrderTracking> {
                       Icon(
                         Icons.location_on,
                         size: 14,
-                        color:
-                            theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                       ),
                       const SizedBox(width: 4),
                       Text(
                         latestUpdate!.location!,
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurface
-                              .withValues(alpha: 0.6),
+                          color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                         ),
                       ),
                     ],
@@ -506,12 +522,7 @@ class _OrderTrackingState extends State<OrderTracking> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    'Total',
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  const Text('Total'),
                   Text(
                     '\$${widget.order.cart.total.toStringAsFixed(2)}',
                     style: theme.textTheme.titleSmall?.copyWith(
@@ -557,20 +568,6 @@ class _OrderTrackingState extends State<OrderTracking> {
     }
   }
 
-  String _getStatusDescription(String status) {
-    switch (status.toLowerCase()) {
-      case 'processing':
-        return 'Your order is being processed';
-      case 'shipped':
-        return 'Your order has been shipped';
-      case 'delivered':
-        return 'Your order has been delivered';
-      case 'cancelled':
-        return 'Your order has been cancelled';
-      default:
-        return 'Order status update';
-    }
-  }
 
   String _formatDateTime(DateTime dateTime) {
     final now = DateTime.now();

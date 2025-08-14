@@ -5,6 +5,134 @@ import '../../models/product_model.dart';
 import '../../models/cart_model.dart';
 import '../../theme/shopkit_theme.dart';
 import 'add_to_cart_button.dart';
+import '../../config/flexible_widget_config.dart';
+
+/// Configuration class for ProductCard widget customization
+class FlexibleProductCardConfig {
+  const FlexibleProductCardConfig({
+    this.padding,
+    this.margin,
+    this.borderRadius,
+    this.elevation,
+    this.shadowColor,
+    this.backgroundColor,
+    this.imageAspectRatio,
+    this.imageHeight,
+    this.titleStyle,
+    this.priceStyle,
+    this.originalPriceStyle,
+    this.brandStyle,
+    this.ratingStyle,
+    this.badgeTextStyle,
+    this.badgeBackgroundColor,
+    this.wishlistIconSize,
+    this.cartIconSize,
+    this.animationDuration,
+    this.hoverScale,
+    this.showBrand,
+    this.showRating,
+    this.showDiscount,
+    this.showQuickActions,
+    this.imageBuilder,
+    this.titleBuilder,
+    this.priceBuilder,
+    this.actionBuilder,
+    this.overlayBuilder,
+  });
+
+  final EdgeInsets? padding;
+  final EdgeInsets? margin;
+  final BorderRadius? borderRadius;
+  final double? elevation;
+  final Color? shadowColor;
+  final Color? backgroundColor;
+  final double? imageAspectRatio;
+  final double? imageHeight;
+  final TextStyle? titleStyle;
+  final TextStyle? priceStyle;
+  final TextStyle? originalPriceStyle;
+  final TextStyle? brandStyle;
+  final TextStyle? ratingStyle;
+  final TextStyle? badgeTextStyle;
+  final Color? badgeBackgroundColor;
+  final double? wishlistIconSize;
+  final double? cartIconSize;
+  final Duration? animationDuration;
+  final double? hoverScale;
+  final bool? showBrand;
+  final bool? showRating;
+  final bool? showDiscount;
+  final bool? showQuickActions;
+  
+  // Builder functions for complete customization
+  final Widget Function(BuildContext context, String imageUrl, ProductModel product)? imageBuilder;
+  final Widget Function(BuildContext context, String title, ProductModel product)? titleBuilder;
+  final Widget Function(BuildContext context, double price, double? originalPrice, ProductModel product)? priceBuilder;
+  final Widget Function(BuildContext context, VoidCallback? onAddToCart, VoidCallback? onWishlist, ProductModel product)? actionBuilder;
+  final Widget Function(BuildContext context, ProductModel product)? overlayBuilder;
+
+  FlexibleProductCardConfig copyWith({
+    EdgeInsets? padding,
+    EdgeInsets? margin,
+    BorderRadius? borderRadius,
+    double? elevation,
+    Color? shadowColor,
+    Color? backgroundColor,
+    double? imageAspectRatio,
+    double? imageHeight,
+    TextStyle? titleStyle,
+    TextStyle? priceStyle,
+    TextStyle? originalPriceStyle,
+    TextStyle? brandStyle,
+    TextStyle? ratingStyle,
+    TextStyle? badgeTextStyle,
+    Color? badgeBackgroundColor,
+    double? wishlistIconSize,
+    double? cartIconSize,
+    Duration? animationDuration,
+    double? hoverScale,
+    bool? showBrand,
+    bool? showRating,
+    bool? showDiscount,
+    bool? showQuickActions,
+    Widget Function(BuildContext context, String imageUrl, ProductModel product)? imageBuilder,
+    Widget Function(BuildContext context, String title, ProductModel product)? titleBuilder,
+    Widget Function(BuildContext context, double price, double? originalPrice, ProductModel product)? priceBuilder,
+    Widget Function(BuildContext context, VoidCallback? onAddToCart, VoidCallback? onWishlist, ProductModel product)? actionBuilder,
+    Widget Function(BuildContext context, ProductModel product)? overlayBuilder,
+  }) {
+    return FlexibleProductCardConfig(
+      padding: padding ?? this.padding,
+      margin: margin ?? this.margin,
+      borderRadius: borderRadius ?? this.borderRadius,
+      elevation: elevation ?? this.elevation,
+      shadowColor: shadowColor ?? this.shadowColor,
+      backgroundColor: backgroundColor ?? this.backgroundColor,
+      imageAspectRatio: imageAspectRatio ?? this.imageAspectRatio,
+      imageHeight: imageHeight ?? this.imageHeight,
+      titleStyle: titleStyle ?? this.titleStyle,
+      priceStyle: priceStyle ?? this.priceStyle,
+      originalPriceStyle: originalPriceStyle ?? this.originalPriceStyle,
+      brandStyle: brandStyle ?? this.brandStyle,
+      ratingStyle: ratingStyle ?? this.ratingStyle,
+      badgeTextStyle: badgeTextStyle ?? this.badgeTextStyle,
+      badgeBackgroundColor: badgeBackgroundColor ?? this.badgeBackgroundColor,
+      wishlistIconSize: wishlistIconSize ?? this.wishlistIconSize,
+      cartIconSize: cartIconSize ?? this.cartIconSize,
+      animationDuration: animationDuration ?? this.animationDuration,
+      hoverScale: hoverScale ?? this.hoverScale,
+      showBrand: showBrand ?? this.showBrand,
+      showRating: showRating ?? this.showRating,
+      showDiscount: showDiscount ?? this.showDiscount,
+      showQuickActions: showQuickActions ?? this.showQuickActions,
+      imageBuilder: imageBuilder ?? this.imageBuilder,
+      titleBuilder: titleBuilder ?? this.titleBuilder,
+      priceBuilder: priceBuilder ?? this.priceBuilder,
+      actionBuilder: actionBuilder ?? this.actionBuilder,
+      overlayBuilder: overlayBuilder ?? this.overlayBuilder,
+    );
+  }
+}
 
 /// Modern product card widget aligned with new ShopKit architecture
 class ProductCard extends StatefulWidget {
@@ -23,6 +151,8 @@ class ProductCard extends StatefulWidget {
     this.imageHeight,
     this.width,
     this.height,
+    this.config,
+  this.flexibleConfig,
   });
 
   final ProductModel product;
@@ -39,6 +169,18 @@ class ProductCard extends StatefulWidget {
   final double? imageHeight;
   final double? width;
   final double? height;
+  final FlexibleProductCardConfig? config;
+  /// New flexible configuration (supersedes [FlexibleProductCardConfig] gradually)
+  /// Supported keys (namespaced productCard.):
+  ///  - productCard.padding / margin / borderRadius / elevation
+  ///  - productCard.backgroundColor / shadowColor
+  ///  - productCard.imageHeight / imageAspectRatio
+  ///  - productCard.showBrand / showRating / showDiscount / showQuickActions
+  ///  - productCard.hoverScale (double) / animationDuration (int ms)
+  ///  - productCard.badgeBackgroundColor / badgeTextStyle
+  ///  - productCard.wishlistIconSize / cartIconSize
+  ///  - productCard.titleStyle / priceStyle / originalPriceStyle
+  final FlexibleWidgetConfig? flexibleConfig;
 
   @override
   State<ProductCard> createState() => ProductCardState();
@@ -55,8 +197,12 @@ class ProductCardState extends State<ProductCard>
   void initState() {
     super.initState();
 
+    final config = widget.config ?? const FlexibleProductCardConfig();
+    final animationDuration = config.animationDuration ?? const Duration(milliseconds: 200);
+    final hoverScale = config.hoverScale ?? 1.05;
+
     _hoverController = AnimationController(
-      duration: const Duration(milliseconds: 200),
+      duration: animationDuration,
       vsync: this,
     );
 
@@ -65,7 +211,7 @@ class ProductCardState extends State<ProductCard>
       vsync: this,
     );
 
-    _hoverAnimation = Tween<double>(begin: 1.0, end: 1.05).animate(
+    _hoverAnimation = Tween<double>(begin: 1.0, end: hoverScale).animate(
       CurvedAnimation(parent: _hoverController, curve: Curves.easeOut),
     );
 
@@ -102,38 +248,77 @@ class ProductCardState extends State<ProductCard>
   }
 
   Widget _buildDefaultCard(BuildContext context, ShopKitTheme theme) {
+    final legacy = widget.config ?? const FlexibleProductCardConfig();
+    final fc = widget.flexibleConfig;
+
+    T _cfg<T>(String key, T fallback) {
+      if (fc != null) {
+        if (fc.has('productCard.$key')) {
+          try { return fc.get<T>('productCard.$key', fallback); } catch (_) {}
+        }
+        if (fc.has(key)) {
+          try { return fc.get<T>(key, fallback); } catch (_) {}
+        }
+      }
+      return fallback;
+    }
+
+    final padding = legacy.padding ?? _cfg<EdgeInsets>('padding', const EdgeInsets.all(0));
+    final margin = legacy.margin ?? _cfg<EdgeInsets>('margin', EdgeInsets.zero);
+    final borderRadius = legacy.borderRadius ?? _cfg<BorderRadius>('borderRadius', BorderRadius.circular(theme.borderRadius));
+    final elevation = legacy.elevation ?? _cfg<double>('elevation', 4);
+    final backgroundColor = legacy.backgroundColor ?? _cfg<Color>('backgroundColor', theme.surfaceColor);
+    final showQuickActions = legacy.showQuickActions ?? _cfg<bool>('showQuickActions', true);
+    final hoverScale = legacy.hoverScale ?? _cfg<double>('hoverScale', 1.05);
+    final animationDuration = legacy.animationDuration ?? _cfg<Duration>('animationDuration', const Duration(milliseconds: 200));
+
+    // Update controllers if config changed (simple approach: durations may differ)
+    if (_hoverController.duration != animationDuration) {
+      _hoverController.duration = animationDuration;
+    }
+    if (_hoverAnimation.value != hoverScale) {
+      _hoverAnimation = Tween<double>(begin: 1.0, end: hoverScale).animate(
+        CurvedAnimation(parent: _hoverController, curve: Curves.easeOut),
+      );
+    }
+    
     return AnimatedBuilder(
       animation: _hoverAnimation,
       builder: (context, child) {
         return Transform.scale(
           scale: _hoverAnimation.value,
-          child: Material(
-            color: theme.surfaceColor,
-            borderRadius: BorderRadius.circular(theme.borderRadius),
-            elevation: 4,
-            child: InkWell(
-              onTap: widget.onTap,
-              onHover: _onHover,
-              borderRadius: BorderRadius.circular(theme.borderRadius),
-              child: Container(
-                clipBehavior: Clip.antiAlias,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(theme.borderRadius),
-                ),
-                // FIX 1: Use Flexible to ensure content fits within constrained height
-                child: Column(
-                  mainAxisSize: MainAxisSize.min, // CRITICAL FIX
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Flexible(
-                      flex: 3,
-                      child: _buildImageSection(context, theme),
-                    ),
-                    Flexible(
-                      flex: 2,
-                      child: _buildContentSection(context, theme),
-                    ),
-                  ],
+          child: Container(
+            margin: margin,
+            child: Material(
+              color: backgroundColor,
+              borderRadius: borderRadius,
+              elevation: elevation,
+              shadowColor: legacy.shadowColor,
+              child: InkWell(
+                onTap: widget.onTap,
+                onHover: _onHover,
+                borderRadius: borderRadius,
+                child: Container(
+                  padding: padding,
+                  clipBehavior: Clip.antiAlias,
+                  decoration: BoxDecoration(
+                    borderRadius: borderRadius,
+                  ),
+                  // FIX 1: Use Flexible to ensure content fits within constrained height
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min, // CRITICAL FIX
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Flexible(
+                        flex: 3,
+                        child: _buildImageSection(context, theme, showQuickActions),
+                      ),
+                      Flexible(
+                        flex: 2,
+                        child: _buildContentSection(context, theme),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -143,14 +328,21 @@ class ProductCardState extends State<ProductCard>
     );
   }
 
-  Widget _buildImageSection(BuildContext context, ShopKitTheme theme) {
+  Widget _buildImageSection(BuildContext context, ShopKitTheme theme, bool showQuickActions) {
+    final config = widget.config ?? const FlexibleProductCardConfig();
+    
+    // Use custom image builder if provided
+    if (config.imageBuilder != null && widget.product.mainImageUrl != null) {
+      return config.imageBuilder!(context, widget.product.mainImageUrl!, widget.product);
+    }
+    
     // Instead of forcing a large aspect ratio that can overflow (esp. with large text scale),
     // clamp the image height. If an explicit imageHeight is provided, use it. Otherwise derive
     // a safe height that leaves room for content (max 240).
     return LayoutBuilder(
       builder: (context, constraints) {
         final maxAvailable = constraints.maxHeight.isFinite ? constraints.maxHeight : 600;
-        final desired = widget.imageHeight ??  min(240.0, maxAvailable * 0.5);
+        final desired = config.imageHeight ?? widget.imageHeight ?? min(240.0, maxAvailable * 0.5);
         return SizedBox(
           height: desired,
           width: double.infinity,
@@ -173,18 +365,26 @@ class ProductCardState extends State<ProductCard>
               else
                 Positioned.fill(child: _buildImagePlaceholder(theme)),
 
-              if (widget.onToggleWishlist != null)
+              // Show wishlist button if enabled by config
+              if (widget.onToggleWishlist != null && (config.showQuickActions ?? showQuickActions))
                 Positioned(
                   top: 8,
                   right: 8,
                   child: _buildWishlistButton(context, theme),
                 ),
 
-              if (widget.product.hasDiscount)
+              // Show discount badge if enabled by config
+              if (widget.product.hasDiscount && (config.showDiscount ?? true))
                 Positioned(
                   top: 8,
                   left: 8,
                   child: _buildDiscountBadge(context, theme),
+                ),
+                
+              // Custom overlay builder
+              if (config.overlayBuilder != null)
+                Positioned.fill(
+                  child: config.overlayBuilder!(context, widget.product),
                 ),
             ],
           ),
@@ -205,6 +405,9 @@ class ProductCardState extends State<ProductCard>
   }
 
   Widget _buildWishlistButton(BuildContext context, ShopKitTheme theme) {
+    final config = widget.config ?? const FlexibleProductCardConfig();
+    final iconSize = config.wishlistIconSize ?? 20.0;
+    
     return AnimatedBuilder(
       animation: _favoriteAnimation,
       builder: (context, child) {
@@ -229,7 +432,7 @@ class ProductCardState extends State<ProductCard>
                   color: widget.isInWishlist
                       ? theme.errorColor
                       : theme.onSurfaceColor,
-                  size: 20,
+                  size: iconSize,
                 ),
               ),
             ),
@@ -240,16 +443,18 @@ class ProductCardState extends State<ProductCard>
   }
 
   Widget _buildDiscountBadge(BuildContext context, ShopKitTheme theme) {
+    final config = widget.config ?? const FlexibleProductCardConfig();
     final discount = widget.product.discountPercentage ?? 0;
+    
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: theme.errorColor,
+        color: config.badgeBackgroundColor ?? theme.errorColor,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
         '${discount.toInt()}% OFF',
-        style: TextStyle(
+        style: config.badgeTextStyle ?? TextStyle(
           color: theme.onErrorColor,
           fontSize: 10,
           fontWeight: FontWeight.bold,
@@ -277,9 +482,16 @@ class ProductCardState extends State<ProductCard>
   }
 
   Widget _buildTitleText(BuildContext context, ShopKitTheme theme) {
+    final config = widget.config ?? const FlexibleProductCardConfig();
+    
+    // Use custom title builder if provided
+    if (config.titleBuilder != null) {
+      return config.titleBuilder!(context, widget.product.name, widget.product);
+    }
+    
     return Text(
       widget.product.name,
-      style: TextStyle(
+      style: config.titleStyle ?? TextStyle(
         color: theme.onSurfaceColor,
         fontSize: 14,
         fontWeight: FontWeight.w500,
@@ -290,6 +502,14 @@ class ProductCardState extends State<ProductCard>
   }
 
   Widget _buildPriceRow(BuildContext context, ShopKitTheme theme) {
+    final config = widget.config ?? const FlexibleProductCardConfig();
+    
+    // Use custom price builder if provided
+    if (config.priceBuilder != null) {
+      final originalPrice = widget.product.hasDiscount ? widget.product.price : null;
+      return config.priceBuilder!(context, widget.product.discountedPrice, originalPrice, widget.product);
+    }
+    
     // FIX 5: Use intrinsic dimensions for price row to prevent overflow
     return IntrinsicWidth(
       child: Row(
@@ -297,7 +517,7 @@ class ProductCardState extends State<ProductCard>
         children: [
           Text(
             widget.product.formattedPrice,
-            style: TextStyle(
+            style: config.priceStyle ?? TextStyle(
               color: theme.primaryColor,
               fontSize: 16,
               fontWeight: FontWeight.bold,
@@ -308,7 +528,7 @@ class ProductCardState extends State<ProductCard>
             Flexible(
               child: Text(
                 widget.product.formattedOriginalPrice,
-                style: TextStyle(
+                style: config.originalPriceStyle ?? TextStyle(
                   color: theme.onSurfaceColor.withValues(alpha: 0.6),
                   fontSize: 12,
                   decoration: TextDecoration.lineThrough,
@@ -323,6 +543,28 @@ class ProductCardState extends State<ProductCard>
   }
 
   Widget _buildActionSection(BuildContext context, ShopKitTheme theme) {
+    final config = widget.config ?? const FlexibleProductCardConfig();
+    
+    // Use custom action builder if provided
+    if (config.actionBuilder != null) {
+      return config.actionBuilder!(
+        context,
+        () {
+          if (widget.onAddToCart != null) {
+            final cartItem = CartItemModel(
+              id: 'cart_${widget.product.id}_${DateTime.now().millisecondsSinceEpoch}',
+              product: widget.product,
+              quantity: 1,
+              pricePerItem: widget.product.discountedPrice,
+            );
+            widget.onAddToCart!(cartItem);
+          }
+        },
+        widget.onToggleWishlist,
+        widget.product,
+      );
+    }
+    
     return SizedBox(
       width: double.infinity,
       child: AddToCartButtonNew(
@@ -332,7 +574,7 @@ class ProductCardState extends State<ProductCard>
             id: 'cart_${product?.id}_${DateTime.now().millisecondsSinceEpoch}',
             product: product!,
             quantity: quantity,
-            pricePerItem: product.price,
+            pricePerItem: product.discountedPrice,
           );
           widget.onAddToCart?.call(cartItem);
         },

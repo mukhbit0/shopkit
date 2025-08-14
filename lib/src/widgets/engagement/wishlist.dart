@@ -2,6 +2,129 @@ import 'package:flutter/material.dart';
 import '../../models/wishlist_model.dart';
 import '../../models/product_model.dart';
 import '../product_discovery/product_card.dart';
+import '../../config/flexible_widget_config.dart';
+
+/// Configuration class enabling deep customization of the Wishlist widget.
+///
+/// This follows the flexible widget architecture used across ShopKit and
+/// allows consumers to override layout, styling, behavior and even provide
+/// full custom builders for each major section.
+class FlexibleWishlistConfig {
+  const FlexibleWishlistConfig({
+    this.padding,
+    this.margin,
+    this.backgroundColor,
+    this.borderRadius,
+    this.borderColor,
+    this.borderWidth,
+    this.headerTextStyle,
+    this.subtitleTextStyle,
+    this.priceTextStyle,
+    this.originalPriceTextStyle,
+    this.ratingColor,
+    this.iconColor,
+    this.actionSpacing,
+    this.gridCrossAxisCount,
+    this.itemAspectRatio,
+    this.spacing,
+    this.showMoveToCartButton,
+    this.showShareButton,
+    this.showRemoveButton,
+    // Builders
+  this.headerBuilder,
+  this.controlsBuilder,
+  this.gridItemBuilder,
+  this.listItemBuilder,
+  this.emptyStateBuilder,
+  this.moveToCartButtonBuilder,
+  });
+
+  /// Outer padding for the wishlist container.
+  final EdgeInsets? padding;
+  /// External margin (not applied internally by default container here but available for wrapper usage).
+  final EdgeInsets? margin;
+  final Color? backgroundColor;
+  final BorderRadius? borderRadius;
+  final Color? borderColor;
+  final double? borderWidth;
+  final TextStyle? headerTextStyle;
+  final TextStyle? subtitleTextStyle;
+  final TextStyle? priceTextStyle;
+  final TextStyle? originalPriceTextStyle;
+  final Color? ratingColor;
+  final Color? iconColor;
+  final double? actionSpacing;
+  final int? gridCrossAxisCount;
+  final double? itemAspectRatio;
+  final double? spacing;
+  final bool? showMoveToCartButton;
+  final bool? showShareButton;
+  final bool? showRemoveButton;
+
+  // Section builders
+  final Widget Function(BuildContext context, Wishlist widget)? headerBuilder;
+  final Widget Function(BuildContext context, Wishlist widget)? controlsBuilder;
+  final Widget Function(BuildContext context, ProductModel product, Wishlist widget)? gridItemBuilder;
+  final Widget Function(BuildContext context, ProductModel product, Wishlist widget)? listItemBuilder;
+  final Widget Function(BuildContext context, Wishlist widget)? emptyStateBuilder;
+  final Widget Function(BuildContext context, ProductModel product, VoidCallback? onPressed, Wishlist widget)? moveToCartButtonBuilder;
+
+  FlexibleWishlistConfig copyWith({
+    EdgeInsets? padding,
+    EdgeInsets? margin,
+    Color? backgroundColor,
+    BorderRadius? borderRadius,
+    Color? borderColor,
+    double? borderWidth,
+    TextStyle? headerTextStyle,
+    TextStyle? subtitleTextStyle,
+    TextStyle? priceTextStyle,
+    TextStyle? originalPriceTextStyle,
+    Color? ratingColor,
+    Color? iconColor,
+    double? actionSpacing,
+    int? gridCrossAxisCount,
+    double? itemAspectRatio,
+    double? spacing,
+    bool? showMoveToCartButton,
+    bool? showShareButton,
+    bool? showRemoveButton,
+  Widget Function(BuildContext, Wishlist)? headerBuilder,
+  Widget Function(BuildContext, Wishlist)? controlsBuilder,
+  Widget Function(BuildContext, ProductModel, Wishlist)? gridItemBuilder,
+  Widget Function(BuildContext, ProductModel, Wishlist)? listItemBuilder,
+  Widget Function(BuildContext, Wishlist)? emptyStateBuilder,
+  Widget Function(BuildContext, ProductModel, VoidCallback?, Wishlist)? moveToCartButtonBuilder,
+  }) {
+    return FlexibleWishlistConfig(
+      padding: padding ?? this.padding,
+      margin: margin ?? this.margin,
+      backgroundColor: backgroundColor ?? this.backgroundColor,
+      borderRadius: borderRadius ?? this.borderRadius,
+      borderColor: borderColor ?? this.borderColor,
+      borderWidth: borderWidth ?? this.borderWidth,
+      headerTextStyle: headerTextStyle ?? this.headerTextStyle,
+      subtitleTextStyle: subtitleTextStyle ?? this.subtitleTextStyle,
+      priceTextStyle: priceTextStyle ?? this.priceTextStyle,
+      originalPriceTextStyle: originalPriceTextStyle ?? this.originalPriceTextStyle,
+      ratingColor: ratingColor ?? this.ratingColor,
+      iconColor: iconColor ?? this.iconColor,
+      actionSpacing: actionSpacing ?? this.actionSpacing,
+      gridCrossAxisCount: gridCrossAxisCount ?? this.gridCrossAxisCount,
+      itemAspectRatio: itemAspectRatio ?? this.itemAspectRatio,
+      spacing: spacing ?? this.spacing,
+      showMoveToCartButton: showMoveToCartButton ?? this.showMoveToCartButton,
+      showShareButton: showShareButton ?? this.showShareButton,
+      showRemoveButton: showRemoveButton ?? this.showRemoveButton,
+  headerBuilder: headerBuilder ?? this.headerBuilder,
+  controlsBuilder: controlsBuilder ?? this.controlsBuilder,
+  gridItemBuilder: gridItemBuilder ?? this.gridItemBuilder,
+  listItemBuilder: listItemBuilder ?? this.listItemBuilder,
+  emptyStateBuilder: emptyStateBuilder ?? this.emptyStateBuilder,
+  moveToCartButtonBuilder: moveToCartButtonBuilder ?? this.moveToCartButtonBuilder,
+    );
+  }
+}
 
 /// A widget for displaying and managing wishlist items
 class Wishlist extends StatefulWidget {
@@ -22,6 +145,8 @@ class Wishlist extends StatefulWidget {
     this.borderRadius,
     this.padding,
     this.spacing = 16.0,
+  this.config,
+  this.flexibleConfig,
   });
 
   /// Wishlist to display
@@ -69,6 +194,30 @@ class Wishlist extends StatefulWidget {
   /// Spacing between items
   final double spacing;
 
+  /// Optional configuration for deep customization.
+  final FlexibleWishlistConfig? config;
+
+  /// New universal flexible configuration. When provided, it can override core
+  /// layout/styling props (padding, spacing, colors, booleans) while remaining
+  /// backward compatible with the legacy [FlexibleWishlistConfig].
+  ///
+  /// Supported keys (namespaced suggestions):
+  ///  - wishlist.padding (EdgeInsets / double / map)
+  ///  - wishlist.margin (EdgeInsets / double / map)
+  ///  - wishlist.spacing (double)
+  ///  - wishlist.backgroundColor (Color)
+  ///  - wishlist.borderRadius (double / BorderRadius)
+  ///  - wishlist.borderColor (Color)
+  ///  - wishlist.borderWidth (double)
+  ///  - wishlist.showMoveToCartButton (bool)
+  ///  - wishlist.showShareButton (bool)
+  ///  - wishlist.showRemoveButton (bool)
+  ///  - wishlist.headerTextStyle (TextStyle)
+  ///  - wishlist.subtitleTextStyle (TextStyle)
+  ///  - wishlist.ratingColor (Color)
+  ///  - wishlist.iconColor (Color)
+  final FlexibleWidgetConfig? flexibleConfig;
+
   @override
   State<Wishlist> createState() => _WishlistState();
 }
@@ -82,44 +231,94 @@ class _WishlistState extends State<Wishlist> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    if (widget.wishlist.items.isEmpty) {
+    // Helper to read from flexibleConfig with fallbacks to legacy config and then widget props
+    T _cfg<T>(String key, T fallback) {
+      // Try namespaced key first then generic key for convenience
+      if (widget.flexibleConfig != null) {
+        if (widget.flexibleConfig!.has('wishlist.$key')) {
+          try { return widget.flexibleConfig!.get<T>('wishlist.$key', fallback); } catch (_) {}
+        }
+        if (widget.flexibleConfig!.has(key)) {
+          try { return widget.flexibleConfig!.get<T>(key, fallback); } catch (_) {}
+        }
+      }
+      return fallback;
+    }
+
+    // Derived values with override order: flexibleConfig -> legacy config -> explicit widget prop / default
+    final padding = widget.padding ?? widget.config?.padding ?? _cfg<EdgeInsets>('padding', const EdgeInsets.all(16));
+    final bgColor = widget.backgroundColor ?? widget.config?.backgroundColor ?? _cfg<Color>('backgroundColor', colorScheme.surface);
+    final borderRadius = widget.borderRadius ?? widget.config?.borderRadius ?? _cfg<BorderRadius>('borderRadius', BorderRadius.circular(12));
+    final borderColor = widget.config?.borderColor ?? _cfg<Color>('borderColor', colorScheme.outline.withValues(alpha: 0.2));
+    final borderWidth = widget.config?.borderWidth ?? _cfg<double>('borderWidth', 1.0);
+    final spacing = _cfg<double>('spacing', widget.config?.spacing ?? widget.spacing);
+    final showMoveToCart = _cfg<bool>('showMoveToCartButton', widget.config?.showMoveToCartButton ?? widget.showMoveToCartButton);
+    final showShare = _cfg<bool>('showShareButton', widget.config?.showShareButton ?? widget.showShareButton);
+    final showRemove = _cfg<bool>('showRemoveButton', widget.config?.showRemoveButton ?? widget.showRemoveButton);
+    final ratingColor = widget.config?.ratingColor ?? _cfg<Color>('ratingColor', Colors.amber);
+
+    // Store derived booleans for reuse down the tree via InheritedWidget pattern (future) or locals now
+    final derived = _WishlistDerived(
+      spacing: spacing,
+      showMoveToCart: showMoveToCart,
+      showShare: showShare,
+      showRemove: showRemove,
+      ratingColor: ratingColor,
+      padding: padding,
+      bgColor: bgColor,
+      borderRadius: borderRadius,
+      borderColor: borderColor,
+      borderWidth: borderWidth,
+    );
+
+  if (widget.wishlist.items.isEmpty) {
+      // Allow custom empty state
+      if (widget.config?.emptyStateBuilder != null) {
+        return widget.config!.emptyStateBuilder!(context, widget);
+      }
       return _buildEmptyState(theme);
     }
 
     final sortedItems = _sortItems(widget.wishlist.items);
 
+    final cfg = widget.config;
     return Container(
-      padding: widget.padding ?? const EdgeInsets.all(16),
+      padding: derived.padding,
       decoration: BoxDecoration(
-        color: widget.backgroundColor ?? colorScheme.surface,
-        borderRadius: widget.borderRadius ?? BorderRadius.circular(12),
-        border: Border.all(color: colorScheme.outline.withValues(alpha: 0.2)),
+        color: derived.bgColor,
+        borderRadius: derived.borderRadius,
+        border: Border.all(color: derived.borderColor, width: derived.borderWidth),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header
-          _buildHeader(theme),
+          cfg?.headerBuilder != null
+              ? cfg!.headerBuilder!(context, widget)
+              : _buildHeader(theme, showShare),
 
-          const SizedBox(height: 16),
+          SizedBox(height: derived.spacing),
 
           // Controls
-          _buildControls(theme),
+      cfg?.controlsBuilder != null
+        ? cfg!.controlsBuilder!(context, widget)
+        : _buildControls(theme),
 
-          const SizedBox(height: 16),
+          SizedBox(height: derived.spacing),
 
           // Items
           Expanded(
             child: _isGridView
-                ? _buildGridView(sortedItems, theme)
-                : _buildListView(sortedItems, theme),
+                ? _buildGridView(sortedItems, theme, derived)
+                : _buildListView(sortedItems, theme, derived),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildHeader(ThemeData theme) {
+  Widget _buildHeader(ThemeData theme, bool showShare) {
+    final cfg = widget.config;
     return Row(
       children: [
         Expanded(
@@ -128,21 +327,21 @@ class _WishlistState extends State<Wishlist> {
             children: [
               Text(
                 widget.wishlist.name,
-                style: theme.textTheme.titleLarge?.copyWith(
+                style: (cfg?.headerTextStyle ?? theme.textTheme.titleLarge)?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
               ),
               const SizedBox(height: 4),
               Text(
                 '${widget.wishlist.itemCount} items • Total value: \$${widget.wishlist.totalValue.toStringAsFixed(2)}',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                style: (cfg?.subtitleTextStyle ?? theme.textTheme.bodyMedium)?.copyWith(
+                  color: (cfg?.subtitleTextStyle?.color ?? theme.colorScheme.onSurface).withValues(alpha: 0.6),
                 ),
               ),
             ],
           ),
         ),
-        if (widget.showShareButton && widget.onShare != null)
+        if (showShare && widget.onShare != null)
           IconButton(
             onPressed: widget.onShare,
             icon: const Icon(Icons.share),
@@ -187,79 +386,99 @@ class _WishlistState extends State<Wishlist> {
     );
   }
 
-  Widget _buildGridView(List<ProductModel> items, ThemeData theme) {
+  Widget _buildGridView(List<ProductModel> items, ThemeData theme, _WishlistDerived derived) {
+    final cfg = widget.config;
     return GridView.builder(
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: widget.gridCrossAxisCount ?? _getGridCrossAxisCount(),
-        childAspectRatio: widget.itemAspectRatio,
-        crossAxisSpacing: widget.spacing,
-        mainAxisSpacing: widget.spacing,
+        crossAxisCount: cfg?.gridCrossAxisCount ?? widget.gridCrossAxisCount ?? _getGridCrossAxisCount(),
+        childAspectRatio: cfg?.itemAspectRatio ?? widget.itemAspectRatio,
+        crossAxisSpacing: derived.spacing,
+        mainAxisSpacing: derived.spacing,
       ),
       itemCount: items.length,
       itemBuilder: (context, index) {
         final product = items[index];
-        return _buildGridItem(product, theme);
+        if (cfg?.gridItemBuilder != null) {
+          return cfg!.gridItemBuilder!(context, product, widget);
+        }
+        return _buildGridItem(product, theme, derived);
       },
     );
   }
 
-  Widget _buildListView(List<ProductModel> items, ThemeData theme) {
+  Widget _buildListView(List<ProductModel> items, ThemeData theme, _WishlistDerived derived) {
+    final cfg = widget.config;
+    final spacing = derived.spacing;
     return ListView.separated(
       itemCount: items.length,
-      separatorBuilder: (context, index) => SizedBox(height: widget.spacing),
+      separatorBuilder: (context, index) => SizedBox(height: spacing),
       itemBuilder: (context, index) {
         final product = items[index];
-        return _buildListItem(product, theme);
+    if (cfg?.listItemBuilder != null) {
+      return cfg!.listItemBuilder!(context, product, widget);
+        }
+        return _buildListItem(product, theme, derived);
       },
     );
   }
 
-  Widget _buildGridItem(ProductModel product, ThemeData theme) {
-    return Stack(
+  Widget _buildGridItem(ProductModel product, ThemeData theme, _WishlistDerived derived) {
+    final cfg = widget.config;
+    final showMoveToCart = derived.showMoveToCart;
+    final showRemove = derived.showRemove;
+  return Stack(
       children: [
         ProductCard(
           product: product,
           onTap: () => widget.onProductTap?.call(product),
           isInWishlist: true,
-          onToggleWishlist: widget.showRemoveButton
-              ? () => widget.onRemoveFromWishlist?.call(product)
-              : null,
+      onToggleWishlist: showRemove ? () => widget.onRemoveFromWishlist?.call(product) : null,
           onAddToCart: widget.onAddToCart != null
               ? (cartItem) => widget.onAddToCart?.call(product)
               : null,
         ),
 
         // Move to cart button
-        if (widget.showMoveToCartButton && widget.onMoveToCart != null)
+        if (showMoveToCart && widget.onMoveToCart != null)
           Positioned(
             bottom: 8,
             right: 8,
-            child: Container(
-              decoration: BoxDecoration(
-                color: theme.colorScheme.primary,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: IconButton(
-                onPressed: () => widget.onMoveToCart?.call(product),
-                icon: Icon(
-                  Icons.shopping_cart,
-                  color: theme.colorScheme.onPrimary,
-                  size: 18,
-                ),
-                constraints: const BoxConstraints(
-                  minWidth: 32,
-                  minHeight: 32,
-                ),
-                tooltip: 'Move to cart',
-              ),
-            ),
+            child: cfg?.moveToCartButtonBuilder != null
+                ? cfg!.moveToCartButtonBuilder!(
+                    context,
+                    product,
+                    () => widget.onMoveToCart?.call(product),
+                    widget,
+                  )
+                : Container(
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: IconButton(
+                      onPressed: () => widget.onMoveToCart?.call(product),
+                      icon: Icon(
+                        Icons.shopping_cart,
+                        color: theme.colorScheme.onPrimary,
+                        size: 18,
+                      ),
+                      constraints: const BoxConstraints(
+                        minWidth: 32,
+                        minHeight: 32,
+                      ),
+                      tooltip: 'Move to cart',
+                    ),
+                  ),
           ),
       ],
     );
   }
 
-  Widget _buildListItem(ProductModel product, ThemeData theme) {
-    return Container(
+  Widget _buildListItem(ProductModel product, ThemeData theme, _WishlistDerived derived) {
+    final showMoveToCart = derived.showMoveToCart;
+    final showRemove = derived.showRemove;
+    final ratingColor = derived.ratingColor;
+  return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         border:
@@ -325,7 +544,7 @@ class _WishlistState extends State<Wishlist> {
                                   ? Icons.star_half
                                   : Icons.star_border,
                           size: 14,
-                          color: Colors.amber,
+                          color: ratingColor,
                         );
                       }),
                       const SizedBox(width: 4),
@@ -364,8 +583,7 @@ class _WishlistState extends State<Wishlist> {
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    if (widget.showMoveToCartButton &&
-                        widget.onMoveToCart != null)
+                    if (showMoveToCart && widget.onMoveToCart != null)
                       TextButton.icon(
                         onPressed: () => widget.onMoveToCart?.call(product),
                         icon: const Icon(Icons.shopping_cart, size: 16),
@@ -375,8 +593,7 @@ class _WishlistState extends State<Wishlist> {
                         ),
                       ),
                     const Spacer(),
-                    if (widget.showRemoveButton &&
-                        widget.onRemoveFromWishlist != null)
+                    if (showRemove && widget.onRemoveFromWishlist != null)
                       IconButton(
                         onPressed: () =>
                             widget.onRemoveFromWishlist?.call(product),
@@ -466,4 +683,31 @@ class _WishlistState extends State<Wishlist> {
     if (screenWidth > 600) return 2;
     return 1;
   }
+
+  // Internal data holder for resolved configuration values to avoid recomputing
+}
+
+class _WishlistDerived {
+  final double spacing;
+  final bool showMoveToCart;
+  final bool showShare;
+  final bool showRemove;
+  final Color ratingColor;
+  final EdgeInsets padding;
+  final Color bgColor;
+  final BorderRadius borderRadius;
+  final Color borderColor;
+  final double borderWidth;
+  const _WishlistDerived({
+    required this.spacing,
+    required this.showMoveToCart,
+    required this.showShare,
+    required this.showRemove,
+    required this.ratingColor,
+    required this.padding,
+    required this.bgColor,
+    required this.borderRadius,
+    required this.borderColor,
+    required this.borderWidth,
+  });
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../models/product_model.dart';
 import '../../models/cart_model.dart';
 import '../../models/variant_model.dart';
+import '../../config/flexible_widget_config.dart';
 
 /// A sticky add-to-cart widget that appears at the bottom of the screen
 class StickyAddToCart extends StatefulWidget {
@@ -23,6 +24,7 @@ class StickyAddToCart extends StatefulWidget {
     this.padding,
     this.margin,
     this.animationDuration = const Duration(milliseconds: 300),
+  this.flexibleConfig,
   });
 
   /// Product to add to cart
@@ -72,6 +74,13 @@ class StickyAddToCart extends StatefulWidget {
 
   /// Animation duration for show/hide
   final Duration animationDuration;
+
+  /// Universal flexible configuration for deep overrides.
+  /// Namespaced keys: stickyAddToCart.*
+  /// Supported keys: backgroundColor, elevation, borderRadius, padding, margin,
+  /// showProductInfo, showQuantitySelector, showVariantSelector, isVisible,
+  /// buttonLabel, outOfStockLabel, quantityStep (int), enableAnimations (bool)
+  final FlexibleWidgetConfig? flexibleConfig;
 
   @override
   State<StickyAddToCart> createState() => _StickyAddToCartState();
@@ -141,21 +150,50 @@ class _StickyAddToCartState extends State<StickyAddToCart>
     final colorScheme = theme.colorScheme;
     final mediaQuery = MediaQuery.of(context);
 
+    // Config resolution helper
+    T _cfg<T>(String key, T fallback) {
+      final fc = widget.flexibleConfig;
+      if (fc != null) {
+        if (fc.has('stickyAddToCart.' + key)) {
+          try { return fc.get<T>('stickyAddToCart.' + key, fallback); } catch (_) {}
+        }
+        if (fc.has(key)) {
+          try { return fc.get<T>(key, fallback); } catch (_) {}
+        }
+      }
+      return fallback;
+    }
+
+    final isVisible = _cfg<bool>('isVisible', widget.isVisible);
+    final padding = widget.padding ?? _cfg<EdgeInsets>('padding', const EdgeInsets.all(16));
+    final margin = widget.margin ?? _cfg<EdgeInsets>('margin', EdgeInsets.only(bottom: mediaQuery.viewPadding.bottom));
+    final bgColor = widget.backgroundColor ?? _cfg<Color>('backgroundColor', colorScheme.surface);
+    final borderRadius = widget.borderRadius ?? _cfg<BorderRadius>('borderRadius', const BorderRadius.vertical(top: Radius.circular(16)));
+    final showProductInfo = _cfg<bool>('showProductInfo', widget.showProductInfo);
+    final showQuantitySelector = _cfg<bool>('showQuantitySelector', widget.showQuantitySelector);
+    final showVariantSelector = _cfg<bool>('showVariantSelector', widget.showVariantSelector);
+    final buttonLabel = _cfg<String>('buttonLabel', 'Add to Cart');
+    final outOfStockLabel = _cfg<String>('outOfStockLabel', 'Out of Stock');
+
+    // Keep animation controller in sync with visibility override
+    if (isVisible && !_animationController.isAnimating && _animationController.status != AnimationStatus.forward) {
+      _animationController.forward();
+    } else if (!isVisible && !_animationController.isAnimating && _animationController.status != AnimationStatus.reverse) {
+      _animationController.reverse();
+    }
+
     return SlideTransition(
       position: _slideAnimation,
       child: Container(
-        margin: widget.margin ??
-            EdgeInsets.only(bottom: mediaQuery.viewPadding.bottom),
+        margin: margin,
         child: Material(
           elevation: widget.elevation,
-          borderRadius: widget.borderRadius ??
-              const BorderRadius.vertical(top: Radius.circular(16)),
+          borderRadius: borderRadius,
           child: Container(
-            padding: widget.padding ?? const EdgeInsets.all(16),
+            padding: padding,
             decoration: BoxDecoration(
-              color: widget.backgroundColor ?? colorScheme.surface,
-              borderRadius: widget.borderRadius ??
-                  const BorderRadius.vertical(top: Radius.circular(16)),
+              color: bgColor,
+              borderRadius: borderRadius,
             ),
             child: SafeArea(
               top: false,
@@ -163,20 +201,20 @@ class _StickyAddToCartState extends State<StickyAddToCart>
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   // Product info row
-                  if (widget.showProductInfo) ...[
+                  if (showProductInfo) ...[
                     _buildProductInfo(theme),
                     const SizedBox(height: 12),
                   ],
 
                   // Variant selector
-                  if (widget.showVariantSelector &&
+                  if (showVariantSelector &&
                       widget.product.variants?.isNotEmpty == true) ...[
                     _buildVariantSelector(theme),
                     const SizedBox(height: 12),
                   ],
 
                   // Quantity and add to cart row
-                  _buildActionRow(theme),
+                  _buildActionRow(theme, showQuantitySelector, buttonLabel, outOfStockLabel),
                 ],
               ),
             ),
@@ -325,11 +363,11 @@ class _StickyAddToCartState extends State<StickyAddToCart>
     );
   }
 
-  Widget _buildActionRow(ThemeData theme) {
+  Widget _buildActionRow(ThemeData theme, bool showQuantitySelector, String buttonLabel, String outOfStockLabel) {
     return Row(
       children: [
         // Quantity selector
-        if (widget.showQuantitySelector) ...[
+        if (showQuantitySelector) ...[
           _buildQuantitySelector(theme),
           const SizedBox(width: 16),
         ],
@@ -345,7 +383,7 @@ class _StickyAddToCartState extends State<StickyAddToCart>
               ),
             ),
             child: Text(
-              widget.product.isInStock ? 'Add to Cart' : 'Out of Stock',
+              widget.product.isInStock ? buttonLabel : outOfStockLabel,
               style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
