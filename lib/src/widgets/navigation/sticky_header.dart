@@ -68,22 +68,22 @@ class _StickyHeaderState extends State<StickyHeader> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    T _cfg<T>(String key, T fallback) {
+    T cfg<T>(String key, T fallback) {
       final fc = widget.flexibleConfig;
       if (fc != null) {
-        if (fc.has('stickyHeader.' + key)) { try { return fc.get<T>('stickyHeader.' + key, fallback); } catch (_) {} }
+        if (fc.has('stickyHeader.$key')) { try { return fc.get<T>('stickyHeader.$key', fallback); } catch (_) {} }
         if (fc.has(key)) { try { return fc.get<T>(key, fallback); } catch (_) {} }
       }
       return fallback;
     }
 
-    final height = _cfg<double>('height', widget.height);
-    final background = _cfg<Color>('backgroundColor', widget.backgroundColor ?? colorScheme.surface);
-    final elevation = _cfg<double>('elevation', widget.elevation);
-    final showSearch = _cfg<bool>('showSearch', widget.showSearch);
-    final showCart = _cfg<bool>('showCart', widget.showCart);
-    final showShadow = _cfg<bool>('showShadow', true);
-    final padding = _cfg<EdgeInsets>('padding', const EdgeInsets.symmetric(horizontal: 16.0));
+    final height = cfg<double>('height', widget.height);
+    final background = cfg<Color>('backgroundColor', widget.backgroundColor ?? colorScheme.surface);
+    final elevation = cfg<double>('elevation', widget.elevation);
+    final showSearch = cfg<bool>('showSearch', widget.showSearch);
+    final showCart = cfg<bool>('showCart', widget.showCart);
+    final showShadow = cfg<bool>('showShadow', true);
+    final padding = cfg<EdgeInsets>('padding', const EdgeInsets.symmetric(horizontal: 16.0));
 
     return Container(
       height: height,

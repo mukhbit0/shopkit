@@ -96,25 +96,25 @@ class _ShippingCalculatorState extends State<ShippingCalculator> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    T _cfg<T>(String key, T fallback) {
+    T cfg<T>(String key, T fallback) {
       final fc = widget.flexibleConfig;
       if (fc != null) {
-        if (fc.has('shippingCalc.' + key)) { try { return fc.get<T>('shippingCalc.' + key, fallback); } catch (_) {} }
+        if (fc.has('shippingCalc.$key')) { try { return fc.get<T>('shippingCalc.$key', fallback); } catch (_) {} }
         if (fc.has(key)) { try { return fc.get<T>(key, fallback); } catch (_) {} }
       }
       return fallback;
     }
 
-    final padding = widget.padding ?? _cfg<EdgeInsets>('padding', const EdgeInsets.all(16));
-    final bgColor = widget.backgroundColor ?? _cfg<Color>('backgroundColor', colorScheme.surface);
-    final borderRadius = widget.borderRadius ?? _cfg<BorderRadius>('borderRadius', BorderRadius.circular(12));
-    final showAddressForm = _cfg<bool>('showAddressForm', widget.showAddressForm);
-    final showShippingMethods = _cfg<bool>('showShippingMethods', widget.showShippingMethods);
-    final calcLabel = _cfg<String>('calculateButtonLabel', 'Calculate Shipping');
-    final headerText = _cfg<String>('headerText', 'Shipping Calculator');
-    final addressHeaderText = _cfg<String>('addressHeaderText', 'Shipping Address');
-    final methodsHeaderText = _cfg<String>('methodsHeaderText', 'Shipping Methods');
-    final loadingSize = _cfg<double>('loadingIndicatorSize', 20);
+    final padding = widget.padding ?? cfg<EdgeInsets>('padding', const EdgeInsets.all(16));
+    final bgColor = widget.backgroundColor ?? cfg<Color>('backgroundColor', colorScheme.surface);
+    final borderRadius = widget.borderRadius ?? cfg<BorderRadius>('borderRadius', BorderRadius.circular(12));
+    final showAddressForm = cfg<bool>('showAddressForm', widget.showAddressForm);
+    final showShippingMethods = cfg<bool>('showShippingMethods', widget.showShippingMethods);
+    final calcLabel = cfg<String>('calculateButtonLabel', 'Calculate Shipping');
+    final headerText = cfg<String>('headerText', 'Shipping Calculator');
+    final addressHeaderText = cfg<String>('addressHeaderText', 'Shipping Address');
+    final methodsHeaderText = cfg<String>('methodsHeaderText', 'Shipping Methods');
+    final loadingSize = cfg<double>('loadingIndicatorSize', 20);
 
     return Container(
       padding: padding,

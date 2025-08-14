@@ -313,6 +313,7 @@ class _AdvancedBackToTopState extends State<AdvancedBackToTop> with TickerProvid
 
   late FlexibleWidgetConfig _config;
 
+  @override
   void initState() {
     super.initState();
 

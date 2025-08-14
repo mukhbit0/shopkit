@@ -89,7 +89,7 @@ class _ProductFilterState extends State<ProductFilter> {
     final colorScheme = theme.colorScheme;
 
     // Helper to resolve config
-    T _cfg<T>(String key, T fallback) {
+    T cfg<T>(String key, T fallback) {
       final fc = widget.flexibleConfig;
       if (fc != null) {
         if (fc.has('productFilter.$key')) {
@@ -102,18 +102,18 @@ class _ProductFilterState extends State<ProductFilter> {
       return fallback;
     }
 
-    final padding = widget.padding ?? _cfg<EdgeInsets>('padding', const EdgeInsets.all(16));
-    final spacing = _cfg<double>('spacing', widget.spacing);
-    final bgColor = widget.backgroundColor ?? _cfg<Color>('backgroundColor', colorScheme.surface);
-    final borderRadius = widget.borderRadius ?? _cfg<BorderRadius>('borderRadius', BorderRadius.circular(12));
-    final showSortOptions = _cfg<bool>('showSortOptions', widget.showSortOptions);
-    final showFilterCount = _cfg<bool>('showFilterCount', widget.showFilterCount);
-    final chipSpacing = _cfg<double>('chipSpacing', 8.0);
-    final clearAllText = _cfg<String>('clearAllText', 'Clear All');
-    final filtersLabel = _cfg<String>('filtersLabel', 'Filters');
-    final sortLabel = _cfg<String>('sortLabel', 'Sort By');
-    final headerIcon = _cfg<IconData>('headerIcon', Icons.tune);
-    final rangeDivisions = _cfg<int>('rangeDivisions', 20);
+    final padding = widget.padding ?? cfg<EdgeInsets>('padding', const EdgeInsets.all(16));
+    final spacing = cfg<double>('spacing', widget.spacing);
+    final bgColor = widget.backgroundColor ?? cfg<Color>('backgroundColor', colorScheme.surface);
+    final borderRadius = widget.borderRadius ?? cfg<BorderRadius>('borderRadius', BorderRadius.circular(12));
+    final showSortOptions = cfg<bool>('showSortOptions', widget.showSortOptions);
+    final showFilterCount = cfg<bool>('showFilterCount', widget.showFilterCount);
+    final chipSpacing = cfg<double>('chipSpacing', 8.0);
+    final clearAllText = cfg<String>('clearAllText', 'Clear All');
+    final filtersLabel = cfg<String>('filtersLabel', 'Filters');
+    final sortLabel = cfg<String>('sortLabel', 'Sort By');
+    final headerIcon = cfg<IconData>('headerIcon', Icons.tune);
+    final rangeDivisions = cfg<int>('rangeDivisions', 20);
 
     return Container(
       decoration: BoxDecoration(

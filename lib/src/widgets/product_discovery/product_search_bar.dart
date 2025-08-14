@@ -2,8 +2,10 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../config/flexible_widget_config.dart';
 import '../../theme/shopkit_theme.dart';
+import '../../theme/shopkit_theme_styles.dart';
 
 /// A comprehensive product search bar with advanced features and unlimited customization
 /// Features: Voice search, filters, suggestions, history, analytics, and extensive theming
@@ -32,6 +34,7 @@ class ProductSearchBarAdvanced extends StatefulWidget {
     this.debounceDelay = const Duration(milliseconds: 300),
     this.maxSuggestions = 5,
     this.maxHistory = 10,
+    this.themeStyle,
   });
 
   /// Callback when search is performed
@@ -99,6 +102,9 @@ class ProductSearchBarAdvanced extends StatefulWidget {
 
   /// Maximum number of history items to keep
   final int maxHistory;
+
+  /// Built-in theme style support - pass theme name as string
+  final String? themeStyle;
 
   @override
   State<ProductSearchBarAdvanced> createState() => ProductSearchBarAdvancedState();
@@ -410,7 +416,7 @@ class ProductSearchBarAdvancedState extends State<ProductSearchBarAdvanced>
     final searchBarStyle = _getConfig('searchBarStyle', 'elevated');
     
     return Container(
-      height: _getConfig('searchBarHeight', 56.0),
+      height: _getConfig('searchBarHeight', 56.0.h),
       decoration: _buildSearchBarDecoration(theme, searchBarStyle),
       child: Row(
         children: [
@@ -480,24 +486,24 @@ class ProductSearchBarAdvancedState extends State<ProductSearchBarAdvanced>
 
   Widget _buildLeadingIcon(BuildContext context, ShopKitTheme theme) {
     return Container(
-      padding: EdgeInsets.only(left: _getConfig('leadingIconPadding', 16.0)),
+      padding: EdgeInsets.only(left: _getConfig('leadingIconPadding', 16.0.w)),
       child: Icon(
         Icons.search,
         color: _config?.getColor('searchIconColor', theme.onSurfaceColor.withValues(alpha: 0.6)) ?? theme.onSurfaceColor.withValues(alpha: 0.6),
-        size: _getConfig('searchIconSize', 24.0),
+        size: _getConfig('searchIconSize', 24.0.sp),
       ),
     );
   }
 
   Widget _buildSearchField(BuildContext context, ShopKitTheme theme) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: _getConfig('searchFieldPadding', 16.0)),
+      padding: EdgeInsets.symmetric(horizontal: _getConfig('searchFieldPadding', 16.0.w)),
       child: TextField(
         controller: _controller,
         focusNode: _focusNode,
         style: TextStyle(
           color: _config?.getColor('searchTextColor', theme.onSurfaceColor) ?? theme.onSurfaceColor,
-          fontSize: _getConfig('searchTextFontSize', 16.0),
+          fontSize: _getConfig('searchTextFontSize', 16.0.sp),
           fontWeight: _config?.getFontWeight('searchTextFontWeight', FontWeight.w400) ?? FontWeight.w400,
           fontFamily: _getConfig('fontFamily', null),
         ),

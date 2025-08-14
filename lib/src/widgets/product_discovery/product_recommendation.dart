@@ -87,26 +87,26 @@ class ProductRecommendation extends StatelessWidget {
     final displayProducts =
         itemCount != null ? products.take(itemCount!).toList() : products;
 
-    T _cfg<T>(String key, T fallback) {
+    T cfg<T>(String key, T fallback) {
       final fc = flexibleConfig;
       if (fc != null) {
-        if (fc.has('recommendation.' + key)) { try { return fc.get<T>('recommendation.' + key, fallback); } catch (_) {} }
+        if (fc.has('recommendation.$key')) { try { return fc.get<T>('recommendation.$key', fallback); } catch (_) {} }
         if (fc.has(key)) { try { return fc.get<T>(key, fallback); } catch (_) {} }
       }
       return fallback;
     }
 
-    final resolvedPadding = _cfg<EdgeInsets>('padding', padding ?? const EdgeInsets.all(16));
-    final bg = _cfg<Color>('backgroundColor', backgroundColor ?? colorScheme.surface);
-    final radius = _cfg<BorderRadius>('borderRadius', borderRadius ?? BorderRadius.circular(12));
-    final spacingVal = _cfg<double>('spacing', spacing);
-    final scrollable = _cfg<bool>('isScrollable', isScrollable);
-    final showViewAll = _cfg<bool>('showViewAllButton', showViewAllButton);
-    final sectionTitle = _cfg<String>('title', title);
-    final sectionSubtitle = _cfg<String>('subtitle', subtitle ?? '');
-    final cardAspect = _cfg<double>('cardAspectRatio', cardAspectRatio);
-    final cardElev = _cfg<double>('cardElevation', cardElevation);
-    final itemCountOverride = _cfg<int>('itemCount', itemCount ?? -1);
+    final resolvedPadding = cfg<EdgeInsets>('padding', padding ?? const EdgeInsets.all(16));
+    final bg = cfg<Color>('backgroundColor', backgroundColor ?? colorScheme.surface);
+    final radius = cfg<BorderRadius>('borderRadius', borderRadius ?? BorderRadius.circular(12));
+    final spacingVal = cfg<double>('spacing', spacing);
+    final scrollable = cfg<bool>('isScrollable', isScrollable);
+    final showViewAll = cfg<bool>('showViewAllButton', showViewAllButton);
+    final sectionTitle = cfg<String>('title', title);
+    final sectionSubtitle = cfg<String>('subtitle', subtitle ?? '');
+    final cardAspect = cfg<double>('cardAspectRatio', cardAspectRatio);
+    final cardElev = cfg<double>('cardElevation', cardElevation);
+    final itemCountOverride = cfg<int>('itemCount', itemCount ?? -1);
     final effectiveProducts = itemCountOverride > -1
         ? displayProducts.take(itemCountOverride).toList()
         : displayProducts;

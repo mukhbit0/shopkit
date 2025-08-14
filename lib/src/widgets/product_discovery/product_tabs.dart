@@ -99,24 +99,24 @@ class _ProductTabsState extends State<ProductTabs>
       return const SizedBox.shrink();
     }
 
-    T _cfg<T>(String key, T fallback) {
+    T cfg<T>(String key, T fallback) {
       final fc = widget.flexibleConfig;
       if (fc != null) {
-        if (fc.has('productTabs.' + key)) { try { return fc.get<T>('productTabs.' + key, fallback); } catch (_) {} }
+        if (fc.has('productTabs.$key')) { try { return fc.get<T>('productTabs.$key', fallback); } catch (_) {} }
         if (fc.has(key)) { try { return fc.get<T>(key, fallback); } catch (_) {} }
       }
       return fallback;
     }
 
-    final tabBarHeight = _cfg<double>('tabBarHeight', widget.tabBarHeight);
-    final isScrollable = _cfg<bool>('isScrollable', widget.isScrollable);
-    final backgroundColor = _cfg<Color>('backgroundColor', widget.backgroundColor ?? colorScheme.surface);
-    final selectedColor = _cfg<Color>('selectedTabColor', widget.selectedTabColor ?? colorScheme.primary);
-    final unselectedColor = _cfg<Color>('unselectedTabColor', widget.unselectedTabColor ?? colorScheme.onSurface.withValues(alpha: 0.6));
-    final indicatorColor = _cfg<Color>('indicatorColor', widget.indicatorColor ?? colorScheme.primary);
-    final tabPadding = _cfg<EdgeInsets>('tabPadding', widget.tabPadding ?? const EdgeInsets.symmetric(horizontal: 16));
-    final contentPadding = _cfg<EdgeInsets>('contentPadding', widget.contentPadding ?? const EdgeInsets.all(16));
-    final radius = _cfg<BorderRadius>('borderRadius', widget.borderRadius ?? BorderRadius.circular(12));
+    final tabBarHeight = cfg<double>('tabBarHeight', widget.tabBarHeight);
+    final isScrollable = cfg<bool>('isScrollable', widget.isScrollable);
+    final backgroundColor = cfg<Color>('backgroundColor', widget.backgroundColor ?? colorScheme.surface);
+    final selectedColor = cfg<Color>('selectedTabColor', widget.selectedTabColor ?? colorScheme.primary);
+    final unselectedColor = cfg<Color>('unselectedTabColor', widget.unselectedTabColor ?? colorScheme.onSurface.withValues(alpha: 0.6));
+    final indicatorColor = cfg<Color>('indicatorColor', widget.indicatorColor ?? colorScheme.primary);
+    final tabPadding = cfg<EdgeInsets>('tabPadding', widget.tabPadding ?? const EdgeInsets.symmetric(horizontal: 16));
+    final contentPadding = cfg<EdgeInsets>('contentPadding', widget.contentPadding ?? const EdgeInsets.all(16));
+    final radius = cfg<BorderRadius>('borderRadius', widget.borderRadius ?? BorderRadius.circular(12));
 
     return Container(
       decoration: BoxDecoration(

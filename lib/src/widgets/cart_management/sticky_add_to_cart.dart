@@ -151,11 +151,11 @@ class _StickyAddToCartState extends State<StickyAddToCart>
     final mediaQuery = MediaQuery.of(context);
 
     // Config resolution helper
-    T _cfg<T>(String key, T fallback) {
+    T cfg<T>(String key, T fallback) {
       final fc = widget.flexibleConfig;
       if (fc != null) {
-        if (fc.has('stickyAddToCart.' + key)) {
-          try { return fc.get<T>('stickyAddToCart.' + key, fallback); } catch (_) {}
+        if (fc.has('stickyAddToCart.$key')) {
+          try { return fc.get<T>('stickyAddToCart.$key', fallback); } catch (_) {}
         }
         if (fc.has(key)) {
           try { return fc.get<T>(key, fallback); } catch (_) {}
@@ -164,16 +164,16 @@ class _StickyAddToCartState extends State<StickyAddToCart>
       return fallback;
     }
 
-    final isVisible = _cfg<bool>('isVisible', widget.isVisible);
-    final padding = widget.padding ?? _cfg<EdgeInsets>('padding', const EdgeInsets.all(16));
-    final margin = widget.margin ?? _cfg<EdgeInsets>('margin', EdgeInsets.only(bottom: mediaQuery.viewPadding.bottom));
-    final bgColor = widget.backgroundColor ?? _cfg<Color>('backgroundColor', colorScheme.surface);
-    final borderRadius = widget.borderRadius ?? _cfg<BorderRadius>('borderRadius', const BorderRadius.vertical(top: Radius.circular(16)));
-    final showProductInfo = _cfg<bool>('showProductInfo', widget.showProductInfo);
-    final showQuantitySelector = _cfg<bool>('showQuantitySelector', widget.showQuantitySelector);
-    final showVariantSelector = _cfg<bool>('showVariantSelector', widget.showVariantSelector);
-    final buttonLabel = _cfg<String>('buttonLabel', 'Add to Cart');
-    final outOfStockLabel = _cfg<String>('outOfStockLabel', 'Out of Stock');
+    final isVisible = cfg<bool>('isVisible', widget.isVisible);
+    final padding = widget.padding ?? cfg<EdgeInsets>('padding', const EdgeInsets.all(16));
+    final margin = widget.margin ?? cfg<EdgeInsets>('margin', EdgeInsets.only(bottom: mediaQuery.viewPadding.bottom));
+    final bgColor = widget.backgroundColor ?? cfg<Color>('backgroundColor', colorScheme.surface);
+    final borderRadius = widget.borderRadius ?? cfg<BorderRadius>('borderRadius', const BorderRadius.vertical(top: Radius.circular(16)));
+    final showProductInfo = cfg<bool>('showProductInfo', widget.showProductInfo);
+    final showQuantitySelector = cfg<bool>('showQuantitySelector', widget.showQuantitySelector);
+    final showVariantSelector = cfg<bool>('showVariantSelector', widget.showVariantSelector);
+    final buttonLabel = cfg<String>('buttonLabel', 'Add to Cart');
+    final outOfStockLabel = cfg<String>('outOfStockLabel', 'Out of Stock');
 
     // Keep animation controller in sync with visibility override
     if (isVisible && !_animationController.isAnimating && _animationController.status != AnimationStatus.forward) {

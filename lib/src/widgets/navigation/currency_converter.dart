@@ -96,29 +96,29 @@ class _CurrencyConverterState extends State<CurrencyConverter> {
     final theme = Theme.of(context);
     final convertedAmount = _convertAmount();
 
-    T _cfg<T>(String key, T fallback) {
+    T cfg<T>(String key, T fallback) {
       final fc = widget.flexibleConfig;
       if (fc != null) {
-        if (fc.has('currencyConverter.' + key)) { try { return fc.get<T>('currencyConverter.' + key, fallback); } catch (_) {} }
+        if (fc.has('currencyConverter.$key')) { try { return fc.get<T>('currencyConverter.$key', fallback); } catch (_) {} }
         if (fc.has(key)) { try { return fc.get<T>(key, fallback); } catch (_) {} }
       }
       return fallback;
     }
 
-    final compact = _cfg<bool>('compact', widget.compact);
-    final showDropdown = _cfg<bool>('showDropdown', widget.showDropdown);
-    final showSymbol = _cfg<bool>('showSymbol', widget.showSymbol);
-    final showCode = _cfg<bool>('showCode', widget.showCode);
-    final decimalPlaces = _cfg<int>('decimalPlaces', widget.decimalPlaces);
-    final padding = widget.padding ?? _cfg<EdgeInsets>('padding', const EdgeInsets.all(12));
-    final bgColor = widget.backgroundColor ?? _cfg<Color>('backgroundColor', theme.colorScheme.surface);
-    final borderRadius = widget.borderRadius ?? _cfg<BorderRadius>('borderRadius', BorderRadius.circular(8));
-    final headerText = _cfg<String>('headerText', 'Currency Converter');
-    final fromLabel = _cfg<String>('fromLabel', 'From');
-    final toLabel = _cfg<String>('toLabel', 'To');
-    final iconColor = _cfg<Color>('iconColor', theme.colorScheme.primary);
-    final amountStyle = widget.style ?? _cfg<TextStyle>('amountStyle', theme.textTheme.bodyMedium ?? const TextStyle());
-    final convertedStyle = _cfg<TextStyle>('convertedAmountStyle', amountStyle.copyWith(fontWeight: FontWeight.bold, color: theme.colorScheme.primary));
+    final compact = cfg<bool>('compact', widget.compact);
+    final showDropdown = cfg<bool>('showDropdown', widget.showDropdown);
+    final showSymbol = cfg<bool>('showSymbol', widget.showSymbol);
+    final showCode = cfg<bool>('showCode', widget.showCode);
+    final decimalPlaces = cfg<int>('decimalPlaces', widget.decimalPlaces);
+    final padding = widget.padding ?? cfg<EdgeInsets>('padding', const EdgeInsets.all(12));
+    final bgColor = widget.backgroundColor ?? cfg<Color>('backgroundColor', theme.colorScheme.surface);
+    final borderRadius = widget.borderRadius ?? cfg<BorderRadius>('borderRadius', BorderRadius.circular(8));
+    final headerText = cfg<String>('headerText', 'Currency Converter');
+    final fromLabel = cfg<String>('fromLabel', 'From');
+    final toLabel = cfg<String>('toLabel', 'To');
+    final iconColor = cfg<Color>('iconColor', theme.colorScheme.primary);
+    final amountStyle = widget.style ?? cfg<TextStyle>('amountStyle', theme.textTheme.bodyMedium ?? const TextStyle());
+    final convertedStyle = cfg<TextStyle>('convertedAmountStyle', amountStyle.copyWith(fontWeight: FontWeight.bold, color: theme.colorScheme.primary));
 
     _currentDecimalPlaces = decimalPlaces; // override for this build
 

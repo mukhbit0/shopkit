@@ -1,13 +1,19 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../config/flexible_widget_config.dart';
-import '../../theme/shopkit_theme.dart';
+import '../../theme/shopkit_theme_styles.dart';
 import '../../models/product_model.dart';
 
 /// A comprehensive add to cart button widget with advanced features and unlimited customization
 /// Features: Multiple styles, quantity selector, animations, loading states, and extensive theming
-class AddToCartButtonNew extends StatefulWidget {
-  const AddToCartButtonNew({
+// NOTE: This is the new theming-aware implementation. Ultimately we should
+// deprecate the legacy cart_management/add_to_cart_button.dart and expose a
+// single AddToCartButton API. Temporary name kept unique to avoid export
+// collisions – will be renamed to AddToCartButton after migration.
+class AddToCartButtonUnified extends StatefulWidget {
+  const AddToCartButtonUnified({
     super.key,
     this.product,
     this.config,
@@ -35,6 +41,7 @@ class AddToCartButtonNew extends StatefulWidget {
     this.size = AddToCartButtonSize.medium,
     this.quantityStyle = QuantitySelectorStyle.inline,
     this.animationType = AddToCartAnimationType.scale,
+    this.themeStyle,
   });
 
   /// Product to add to cart
@@ -44,7 +51,7 @@ class AddToCartButtonNew extends StatefulWidget {
   final FlexibleWidgetConfig? config;
 
   /// Custom builder for complete control
-  final Widget Function(BuildContext, AddToCartButtonNewState)? customBuilder;
+  final Widget Function(BuildContext, AddToCartButtonUnifiedState)? customBuilder;
 
   /// Custom icon builder
   final Widget Function(BuildContext, bool isLoading, bool wasAdded)? customIconBuilder;
@@ -53,7 +60,7 @@ class AddToCartButtonNew extends StatefulWidget {
   final Widget Function(BuildContext, String text, bool isLoading, bool wasAdded)? customTextBuilder;
 
   /// Custom quantity selector builder
-  final Widget Function(BuildContext, int quantity, AddToCartButtonNewState)? customQuantityBuilder;
+  final Widget Function(BuildContext, int quantity, AddToCartButtonUnifiedState)? customQuantityBuilder;
 
   /// Callback when product is added to cart
   final Function(ProductModel? product, int quantity)? onAddToCart;
@@ -115,19 +122,19 @@ class AddToCartButtonNew extends StatefulWidget {
   /// Animation type
   final AddToCartAnimationType animationType;
 
+  /// Built-in theme style support - pass theme name as string
+  final String? themeStyle;
+
   @override
-  State<AddToCartButtonNew> createState() => AddToCartButtonNewState();
+  State<AddToCartButtonUnified> createState() => AddToCartButtonUnifiedState();
 }
 
-class AddToCartButtonNewState extends State<AddToCartButtonNew>
+class AddToCartButtonUnifiedState extends State<AddToCartButtonUnified>
     with TickerProviderStateMixin {
   late AnimationController _pressController;
   late AnimationController _successController;
   late AnimationController _loadingController;
   late AnimationController _quantityController;
-  late Animation<double> _pressAnimation;
-  late Animation<double> _successAnimation;
-  late Animation<double> _loadingAnimation;
   // late Animation<double> _quantityAnimation; // Unused - commented out
 
   FlexibleWidgetConfig? _config;
@@ -173,29 +180,9 @@ class AddToCartButtonNewState extends State<AddToCartButtonNew>
   }
 
   void _setupAnimations() {
-    _pressAnimation = Tween<double>(
-      begin: 1.0,
-      end: _getConfig('pressScaleValue', 0.95),
-    ).animate(CurvedAnimation(
-      parent: _pressController,
-      curve: _config?.getCurve('pressAnimationCurve', Curves.easeInOut) ?? Curves.easeInOut,
-    ));
+  // Press animation removed for simplification; controller retained for potential external use.
 
-    _successAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _successController,
-      curve: _config?.getCurve('successAnimationCurve', Curves.elasticOut) ?? Curves.elasticOut,
-    ));
-
-    _loadingAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _loadingController,
-      curve: Curves.linear,
-    ));
+  // Success & loading animations removed; controllers kept for timing (could be re-added later)
 
     // _quantityAnimation = Tween<double>(
     //   begin: 0.0,
@@ -210,41 +197,9 @@ class AddToCartButtonNewState extends State<AddToCartButtonNew>
     }
   }
 
-  void _handleTapDown(TapDownDetails details) {
-    if (!widget.isEnabled || widget.isLoading) return;
-    
-    setState(() {
-      _isPressed = true;
-    });
+  // Removed _handleTapDown (unused)
 
-    if (widget.enableAnimations) {
-      _pressController.forward();
-    }
-  }
-
-  void _handleTapUp(TapUpDetails details) {
-    if (!widget.isEnabled || widget.isLoading) return;
-    
-    setState(() {
-      _isPressed = false;
-    });
-
-    if (widget.enableAnimations) {
-      _pressController.reverse();
-    }
-  }
-
-  void _handleTapCancel() {
-    if (!widget.isEnabled || widget.isLoading) return;
-    
-    setState(() {
-      _isPressed = false;
-    });
-
-    if (widget.enableAnimations) {
-      _pressController.reverse();
-    }
-  }
+  // Removed unused tap up / cancel handlers
 
   void _handleTap() {
     if (!widget.isEnabled || widget.isLoading) return;
@@ -303,7 +258,7 @@ class AddToCartButtonNewState extends State<AddToCartButtonNew>
   }
 
   @override
-  void didUpdateWidget(AddToCartButtonNew oldWidget) {
+  void didUpdateWidget(AddToCartButtonUnified oldWidget) {
     super.didUpdateWidget(oldWidget);
     
     if (widget.quantity != oldWidget.quantity) {
@@ -334,438 +289,554 @@ class AddToCartButtonNewState extends State<AddToCartButtonNew>
       return widget.customBuilder!(context, this);
     }
 
-    final theme = ShopKitThemeProvider.of(context);
+    // Use new theme system if themeStyle is provided
+    if (widget.themeStyle != null) {
+      return _buildThemedAddToCartButton(context, widget.themeStyle!);
+    }
 
-    return _buildAddToCartButton(context, theme);
+    // Fallback to basic button design
+    return _buildBasicAddToCartButton(context);
   }
 
-  Widget _buildAddToCartButton(BuildContext context, ShopKitTheme theme) {
+  /// Built-in theme styling - automatically styles the button based on theme
+  Widget _buildThemedAddToCartButton(BuildContext context, String themeStyleString) {
+    final themeStyle = ShopKitThemeStyleExtension.fromString(themeStyleString);
+    final themeConfig = ShopKitThemeConfig.forStyle(themeStyle, context);
+    
+    return _buildThemedButton(context, themeConfig, themeStyle);
+  }
+
+  Widget _buildThemedButton(BuildContext context, ShopKitThemeConfig themeConfig, ShopKitThemeStyle themeStyle) {
+    final buttonText = widget.text ?? 'Add to Cart';
+    
+    Widget button;
+    
+    switch (themeStyle) {
+      case ShopKitThemeStyle.material3:
+        button = _buildMaterial3Button(context, themeConfig, buttonText);
+        break;
+      case ShopKitThemeStyle.materialYou:
+        button = _buildMaterialYouButton(context, themeConfig, buttonText);
+        break;
+      case ShopKitThemeStyle.neumorphism:
+        button = _buildNeumorphicButton(context, themeConfig, buttonText);
+        break;
+      case ShopKitThemeStyle.glassmorphism:
+        button = _buildGlassmorphicButton(context, themeConfig, buttonText);
+        break;
+      case ShopKitThemeStyle.cupertino:
+        button = _buildCupertinoButton(context, themeConfig, buttonText);
+        break;
+      case ShopKitThemeStyle.minimal:
+        button = _buildMinimalButton(context, themeConfig, buttonText);
+        break;
+      case ShopKitThemeStyle.retro:
+        button = _buildRetroButton(context, themeConfig, buttonText);
+        break;
+      case ShopKitThemeStyle.neon:
+        button = _buildNeonButton(context, themeConfig, buttonText);
+        break;
+    }
+
+    return button;
+  }
+
+  Widget _buildMaterial3Button(BuildContext context, ShopKitThemeConfig themeConfig, String text) {
+    return SizedBox(
+      height: _getButtonHeight(),
+      child: ElevatedButton(
+        onPressed: widget.isEnabled ? _handleButtonPress : null,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: themeConfig.primaryColor,
+          foregroundColor: themeConfig.onPrimaryColor,
+          elevation: themeConfig.elevation,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(themeConfig.borderRadius),
+          ),
+          padding: EdgeInsets.symmetric(
+            horizontal: _getHorizontalPadding(),
+            vertical: _getVerticalPadding(),
+          ),
+        ),
+        child: _buildButtonContent(context, themeConfig, text),
+      ),
+    );
+  }
+
+  Widget _buildMaterialYouButton(BuildContext context, ShopKitThemeConfig themeConfig, String text) {
+    return Container(
+      height: _getButtonHeight(),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            themeConfig.primaryColor!,
+            themeConfig.primaryColor!.withValues(alpha: 0.8),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(themeConfig.borderRadius),
+        boxShadow: [
+          BoxShadow(
+            color: themeConfig.primaryColor!.withValues(alpha: 0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: widget.isEnabled ? _handleButtonPress : null,
+          borderRadius: BorderRadius.circular(themeConfig.borderRadius),
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: _getHorizontalPadding(),
+              vertical: _getVerticalPadding(),
+            ),
+            child: _buildButtonContent(context, themeConfig, text),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNeumorphicButton(BuildContext context, ShopKitThemeConfig themeConfig, String text) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      height: _getButtonHeight(),
+      decoration: BoxDecoration(
+        color: themeConfig.backgroundColor,
+        borderRadius: BorderRadius.circular(themeConfig.borderRadius),
+        boxShadow: [
+          BoxShadow(
+            color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.white,
+            offset: const Offset(-4, -4),
+            blurRadius: 8,
+          ),
+          BoxShadow(
+            color: isDark ? Colors.black.withValues(alpha: 0.3) : Colors.grey.shade400,
+            offset: const Offset(4, 4),
+            blurRadius: 8,
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: widget.isEnabled ? _handleButtonPress : null,
+          borderRadius: BorderRadius.circular(themeConfig.borderRadius),
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: _getHorizontalPadding(),
+              vertical: _getVerticalPadding(),
+            ),
+            child: _buildButtonContent(context, themeConfig, text),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGlassmorphicButton(BuildContext context, ShopKitThemeConfig themeConfig, String text) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(themeConfig.borderRadius),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          height: _getButtonHeight(),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.2),
+            borderRadius: BorderRadius.circular(themeConfig.borderRadius),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: widget.isEnabled ? _handleButtonPress : null,
+              borderRadius: BorderRadius.circular(themeConfig.borderRadius),
+              child: Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: _getHorizontalPadding(),
+                  vertical: _getVerticalPadding(),
+                ),
+                child: _buildButtonContent(context, themeConfig, text),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCupertinoButton(BuildContext context, ShopKitThemeConfig themeConfig, String text) {
+    return Container(
+      height: _getButtonHeight(),
+      decoration: BoxDecoration(
+        color: themeConfig.primaryColor,
+        borderRadius: BorderRadius.circular(themeConfig.borderRadius),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: widget.isEnabled ? _handleButtonPress : null,
+          borderRadius: BorderRadius.circular(themeConfig.borderRadius),
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: _getHorizontalPadding(),
+              vertical: _getVerticalPadding(),
+            ),
+            child: _buildButtonContent(context, themeConfig, text),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMinimalButton(BuildContext context, ShopKitThemeConfig themeConfig, String text) {
+    return Container(
+      height: _getButtonHeight(),
+      decoration: BoxDecoration(
+        border: Border.all(color: themeConfig.primaryColor!),
+        borderRadius: BorderRadius.circular(themeConfig.borderRadius),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: widget.isEnabled ? _handleButtonPress : null,
+          borderRadius: BorderRadius.circular(themeConfig.borderRadius),
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: _getHorizontalPadding(),
+              vertical: _getVerticalPadding(),
+            ),
+            child: _buildButtonContent(context, themeConfig, text),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRetroButton(BuildContext context, ShopKitThemeConfig themeConfig, String text) {
+    return Container(
+      height: _getButtonHeight(),
+      decoration: BoxDecoration(
+        color: themeConfig.primaryColor,
+        borderRadius: BorderRadius.circular(themeConfig.borderRadius),
+        border: Border.all(color: Colors.black87, width: 2),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black87,
+            offset: Offset(4, 4),
+            blurRadius: 0,
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: widget.isEnabled ? _handleButtonPress : null,
+          borderRadius: BorderRadius.circular(themeConfig.borderRadius),
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: _getHorizontalPadding(),
+              vertical: _getVerticalPadding(),
+            ),
+            child: _buildButtonContent(context, themeConfig, text),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNeonButton(BuildContext context, ShopKitThemeConfig themeConfig, String text) {
+    return Container(
+      height: _getButtonHeight(),
+      decoration: BoxDecoration(
+        color: Colors.black,
+        borderRadius: BorderRadius.circular(themeConfig.borderRadius),
+        border: Border.all(color: Colors.cyan, width: 2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.cyan.withValues(alpha: 0.5),
+            blurRadius: 15,
+            spreadRadius: 0,
+          ),
+          BoxShadow(
+            color: Colors.purple.withValues(alpha: 0.3),
+            blurRadius: 25,
+            spreadRadius: 5,
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: widget.isEnabled ? _handleButtonPress : null,
+          borderRadius: BorderRadius.circular(themeConfig.borderRadius),
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: _getHorizontalPadding(),
+              vertical: _getVerticalPadding(),
+            ),
+            child: _buildButtonContent(context, themeConfig, text),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildButtonContent(BuildContext context, ShopKitThemeConfig themeConfig, String text) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        if (widget.showIcon && widget.icon != null) ...[
+          Icon(
+            widget.icon,
+            size: _getIconSize(),
+            color: themeConfig.onPrimaryColor,
+          ),
+          if (widget.showText) SizedBox(width: 8.w),
+        ],
+        if (widget.showText)
+          Text(
+            text,
+            style: TextStyle(
+              color: themeConfig.onPrimaryColor,
+              fontSize: 16.sp,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+      ],
+    );
+  }
+
+  void _handleButtonPress() {
+    if (widget.onPressed != null) {
+      widget.onPressed!();
+    }
+    if (widget.onAddToCart != null && widget.product != null) {
+      try {
+        // Prefer 2-arg signature (product, quantity). If callback only accepts one,
+        // a runtime error would occur; guard via Function.apply introspection not available in Flutter web,
+        // so we optimistically call with both then fall back.
+        widget.onAddToCart!(widget.product!, _currentQuantity);
+      } catch (_) {
+        // Fallback to legacy single argument signature.
+        // ignore: deprecated_member_use_from_same_package
+        // ignore: avoid_dynamic_calls
+        // dynamic invocation with one arg
+        // Using dynamic cast to silence analyzer for legacy projects.
+        (widget.onAddToCart as dynamic).call(widget.product!);
+      }
+    }
+  }
+
+  Widget _buildBasicAddToCartButton(BuildContext context) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         if (widget.showQuantitySelector && widget.quantityStyle == QuantitySelectorStyle.above)
-          _buildQuantitySelector(context, theme),
+          _buildBasicQuantitySelector(context),
         
         if (widget.showQuantitySelector && widget.quantityStyle == QuantitySelectorStyle.above)
-          SizedBox(height: _getConfig('quantitySelectorSpacing', 8.0)),
+          SizedBox(height: 8.0.h),
         
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             if (widget.showQuantitySelector && widget.quantityStyle == QuantitySelectorStyle.inline)
-              _buildQuantitySelector(context, theme),
+              _buildBasicQuantitySelector(context),
             
             if (widget.showQuantitySelector && widget.quantityStyle == QuantitySelectorStyle.inline)
-              SizedBox(width: _getConfig('quantitySelectorSpacing', 8.0)),
+              SizedBox(width: 8.0.w),
             
-            Flexible(child: _buildButton(context, theme)),
+            Flexible(child: _buildBasicButton(context)),
           ],
         ),
         
         if (widget.showQuantitySelector && widget.quantityStyle == QuantitySelectorStyle.below)
-          SizedBox(height: _getConfig('quantitySelectorSpacing', 8.0)),
+          SizedBox(height: 8.0.h),
         
         if (widget.showQuantitySelector && widget.quantityStyle == QuantitySelectorStyle.below)
-          _buildQuantitySelector(context, theme),
+          _buildBasicQuantitySelector(context),
       ],
     );
   }
 
-  Widget _buildButton(BuildContext context, ShopKitTheme theme) {
-    Widget button = _buildButtonContent(context, theme);
-
-    // Apply animations
-    if (widget.enableAnimations) {
-      button = _applyAnimations(button);
-    }
-
+  Widget _buildBasicButton(BuildContext context) {
     return GestureDetector(
-      onTapDown: _handleTapDown,
-      onTapUp: _handleTapUp,
-      onTapCancel: _handleTapCancel,
-      onTap: _handleTap,
-      child: button,
-    );
-  }
-
-  Widget _buildButtonContent(BuildContext context, ShopKitTheme theme) {
-    switch (widget.style) {
-      case AddToCartButtonStyle.outlined:
-        return _buildOutlinedButton(context, theme);
-      case AddToCartButtonStyle.text:
-        return _buildTextButton(context, theme);
-      case AddToCartButtonStyle.icon:
-        return _buildIconButton(context, theme);
-      case AddToCartButtonStyle.floating:
-        return _buildFloatingButton(context, theme);
-      case AddToCartButtonStyle.filled:
-        return _buildFilledButton(context, theme);
-    }
-  }
-
-  Widget _buildFilledButton(BuildContext context, ShopKitTheme theme) {
-    return Container(
-      height: _getButtonHeight(),
-      decoration: BoxDecoration(
-        color: _getButtonColor(theme),
-        borderRadius: _config?.getBorderRadius('buttonBorderRadius', BorderRadius.circular(8)) ?? BorderRadius.circular(8),
-        boxShadow: _getConfig('showButtonShadow', true) && !widget.isLoading
-          ? [
-              BoxShadow(
-                color: theme.primaryColor.withValues(alpha: _getConfig('buttonShadowOpacity', 0.3)),
-                blurRadius: _getConfig('buttonShadowBlur', 8.0),
-                offset: Offset(0, _getConfig('buttonShadowOffset', 2.0)),
+      onTap: widget.isEnabled ? _handleTap : null,
+      child: Container(
+        height: _getButtonHeight(),
+        padding: EdgeInsets.symmetric(
+          horizontal: _getHorizontalPadding(),
+          vertical: _getVerticalPadding(),
+        ),
+        decoration: BoxDecoration(
+          color: widget.isEnabled 
+            ? (_wasAdded ? Colors.green : Theme.of(context).primaryColor)
+            : Colors.grey.shade300,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (widget.showIcon && widget.isLoading)
+              SizedBox(
+                width: 16.sp,
+                height: 16.sp,
+                child: const CircularProgressIndicator(
+                  strokeWidth: 2.0,
+                  valueColor: AlwaysStoppedAnimation(Colors.white),
+                ),
+              )
+            else if (widget.showIcon)
+              Icon(
+                _wasAdded ? Icons.check : (widget.icon ?? Icons.add_shopping_cart),
+                size: _getIconSize(),
+                color: Colors.white,
               ),
-            ]
-          : null,
-      ),
-      child: _buildButtonChild(context, theme),
-    );
-  }
-
-  Widget _buildOutlinedButton(BuildContext context, ShopKitTheme theme) {
-    return Container(
-      height: _getButtonHeight(),
-      decoration: BoxDecoration(
-        color: _wasAdded 
-          ? _getSuccessColor(theme) 
-          : _getConfig('outlinedButtonBackgroundColor', Colors.transparent),
-        border: Border.all(
-          color: _getButtonColor(theme),
-          width: _getConfig('outlinedButtonBorderWidth', 2.0),
-        ),
-        borderRadius: _config?.getBorderRadius('buttonBorderRadius', BorderRadius.circular(8)) ?? BorderRadius.circular(8),
-      ),
-      child: _buildButtonChild(context, theme),
-    );
-  }
-
-  Widget _buildTextButton(BuildContext context, ShopKitTheme theme) {
-    return Container(
-      height: _getButtonHeight(),
-      padding: EdgeInsets.symmetric(
-        horizontal: _getHorizontalPadding(),
-        vertical: _getVerticalPadding(),
-      ),
-      child: _buildButtonChild(context, theme),
-    );
-  }
-
-  Widget _buildIconButton(BuildContext context, ShopKitTheme theme) {
-    final size = _getButtonHeight();
-    
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        color: _getButtonColor(theme),
-        borderRadius: BorderRadius.circular(size / 2),
-        boxShadow: _getConfig('showButtonShadow', true) && !widget.isLoading
-          ? [
-              BoxShadow(
-                color: theme.primaryColor.withValues(alpha: _getConfig('buttonShadowOpacity', 0.3)),
-                blurRadius: _getConfig('buttonShadowBlur', 8.0),
-                offset: Offset(0, _getConfig('buttonShadowOffset', 2.0)),
+            
+            if (widget.showIcon && widget.showText)
+              SizedBox(width: 8.0.w),
+            
+            if (widget.showText && widget.style != AddToCartButtonStyle.icon)
+              Text(
+                _getButtonText(),
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w500,
+                  fontSize: _getTextSize(),
+                ),
+                textAlign: TextAlign.center,
               ),
-            ]
-          : null,
-      ),
-      child: Center(
-        child: _buildIcon(context, theme),
-      ),
-    );
-  }
-
-  Widget _buildFloatingButton(BuildContext context, ShopKitTheme theme) {
-    final size = _getButtonHeight();
-    
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        color: _getButtonColor(theme),
-        borderRadius: BorderRadius.circular(size / 2),
-        boxShadow: [
-          BoxShadow(
-            color: theme.onSurfaceColor.withValues(alpha: _getConfig('floatingButtonShadowOpacity', 0.2)),
-            blurRadius: _getConfig('floatingButtonShadowBlur', 12.0),
-            offset: Offset(0, _getConfig('floatingButtonShadowOffset', 4.0)),
-          ),
-        ],
-      ),
-      child: Center(
-        child: _buildIcon(context, theme),
-      ),
-    );
-  }
-
-  Widget _buildButtonChild(BuildContext context, ShopKitTheme theme) {
-    return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: _getHorizontalPadding(),
-        vertical: _getVerticalPadding(),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          if (widget.showIcon && (widget.showText || widget.style == AddToCartButtonStyle.icon))
-            _buildIcon(context, theme),
-          
-          if (widget.showIcon && widget.showText)
-            SizedBox(width: _getConfig('iconTextSpacing', 8.0)),
-          
-          if (widget.showText && widget.style != AddToCartButtonStyle.icon)
-            Flexible(child: _buildText(context, theme)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildIcon(BuildContext context, ShopKitTheme theme) {
-    if (widget.customIconBuilder != null) {
-      return widget.customIconBuilder!(context, widget.isLoading, _wasAdded);
-    }
-
-    if (widget.isLoading) {
-      return SizedBox(
-        width: _getIconSize(),
-        height: _getIconSize(),
-        child: CircularProgressIndicator(
-          strokeWidth: _getConfig('loadingIndicatorStrokeWidth', 2.0),
-          valueColor: AlwaysStoppedAnimation<Color>(_getIconColor(theme)),
+          ],
         ),
-      );
-    }
-
-    if (_wasAdded) {
-      return Icon(
-        _getConfig('successIcon', Icons.check),
-        size: _getIconSize(),
-        color: _getIconColor(theme),
-      );
-    }
-
-    return Icon(
-      widget.icon ?? _getConfig('defaultIcon', Icons.add_shopping_cart),
-      size: _getIconSize(),
-      color: _getIconColor(theme),
+      ),
     );
   }
 
-  Widget _buildText(BuildContext context, ShopKitTheme theme) {
-    if (widget.customTextBuilder != null) {
-      return widget.customTextBuilder!(context, _getButtonText(), widget.isLoading, _wasAdded);
-    }
-
-    return Text(
-      _getButtonText(),
-      style: _getTextStyle(theme),
-      textAlign: TextAlign.center,
-      maxLines: _getConfig('textMaxLines', 1),
-      overflow: TextOverflow.ellipsis,
-    );
-  }
-
-  Widget _buildQuantitySelector(BuildContext context, ShopKitTheme theme) {
-    if (widget.customQuantityBuilder != null) {
-      return widget.customQuantityBuilder!(context, _currentQuantity, this);
-    }
-
+  Widget _buildBasicQuantitySelector(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: _config?.getColor('quantitySelectorBackgroundColor', theme.surfaceColor) ?? theme.surfaceColor,
-        border: Border.all(
-          color: _config?.getColor('quantitySelectorBorderColor', theme.onSurfaceColor.withValues(alpha: 0.2)) ?? theme.onSurfaceColor.withValues(alpha: 0.2),
-        ),
-        borderRadius: _config?.getBorderRadius('quantitySelectorBorderRadius', BorderRadius.circular(8)) ?? BorderRadius.circular(8),
+        color: Colors.grey.shade100,
+        border: Border.all(color: Colors.grey.shade300),
+        borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _buildQuantityButton(
-            context,
-            theme,
-            icon: Icons.remove,
-            onPressed: _currentQuantity > widget.minQuantity
+          GestureDetector(
+            onTap: _currentQuantity > widget.minQuantity
               ? () => _updateQuantity(_currentQuantity - 1)
               : null,
+            child: Container(
+              width: 32.0.w,
+              height: 32.0.h,
+              decoration: BoxDecoration(
+                color: _currentQuantity > widget.minQuantity 
+                  ? Theme.of(context).primaryColor.withOpacity(0.1)
+                  : Colors.transparent,
+                borderRadius: BorderRadius.circular(4.0),
+              ),
+              child: Icon(
+                Icons.remove,
+                size: 16.0.sp,
+                color: _currentQuantity > widget.minQuantity 
+                  ? Theme.of(context).primaryColor
+                  : Colors.grey,
+              ),
+            ),
           ),
           
           Container(
-            width: _getConfig('quantityDisplayWidth', 40.0),
-            padding: EdgeInsets.symmetric(vertical: _getConfig('quantityDisplayPadding', 8.0)),
+            width: 40.0.w,
+            padding: EdgeInsets.symmetric(vertical: 8.0.h),
             child: Text(
               _currentQuantity.toString(),
-              style: TextStyle(
-                color: theme.onSurfaceColor,
+              style: const TextStyle(
+                color: Colors.black87,
                 fontWeight: FontWeight.w500,
               ),
               textAlign: TextAlign.center,
             ),
           ),
           
-          _buildQuantityButton(
-            context,
-            theme,
-            icon: Icons.add,
-            onPressed: _currentQuantity < widget.maxQuantity
+          GestureDetector(
+            onTap: _currentQuantity < widget.maxQuantity
               ? () => _updateQuantity(_currentQuantity + 1)
               : null,
+            child: Container(
+              width: 32.0.w,
+              height: 32.0.h,
+              decoration: BoxDecoration(
+                color: _currentQuantity < widget.maxQuantity 
+                  ? Theme.of(context).primaryColor.withOpacity(0.1)
+                  : Colors.transparent,
+                borderRadius: BorderRadius.circular(4.0),
+              ),
+              child: Icon(
+                Icons.add,
+                size: 16.0.sp,
+                color: _currentQuantity < widget.maxQuantity 
+                  ? Theme.of(context).primaryColor
+                  : Colors.grey,
+              ),
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildQuantityButton(
-    BuildContext context,
-    ShopKitTheme theme, {
-    required IconData icon,
-    required VoidCallback? onPressed,
-  }) {
-    return GestureDetector(
-      onTap: onPressed,
-      child: Container(
-        width: _getConfig('quantityButtonSize', 32.0),
-        height: _getConfig('quantityButtonSize', 32.0),
-        decoration: BoxDecoration(
-          color: onPressed != null 
-            ? _config?.getColor('quantityButtonColor', theme.primaryColor.withValues(alpha: 0.1)) ?? theme.primaryColor.withValues(alpha: 0.1)
-            : Colors.transparent,
-          borderRadius: BorderRadius.circular(_getConfig('quantityButtonBorderRadius', 4.0)),
-        ),
-        child: Icon(
-          icon,
-          size: _getConfig('quantityButtonIconSize', 16.0),
-          color: onPressed != null 
-            ? _config?.getColor('quantityButtonIconColor', theme.primaryColor) ?? theme.primaryColor
-            : theme.onSurfaceColor.withValues(alpha: 0.3),
-        ),
-      ),
-    );
-  }
-
-  Widget _applyAnimations(Widget child) {
-    switch (widget.animationType) {
-      case AddToCartAnimationType.bounce:
-        return AnimatedBuilder(
-          animation: _successController,
-          builder: (context, child) {
-            return Transform.scale(
-              scale: 1.0 + (_successAnimation.value * 0.1),
-              child: child,
-            );
-          },
-          child: _applyPressAnimation(child),
-        );
-        
-      case AddToCartAnimationType.pulse:
-        return AnimatedBuilder(
-          animation: _loadingController,
-          builder: (context, child) {
-            return Transform.scale(
-              scale: widget.isLoading ? 1.0 + ((_loadingAnimation.value * 2 - 1).abs() * 0.05) : 1.0,
-              child: child,
-            );
-          },
-          child: _applyPressAnimation(child),
-        );
-        
-      case AddToCartAnimationType.scale:
-      default:
-        return _applyPressAnimation(child);
-    }
-  }
-
-  Widget _applyPressAnimation(Widget child) {
-    return AnimatedBuilder(
-      animation: _pressController,
-      builder: (context, child) {
-        return Transform.scale(
-          scale: _pressAnimation.value,
-          child: child,
-        );
-      },
-      child: child,
-    );
-  }
+  // Press animation wrapper removed (handled directly where needed)
 
   // Helper methods
   double _getButtonHeight() {
     switch (widget.size) {
       case AddToCartButtonSize.small:
-        return _getConfig('smallButtonHeight', 32.0);
+        return _getConfig('smallButtonHeight', 32.0.h);
       case AddToCartButtonSize.large:
-        return _getConfig('largeButtonHeight', 56.0);
+        return _getConfig('largeButtonHeight', 56.0.h);
       case AddToCartButtonSize.medium:
-        return _getConfig('mediumButtonHeight', 44.0);
+        return _getConfig('mediumButtonHeight', 44.0.h);
     }
   }
 
   double _getHorizontalPadding() {
     switch (widget.size) {
       case AddToCartButtonSize.small:
-        return _getConfig('smallButtonHorizontalPadding', 12.0);
+        return _getConfig('smallButtonHorizontalPadding', 12.0.w);
       case AddToCartButtonSize.large:
-        return _getConfig('largeButtonHorizontalPadding', 24.0);
+        return _getConfig('largeButtonHorizontalPadding', 24.0.w);
       case AddToCartButtonSize.medium:
-        return _getConfig('mediumButtonHorizontalPadding', 16.0);
+        return _getConfig('mediumButtonHorizontalPadding', 16.0.w);
     }
   }
 
   double _getVerticalPadding() {
     switch (widget.size) {
       case AddToCartButtonSize.small:
-        return _getConfig('smallButtonVerticalPadding', 6.0);
+        return _getConfig('smallButtonVerticalPadding', 6.0.h);
       case AddToCartButtonSize.large:
-        return _getConfig('largeButtonVerticalPadding', 12.0);
+        return _getConfig('largeButtonVerticalPadding', 12.0.h);
       case AddToCartButtonSize.medium:
-        return _getConfig('mediumButtonVerticalPadding', 8.0);
+        return _getConfig('mediumButtonVerticalPadding', 8.0.h);
     }
   }
 
   double _getIconSize() {
     switch (widget.size) {
       case AddToCartButtonSize.small:
-        return _getConfig('smallButtonIconSize', 16.0);
+        return _getConfig('smallButtonIconSize', 16.0.sp);
       case AddToCartButtonSize.large:
-        return _getConfig('largeButtonIconSize', 24.0);
+        return _getConfig('largeButtonIconSize', 24.0.sp);
       case AddToCartButtonSize.medium:
-        return _getConfig('mediumButtonIconSize', 20.0);
+        return _getConfig('mediumButtonIconSize', 20.0.sp);
     }
-  }
-
-  Color _getButtonColor(ShopKitTheme theme) {
-    if (!widget.isEnabled) {
-      return _config?.getColor('disabledButtonColor', theme.onSurfaceColor.withValues(alpha: 0.3)) ?? theme.onSurfaceColor.withValues(alpha: 0.3);
-    }
-
-    if (_wasAdded) {
-      return _getSuccessColor(theme);
-    }
-
-    if (widget.style == AddToCartButtonStyle.text) {
-      return Colors.transparent;
-    }
-
-    return _config?.getColor('buttonColor', theme.primaryColor) ?? theme.primaryColor;
-  }
-
-  Color _getIconColor(ShopKitTheme theme) {
-    if (!widget.isEnabled) {
-      return _config?.getColor('disabledIconColor', theme.onSurfaceColor.withValues(alpha: 0.5)) ?? theme.onSurfaceColor.withValues(alpha: 0.5);
-    }
-
-    if (widget.style == AddToCartButtonStyle.text || widget.style == AddToCartButtonStyle.outlined) {
-      return _config?.getColor('iconColor', theme.primaryColor) ?? theme.primaryColor;
-    }
-
-    return _config?.getColor('iconColor', theme.onPrimaryColor) ?? theme.onPrimaryColor;
-  }
-
-  Color _getSuccessColor(ShopKitTheme theme) {
-    return _config?.getColor('successColor', Colors.green) ?? Colors.green;
   }
 
   String _getButtonText() {
@@ -778,24 +849,6 @@ class AddToCartButtonNewState extends State<AddToCartButtonNew>
     }
 
     return widget.text ?? _getConfig('defaultText', 'Add to Cart');
-  }
-
-  TextStyle _getTextStyle(ShopKitTheme theme) {
-    final baseStyle = theme.textTheme.bodyMedium?.copyWith(
-      fontWeight: FontWeight.w500,
-      fontSize: _getTextSize(),
-    );
-
-    Color textColor;
-    if (!widget.isEnabled) {
-      textColor = _config?.getColor('disabledTextColor', theme.onSurfaceColor.withValues(alpha: 0.5)) ?? theme.onSurfaceColor.withValues(alpha: 0.5);
-    } else if (widget.style == AddToCartButtonStyle.text || widget.style == AddToCartButtonStyle.outlined) {
-      textColor = _config?.getColor('textColor', theme.primaryColor) ?? theme.primaryColor;
-    } else {
-      textColor = _config?.getColor('textColor', theme.onPrimaryColor) ?? theme.onPrimaryColor;
-    }
-
-    return baseStyle?.copyWith(color: textColor) ?? TextStyle(color: textColor);
   }
 
   double _getTextSize() {
@@ -852,6 +905,9 @@ class AddToCartButtonNewState extends State<AddToCartButtonNew>
     }
   }
 }
+
+/// Public API alias. Use AddToCartButton going forward.
+typedef AddToCartButton = AddToCartButtonUnified;
 
 /// Style options for add to cart button
 enum AddToCartButtonStyle {

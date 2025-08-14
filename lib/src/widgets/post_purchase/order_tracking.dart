@@ -61,22 +61,22 @@ class _OrderTrackingState extends State<OrderTracking> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    T _cfg<T>(String key, T fallback) {
+    T cfg<T>(String key, T fallback) {
       final fc = widget.flexibleConfig;
       if (fc != null) {
-        if (fc.has('orderTracking.' + key)) { try { return fc.get<T>('orderTracking.' + key, fallback); } catch (_) {} }
+        if (fc.has('orderTracking.$key')) { try { return fc.get<T>('orderTracking.$key', fallback); } catch (_) {} }
         if (fc.has(key)) { try { return fc.get<T>(key, fallback); } catch (_) {} }
       }
       return fallback;
     }
 
-    final showTracking = _cfg<bool>('showTrackingNumber', widget.showTrackingNumber);
-    final showEta = _cfg<bool>('showEstimatedDelivery', widget.showEstimatedDelivery);
-    final showTimeline = _cfg<bool>('showTrackingUpdates', widget.showTrackingUpdates);
-    final showSummary = _cfg<bool>('showOrderSummary', widget.showOrderSummary);
-    final resolvedPadding = _cfg<EdgeInsets>('padding', widget.padding ?? const EdgeInsets.all(16));
-    final bgColor = _cfg<Color>('backgroundColor', widget.backgroundColor ?? colorScheme.surface);
-    final radius = _cfg<BorderRadius>('borderRadius', widget.borderRadius ?? BorderRadius.circular(12));
+    final showTracking = cfg<bool>('showTrackingNumber', widget.showTrackingNumber);
+    final showEta = cfg<bool>('showEstimatedDelivery', widget.showEstimatedDelivery);
+    final showTimeline = cfg<bool>('showTrackingUpdates', widget.showTrackingUpdates);
+    final showSummary = cfg<bool>('showOrderSummary', widget.showOrderSummary);
+    final resolvedPadding = cfg<EdgeInsets>('padding', widget.padding ?? const EdgeInsets.all(16));
+    final bgColor = cfg<Color>('backgroundColor', widget.backgroundColor ?? colorScheme.surface);
+    final radius = cfg<BorderRadius>('borderRadius', widget.borderRadius ?? BorderRadius.circular(12));
 
     return Container(
       padding: resolvedPadding,

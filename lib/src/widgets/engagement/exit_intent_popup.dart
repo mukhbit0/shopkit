@@ -126,21 +126,21 @@ class _ExitIntentPopupState extends State<ExitIntentPopup>
 
   @override
   Widget build(BuildContext context) {
-    T _cfg<T>(String key, T fallback) {
+    T cfg<T>(String key, T fallback) {
       final fc = widget.flexibleConfig;
       if (fc != null) {
-        if (fc.has('exitPopup.' + key)) { try { return fc.get<T>('exitPopup.' + key, fallback); } catch (_) {} }
+        if (fc.has('exitPopup.$key')) { try { return fc.get<T>('exitPopup.$key', fallback); } catch (_) {} }
         if (fc.has(key)) { try { return fc.get<T>(key, fallback); } catch (_) {} }
       }
       return fallback;
     }
 
-    final overlayColor = _cfg<Color>('overlayColor', Colors.black.withValues(alpha: 0.5));
-    final showClose = _cfg<bool>('showCloseButton', true);
-    final enableScale = _cfg<bool>('enableScale', true);
-    final enableFade = _cfg<bool>('enableFade', true);
-    final enableSlide = _cfg<bool>('enableSlide', true);
-    final autoCloseMs = _cfg<int>('autoCloseMs', widget.autoCloseAfter?.inMilliseconds ?? -1);
+    final overlayColor = cfg<Color>('overlayColor', Colors.black.withValues(alpha: 0.5));
+    final showClose = cfg<bool>('showCloseButton', true);
+    final enableScale = cfg<bool>('enableScale', true);
+    final enableFade = cfg<bool>('enableFade', true);
+    final enableSlide = cfg<bool>('enableSlide', true);
+    final autoCloseMs = cfg<int>('autoCloseMs', widget.autoCloseAfter?.inMilliseconds ?? -1);
     if (autoCloseMs > 0) {
       Future.delayed(Duration(milliseconds: autoCloseMs), () { if (mounted && _isVisible) _hidePopup(); });
     }
@@ -180,22 +180,22 @@ class _ExitIntentPopupState extends State<ExitIntentPopup>
 
   Widget _buildPopupContent({bool showClose = true}) {
     final theme = Theme.of(context);
-    T _cfg<T>(String key, T fallback) {
+    T cfg<T>(String key, T fallback) {
       final fc = widget.flexibleConfig;
       if (fc != null) {
-        if (fc.has('exitPopup.' + key)) { try { return fc.get<T>('exitPopup.' + key, fallback); } catch (_) {} }
+        if (fc.has('exitPopup.$key')) { try { return fc.get<T>('exitPopup.$key', fallback); } catch (_) {} }
         if (fc.has(key)) { try { return fc.get<T>(key, fallback); } catch (_) {} }
       }
       return fallback;
     }
 
-    final backgroundColor = _cfg<Color>('backgroundColor', _parseColor(widget.popup.backgroundColor) ?? theme.colorScheme.surface);
-    final borderRadius = _cfg<BorderRadius>('borderRadius', BorderRadius.circular(16));
-    final padding = _cfg<EdgeInsets>('padding', const EdgeInsets.all(24));
-    final maxWidth = _cfg<double>('maxWidth', 500);
-    final elevation = _cfg<double>('elevation', 20);
-    final primaryLabel = _cfg<String>('primaryButtonLabel', widget.popup.buttonText ?? 'Claim Offer');
-    final secondaryLabel = _cfg<String>('secondaryButtonLabel', widget.popup.secondaryButtonText ?? '');
+    final backgroundColor = cfg<Color>('backgroundColor', _parseColor(widget.popup.backgroundColor) ?? theme.colorScheme.surface);
+    final borderRadius = cfg<BorderRadius>('borderRadius', BorderRadius.circular(16));
+    final padding = cfg<EdgeInsets>('padding', const EdgeInsets.all(24));
+    final maxWidth = cfg<double>('maxWidth', 500);
+    final elevation = cfg<double>('elevation', 20);
+    final primaryLabel = cfg<String>('primaryButtonLabel', widget.popup.buttonText ?? 'Claim Offer');
+    final secondaryLabel = cfg<String>('secondaryButtonLabel', widget.popup.secondaryButtonText ?? '');
 
     return Container(
       margin: const EdgeInsets.all(20),

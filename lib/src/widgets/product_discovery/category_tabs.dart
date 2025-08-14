@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../config/flexible_widget_config.dart';
 import '../../theme/shopkit_theme.dart';
+import '../../theme/shopkit_theme_styles.dart';
 import '../../models/category_model.dart';
 
 /// A comprehensive category tabs widget with advanced customization
@@ -21,6 +23,7 @@ class CategoryTabs extends StatefulWidget {
     this.alignment = TabAlignment.start,
     this.enableAnimations = true,
     this.enableHaptics = true,
+    this.themeStyle,
   });
 
   /// List of categories to display
@@ -58,6 +61,9 @@ class CategoryTabs extends StatefulWidget {
 
   /// Whether to enable haptic feedback
   final bool enableHaptics;
+
+  /// Built-in theme style support - pass theme name as string
+  final String? themeStyle;
 
   @override
   State<CategoryTabs> createState() => CategoryTabsState();

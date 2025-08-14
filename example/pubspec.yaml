@@ -15,6 +15,7 @@ dependencies:
   # ADD THIS LINE FOR YOUR LOCAL SHOPKIT PACKAGE
   shopkit:
     path: ../
+  flutter_screenutil: ^5.9.3
 
 dev_dependencies:
   flutter_test:

@@ -42,33 +42,51 @@ class TrustBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
+  T cfg<T>(String key, T fallback) {
+      final fc = flexibleConfig;
+      if (fc != null) {
+    if (fc.has('trustBadge.$key')) { try { return fc.get<T>('trustBadge.$key', fallback); } catch (_) {} }
+        if (fc.has(key)) { try { return fc.get<T>(key, fallback); } catch (_) {} }
+      }
+      return fallback;
+    }
+
+  final resolvedElevation = cfg<double>('elevation', elevation);
+  final resolvedBorderRadius = cfg<BorderRadius>('borderRadius', borderRadius ?? BorderRadius.circular(8));
+  final resolvedShowTooltip = cfg<bool>('showTooltip', showTooltip);
+  final resolvedAnimateOnHover = cfg<bool>('animateOnHover', animateOnHover);
+  final resolvedWidth = cfg<double>('width', customSize?.width ?? badge.width ?? 80);
+  final resolvedHeight = cfg<double>('height', customSize?.height ?? badge.height ?? 40);
+  final resolvedBg = cfg<Color>('backgroundColor', _parseColor(badge.backgroundColor) ?? theme.colorScheme.surface);
+  final resolvedBorderColor = cfg<Color?>('borderColor', _parseColor(badge.borderColor));
+  final resolvedTextColor = cfg<Color>('textColor', _parseColor(badge.textColor) ?? theme.colorScheme.onSurface);
+  final resolvedIconScale = cfg<double>('iconScale', 0.4);
+
     Widget badgeWidget = Container(
-      width: customSize?.width ?? badge.width,
-      height: customSize?.height ?? badge.height,
+      width: resolvedWidth,
+      height: resolvedHeight,
       decoration: BoxDecoration(
-        color: _parseColor(badge.backgroundColor) ?? theme.colorScheme.surface,
-        borderRadius: borderRadius ?? BorderRadius.circular(8),
-        boxShadow: elevation > 0
+        color: resolvedBg,
+        borderRadius: resolvedBorderRadius,
+        boxShadow: resolvedElevation > 0
             ? [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.1),
-                  blurRadius: elevation * 2,
-                  offset: Offset(0, elevation),
+                  blurRadius: resolvedElevation * 2,
+                  offset: Offset(0, resolvedElevation),
                 ),
               ]
             : null,
-        border: badge.borderColor != null
-            ? Border.all(color: _parseColor(badge.borderColor!) ?? Colors.grey)
-            : null,
+  border: resolvedBorderColor != null ? Border.all(color: resolvedBorderColor) : null,
       ),
       child: ClipRRect(
-        borderRadius: borderRadius ?? BorderRadius.circular(8),
-        child: _buildBadgeContent(theme),
+        borderRadius: resolvedBorderRadius,
+  child: _buildBadgeContent(theme, resolvedTextColor, resolvedIconScale),
       ),
     );
 
     // Add hover animation if enabled
-    if (animateOnHover) {
+    if (resolvedAnimateOnHover) {
       badgeWidget = MouseRegion(
         cursor:
             onTap != null ? SystemMouseCursors.click : SystemMouseCursors.basic,
@@ -88,7 +106,7 @@ class TrustBadge extends StatelessWidget {
     }
 
     // Add tooltip if enabled
-    if (showTooltip && badge.description?.isNotEmpty == true) {
+  if (resolvedShowTooltip && badge.description?.isNotEmpty == true) {
       badgeWidget = Tooltip(
         message: badge.description!,
         child: badgeWidget,
@@ -98,20 +116,20 @@ class TrustBadge extends StatelessWidget {
     return badgeWidget;
   }
 
-  Widget _buildBadgeContent(ThemeData theme) {
+  Widget _buildBadgeContent(ThemeData theme, Color textColor, double iconScale) {
     if (badge.imageUrl.isNotEmpty) {
       return Image.network(
         badge.imageUrl,
         fit: BoxFit.contain,
         errorBuilder: (context, error, stackTrace) =>
-            _buildFallbackBadge(theme),
+            _buildFallbackBadge(theme, textColor, iconScale),
       );
     }
 
-    return _buildFallbackBadge(theme);
+    return _buildFallbackBadge(theme, textColor, iconScale);
   }
 
-  Widget _buildFallbackBadge(ThemeData theme) {
+  Widget _buildFallbackBadge(ThemeData theme, Color textColor, double iconScale) {
     return Container(
       padding: const EdgeInsets.all(8),
       child: Column(
@@ -119,16 +137,15 @@ class TrustBadge extends StatelessWidget {
         children: [
           Icon(
             _getBadgeIcon(),
-            color: _parseColor(badge.textColor) ?? theme.colorScheme.primary,
-            size: (customSize?.height ?? badge.height ?? 40) * 0.4,
+            color: textColor,
+            size: (customSize?.height ?? badge.height ?? 40) * iconScale,
           ),
           const SizedBox(height: 4),
           Flexible(
             child: Text(
               badge.name ?? badge.altText,
               style: theme.textTheme.bodySmall?.copyWith(
-                color:
-                    _parseColor(badge.textColor) ?? theme.colorScheme.onSurface,
+                color: textColor,
                 fontWeight: FontWeight.w600,
               ),
               textAlign: TextAlign.center,
@@ -204,6 +221,7 @@ class TrustBadgeCollection extends StatelessWidget {
     this.borderRadius,
     this.showTitle = false,
     this.title = 'Trusted by',
+  this.flexibleConfig,
   });
 
   /// List of badges to display
@@ -244,6 +262,7 @@ class TrustBadgeCollection extends StatelessWidget {
 
   /// Collection title text
   final String title;
+  final FlexibleWidgetConfig? flexibleConfig;
 
   @override
   Widget build(BuildContext context) {
@@ -253,49 +272,65 @@ class TrustBadgeCollection extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
+  T cfg<T>(String key, T fallback) {
+      final fc = flexibleConfig;
+      if (fc != null) {
+    if (fc.has('trustBadgeCollection.$key')) { try { return fc.get<T>('trustBadgeCollection.$key', fallback); } catch (_) {} }
+        if (fc.has(key)) { try { return fc.get<T>(key, fallback); } catch (_) {} }
+      }
+      return fallback;
+    }
+
+  final resolvedSpacing = cfg<double>('spacing', spacing);
+  final resolvedRunSpacing = cfg<double>('runSpacing', runSpacing);
+  final resolvedShowTitle = cfg<bool>('showTitle', showTitle);
+  final resolvedTitle = cfg<String>('title', title);
+  final resolvedPadding = cfg<EdgeInsets>('padding', padding ?? const EdgeInsets.all(16));
+  final resolvedBg = cfg<Color>('backgroundColor', backgroundColor ?? Colors.transparent);
+  final resolvedRadius = cfg<BorderRadius>('borderRadius', borderRadius ?? BorderRadius.circular(8));
+
     return Container(
-      padding: padding ?? const EdgeInsets.all(16),
-      decoration: backgroundColor != null
+      padding: resolvedPadding,
+      decoration: resolvedBg != Colors.transparent
           ? BoxDecoration(
-              color: backgroundColor,
-              borderRadius: borderRadius ?? BorderRadius.circular(8),
+              color: resolvedBg,
+              borderRadius: resolvedRadius,
             )
           : null,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (showTitle) ...[
+          if (resolvedShowTitle) ...[
             Text(
-              title,
+              resolvedTitle,
               style: theme.textTheme.titleSmall?.copyWith(
                 fontWeight: FontWeight.w600,
-    this.flexibleConfig,
                 color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
               ),
             ),
-            SizedBox(height: spacing),
+            SizedBox(height: resolvedSpacing),
           ],
-          _buildBadgeLayout(),
+      _buildBadgeLayout(resolvedSpacing, resolvedRunSpacing),
         ],
       ),
     );
   }
 
-  Widget _buildBadgeLayout() {
+  Widget _buildBadgeLayout(double spacingOverride, double runSpacingOverride) {
     switch (layout) {
       case BadgeLayout.horizontal:
-        return _buildHorizontalLayout();
+    return _buildHorizontalLayout(spacingOverride);
       case BadgeLayout.vertical:
-        return _buildVerticalLayout();
+    return _buildVerticalLayout(spacingOverride);
       case BadgeLayout.grid:
-        return _buildGridLayout();
+    return _buildGridLayout(spacingOverride, runSpacingOverride);
       case BadgeLayout.wrap:
-        return _buildWrapLayout();
+    return _buildWrapLayout(spacingOverride, runSpacingOverride);
     }
   }
 
-  Widget _buildHorizontalLayout() {
+  Widget _buildHorizontalLayout(double spacingValue) {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
@@ -305,20 +340,20 @@ class TrustBadgeCollection extends StatelessWidget {
           final badge = entry.value;
           return Padding(
             padding: EdgeInsets.only(
-              right: index < badges.length - 1 ? spacing : 0,
+        right: index < badges.length - 1 ? spacingValue : 0,
             ),
             child: TrustBadge(
               badge: badge,
               onTap: onBadgeTap != null ? () => onBadgeTap!(badge) : null,
+        flexibleConfig: flexibleConfig,
             ),
           );
-  final FlexibleWidgetConfig? flexibleConfig;
         }).toList(),
       ),
     );
   }
 
-  Widget _buildVerticalLayout() {
+  Widget _buildVerticalLayout(double spacingValue) {
     return Column(
       crossAxisAlignment: crossAxisAlignment,
       children: badges.asMap().entries.map((entry) {
@@ -326,18 +361,19 @@ class TrustBadgeCollection extends StatelessWidget {
         final badge = entry.value;
         return Padding(
           padding: EdgeInsets.only(
-            bottom: index < badges.length - 1 ? spacing : 0,
+      bottom: index < badges.length - 1 ? spacingValue : 0,
           ),
           child: TrustBadge(
             badge: badge,
             onTap: onBadgeTap != null ? () => onBadgeTap!(badge) : null,
+      flexibleConfig: flexibleConfig,
           ),
         );
       }).toList(),
     );
   }
 
-  Widget _buildGridLayout() {
+  Widget _buildGridLayout(double spacingValue, double runSpacingValue) {
     const crossAxisCount = 2;
     final itemCount = badges.length;
     final rowCount = (itemCount / crossAxisCount).ceil();
@@ -350,7 +386,7 @@ class TrustBadgeCollection extends StatelessWidget {
 
         return Padding(
           padding: EdgeInsets.only(
-            bottom: rowIndex < rowCount - 1 ? runSpacing : 0,
+      bottom: rowIndex < rowCount - 1 ? runSpacingValue : 0,
           ),
           child: Row(
             mainAxisAlignment: mainAxisAlignment,
@@ -360,11 +396,12 @@ class TrustBadgeCollection extends StatelessWidget {
               return Expanded(
                 child: Padding(
                   padding: EdgeInsets.only(
-                    right: index < rowBadges.length - 1 ? spacing : 0,
+          right: index < rowBadges.length - 1 ? spacingValue : 0,
                   ),
                   child: TrustBadge(
                     badge: badge,
                     onTap: onBadgeTap != null ? () => onBadgeTap!(badge) : null,
+          flexibleConfig: flexibleConfig,
                   ),
                 ),
               );
@@ -375,15 +412,16 @@ class TrustBadgeCollection extends StatelessWidget {
     );
   }
 
-  Widget _buildWrapLayout() {
+  Widget _buildWrapLayout(double spacingValue, double runSpacingValue) {
     return Wrap(
-      spacing: spacing,
-      runSpacing: runSpacing,
+    spacing: spacingValue,
+    runSpacing: runSpacingValue,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: badges.map((badge) {
         return TrustBadge(
           badge: badge,
           onTap: onBadgeTap != null ? () => onBadgeTap!(badge) : null,
+      flexibleConfig: flexibleConfig,
         );
       }).toList(),
     );

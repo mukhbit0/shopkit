@@ -1,10 +1,11 @@
 // Updated ProductCard with layout fixes
 import 'package:flutter/material.dart';
-import 'dart:math';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'dart:ui';
 import '../../models/product_model.dart';
 import '../../models/cart_model.dart';
-import '../../theme/shopkit_theme.dart';
-import 'add_to_cart_button.dart';
+import '../../theme/shopkit_theme_styles.dart';
 import '../../config/flexible_widget_config.dart';
 
 /// Configuration class for ProductCard widget customization
@@ -152,7 +153,8 @@ class ProductCard extends StatefulWidget {
     this.width,
     this.height,
     this.config,
-  this.flexibleConfig,
+    this.flexibleConfig,
+    this.themeStyle, // NEW: Built-in theme styling support
   });
 
   final ProductModel product;
@@ -170,6 +172,10 @@ class ProductCard extends StatefulWidget {
   final double? width;
   final double? height;
   final FlexibleProductCardConfig? config;
+  
+  /// Built-in theme styling support - just pass a string!
+  /// Supported values: 'material3', 'materialYou', 'neumorphism', 'glassmorphism', 'cupertino', 'minimal', 'retro', 'neon'
+  final String? themeStyle;
   /// New flexible configuration (supersedes [FlexibleProductCardConfig] gradually)
   /// Supported keys (namespaced productCard.):
   ///  - productCard.padding / margin / borderRadius / elevation
@@ -190,33 +196,19 @@ class ProductCardState extends State<ProductCard>
     with TickerProviderStateMixin {
   late AnimationController _hoverController;
   late AnimationController _favoriteController;
-  late Animation<double> _hoverAnimation;
-  late Animation<double> _favoriteAnimation;
 
   @override
   void initState() {
     super.initState();
 
-    final config = widget.config ?? const FlexibleProductCardConfig();
-    final animationDuration = config.animationDuration ?? const Duration(milliseconds: 200);
-    final hoverScale = config.hoverScale ?? 1.05;
-
     _hoverController = AnimationController(
-      duration: animationDuration,
+      duration: const Duration(milliseconds: 200),
       vsync: this,
     );
 
     _favoriteController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
-    );
-
-    _hoverAnimation = Tween<double>(begin: 1.0, end: hoverScale).animate(
-      CurvedAnimation(parent: _hoverController, curve: Curves.easeOut),
-    );
-
-    _favoriteAnimation = Tween<double>(begin: 1.0, end: 1.2).animate(
-      CurvedAnimation(parent: _favoriteController, curve: Curves.elasticOut),
     );
   }
 
@@ -233,362 +225,491 @@ class ProductCardState extends State<ProductCard>
       return widget.customBuilder!(context, widget.product, this);
     }
 
-  // Use inherited theme instead of hardcoded light() to respect app theming
-  final theme = ShopKitThemeProvider.of(context);
-
+    // Use new theme system if themeStyle is provided
+    if (widget.themeStyle != null) {
+      return _buildThemedCard(context, widget.themeStyle!);
+    }
+    
+    // Fallback to basic card design
     return SizedBox(
       width: widget.width,
       height: widget.height,
-      child: _buildCard(context, theme),
+      child: _buildBasicCard(context),
     );
   }
 
-  Widget _buildCard(BuildContext context, ShopKitTheme theme) {
-    return _buildDefaultCard(context, theme);
-  }
-
-  Widget _buildDefaultCard(BuildContext context, ShopKitTheme theme) {
-    final legacy = widget.config ?? const FlexibleProductCardConfig();
-    final fc = widget.flexibleConfig;
-
-    T _cfg<T>(String key, T fallback) {
-      if (fc != null) {
-        if (fc.has('productCard.$key')) {
-          try { return fc.get<T>('productCard.$key', fallback); } catch (_) {}
-        }
-        if (fc.has(key)) {
-          try { return fc.get<T>(key, fallback); } catch (_) {}
-        }
-      }
-      return fallback;
-    }
-
-    final padding = legacy.padding ?? _cfg<EdgeInsets>('padding', const EdgeInsets.all(0));
-    final margin = legacy.margin ?? _cfg<EdgeInsets>('margin', EdgeInsets.zero);
-    final borderRadius = legacy.borderRadius ?? _cfg<BorderRadius>('borderRadius', BorderRadius.circular(theme.borderRadius));
-    final elevation = legacy.elevation ?? _cfg<double>('elevation', 4);
-    final backgroundColor = legacy.backgroundColor ?? _cfg<Color>('backgroundColor', theme.surfaceColor);
-    final showQuickActions = legacy.showQuickActions ?? _cfg<bool>('showQuickActions', true);
-    final hoverScale = legacy.hoverScale ?? _cfg<double>('hoverScale', 1.05);
-    final animationDuration = legacy.animationDuration ?? _cfg<Duration>('animationDuration', const Duration(milliseconds: 200));
-
-    // Update controllers if config changed (simple approach: durations may differ)
-    if (_hoverController.duration != animationDuration) {
-      _hoverController.duration = animationDuration;
-    }
-    if (_hoverAnimation.value != hoverScale) {
-      _hoverAnimation = Tween<double>(begin: 1.0, end: hoverScale).animate(
-        CurvedAnimation(parent: _hoverController, curve: Curves.easeOut),
-      );
-    }
-    
-    return AnimatedBuilder(
-      animation: _hoverAnimation,
-      builder: (context, child) {
-        return Transform.scale(
-          scale: _hoverAnimation.value,
-          child: Container(
-            margin: margin,
-            child: Material(
-              color: backgroundColor,
-              borderRadius: borderRadius,
-              elevation: elevation,
-              shadowColor: legacy.shadowColor,
-              child: InkWell(
-                onTap: widget.onTap,
-                onHover: _onHover,
-                borderRadius: borderRadius,
-                child: Container(
-                  padding: padding,
-                  clipBehavior: Clip.antiAlias,
-                  decoration: BoxDecoration(
-                    borderRadius: borderRadius,
+  /// Fallback card design when no theme is specified
+  Widget _buildBasicCard(BuildContext context) {
+    return Card(
+      elevation: 4,
+      margin: EdgeInsets.zero,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12.r),
+      ),
+      child: InkWell(
+        onTap: widget.onTap,
+        borderRadius: BorderRadius.circular(12.r),
+        child: Padding(
+          padding: EdgeInsets.all(12.w),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Image
+              Container(
+                height: 120.h,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(8.r),
+                  color: Theme.of(context).colorScheme.surfaceContainer,
+                ),
+                child: widget.product.imageUrl != null
+                  ? ClipRRect(
+                      borderRadius: BorderRadius.circular(8.r),
+                      child: Image.network(
+                        widget.product.imageUrl!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Icon(
+                          Icons.image,
+                          size: 32.sp,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    )
+                  : Icon(
+                      Icons.image,
+                      size: 32.sp,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+              ),
+              SizedBox(height: 8.h),
+              // Title
+              Flexible(
+                child: Text(
+                  widget.product.name,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12.sp,
                   ),
-                  // FIX 1: Use Flexible to ensure content fits within constrained height
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min, // CRITICAL FIX
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Flexible(
-                        flex: 3,
-                        child: _buildImageSection(context, theme, showQuickActions),
-                      ),
-                      Flexible(
-                        flex: 2,
-                        child: _buildContentSection(context, theme),
-                      ),
-                    ],
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              SizedBox(height: 6.h),
+              // Price
+              Text(
+                '\$${widget.product.price.toStringAsFixed(2)}',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.primary,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14.sp,
+                ),
+              ),
+              SizedBox(height: 8.h),
+              // Add to Cart Button
+              SizedBox(
+                width: double.infinity,
+                height: 32.h,
+                child: ElevatedButton(
+                  onPressed: () {
+                    final cartItem = CartItemModel(
+                      id: 'cart_${widget.product.id}_${DateTime.now().millisecondsSinceEpoch}',
+                      product: widget.product,
+                      quantity: 1,
+                      pricePerItem: widget.product.price,
+                    );
+                    widget.onAddToCart?.call(cartItem);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                  ),
+                  child: Text(
+                    'Add to Cart',
+                    style: TextStyle(fontSize: 10.sp),
                   ),
                 ),
               ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildImageSection(BuildContext context, ShopKitTheme theme, bool showQuickActions) {
-    final config = widget.config ?? const FlexibleProductCardConfig();
-    
-    // Use custom image builder if provided
-    if (config.imageBuilder != null && widget.product.mainImageUrl != null) {
-      return config.imageBuilder!(context, widget.product.mainImageUrl!, widget.product);
-    }
-    
-    // Instead of forcing a large aspect ratio that can overflow (esp. with large text scale),
-    // clamp the image height. If an explicit imageHeight is provided, use it. Otherwise derive
-    // a safe height that leaves room for content (max 240).
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final maxAvailable = constraints.maxHeight.isFinite ? constraints.maxHeight : 600;
-        final desired = config.imageHeight ?? widget.imageHeight ?? min(240.0, maxAvailable * 0.5);
-        return SizedBox(
-          height: desired,
-          width: double.infinity,
-          child: Stack(
-            children: [
-              if (widget.product.mainImageUrl != null)
-                Positioned.fill(
-                  child: GestureDetector(
-                    onTap: widget.onImageTap,
-                    child: Hero(
-                      tag: widget.heroTag ?? 'product-${widget.product.id}',
-                      child: Image.network(
-                        widget.product.mainImageUrl!,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => _buildImagePlaceholder(theme),
-                      ),
-                    ),
-                  ),
-                )
-              else
-                Positioned.fill(child: _buildImagePlaceholder(theme)),
-
-              // Show wishlist button if enabled by config
-              if (widget.onToggleWishlist != null && (config.showQuickActions ?? showQuickActions))
-                Positioned(
-                  top: 8,
-                  right: 8,
-                  child: _buildWishlistButton(context, theme),
-                ),
-
-              // Show discount badge if enabled by config
-              if (widget.product.hasDiscount && (config.showDiscount ?? true))
-                Positioned(
-                  top: 8,
-                  left: 8,
-                  child: _buildDiscountBadge(context, theme),
-                ),
-                
-              // Custom overlay builder
-              if (config.overlayBuilder != null)
-                Positioned.fill(
-                  child: config.overlayBuilder!(context, widget.product),
-                ),
             ],
           ),
-        );
-      },
-    );
-  }
-
-  Widget _buildImagePlaceholder(ShopKitTheme theme) {
-    return Container(
-      color: theme.backgroundColor,
-      child: Icon(
-        Icons.image_not_supported,
-        color: theme.onSurfaceColor.withValues(alpha: 0.3),
-        size: 48,
-      ),
-    );
-  }
-
-  Widget _buildWishlistButton(BuildContext context, ShopKitTheme theme) {
-    final config = widget.config ?? const FlexibleProductCardConfig();
-    final iconSize = config.wishlistIconSize ?? 20.0;
-    
-    return AnimatedBuilder(
-      animation: _favoriteAnimation,
-      builder: (context, child) {
-        return Transform.scale(
-          scale: _favoriteAnimation.value,
-          child: Material(
-            color: theme.surfaceColor.withValues(alpha: 0.9),
-            shape: const CircleBorder(),
-            elevation: 2,
-            child: InkWell(
-              onTap: () {
-                _favoriteController.forward().then((_) {
-                  _favoriteController.reverse();
-                });
-                widget.onToggleWishlist?.call();
-              },
-              customBorder: const CircleBorder(),
-              child: Padding(
-                padding: const EdgeInsets.all(8),
-                child: Icon(
-                  widget.isInWishlist ? Icons.favorite : Icons.favorite_border,
-                  color: widget.isInWishlist
-                      ? theme.errorColor
-                      : theme.onSurfaceColor,
-                  size: iconSize,
-                ),
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildDiscountBadge(BuildContext context, ShopKitTheme theme) {
-    final config = widget.config ?? const FlexibleProductCardConfig();
-    final discount = widget.product.discountPercentage ?? 0;
-    
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: config.badgeBackgroundColor ?? theme.errorColor,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Text(
-        '${discount.toInt()}% OFF',
-        style: config.badgeTextStyle ?? TextStyle(
-          color: theme.onErrorColor,
-          fontSize: 10,
-          fontWeight: FontWeight.bold,
         ),
       ),
     );
   }
 
-  Widget _buildContentSection(BuildContext context, ShopKitTheme theme) {
+  /// Built-in theme styling - automatically styles the card based on theme
+  Widget _buildThemedCard(BuildContext context, String themeStyleString) {
+    final themeStyle = ShopKitThemeStyleExtension.fromString(themeStyleString);
+    final themeConfig = ShopKitThemeConfig.forStyle(themeStyle, context);
+    final product = widget.product;
+
+    Widget cardContent = _buildCardContent(context, themeConfig, product);
+
+    // Apply theme-specific styling and animations
+    switch (themeStyle) {
+      case ShopKitThemeStyle.material3:
+        return _buildMaterial3Card(context, themeConfig, cardContent);
+      case ShopKitThemeStyle.materialYou:
+        return _buildMaterialYouCard(context, themeConfig, cardContent);
+      case ShopKitThemeStyle.neumorphism:
+        return _buildNeumorphicCard(context, themeConfig, cardContent);
+      case ShopKitThemeStyle.glassmorphism:
+        return _buildGlassmorphicCard(context, themeConfig, cardContent);
+      case ShopKitThemeStyle.cupertino:
+        return _buildCupertinoCard(context, themeConfig, cardContent);
+      case ShopKitThemeStyle.minimal:
+        return _buildMinimalCard(context, themeConfig, cardContent);
+      case ShopKitThemeStyle.retro:
+        return _buildRetroCard(context, themeConfig, cardContent);
+      case ShopKitThemeStyle.neon:
+        return _buildNeonCard(context, themeConfig, cardContent);
+    }
+  }
+
+  Widget _buildCardContent(BuildContext context, ShopKitThemeConfig themeConfig, ProductModel product) {
     return Padding(
-      padding: const EdgeInsets.all(12),
-      // FIX 3: Use mainAxisSize.min in content sections
+      padding: EdgeInsets.all(12.w),
       child: Column(
-        mainAxisSize: MainAxisSize.min, // CRITICAL FIX
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildTitleText(context, theme),
-          const SizedBox(height: 8),
-          _buildPriceRow(context, theme),
-          const SizedBox(height: 8),
-          if (widget.onAddToCart != null) _buildActionSection(context, theme),
+          _buildThemedImage(context, themeConfig, product),
+          SizedBox(height: 8.h),
+          Flexible(
+            child: _buildThemedTitle(context, themeConfig, product),
+          ),
+          SizedBox(height: 6.h),
+          _buildThemedPrice(context, themeConfig, product),
+          SizedBox(height: 8.h),
+          _buildThemedButton(context, themeConfig, product),
         ],
       ),
     );
   }
 
-  Widget _buildTitleText(BuildContext context, ShopKitTheme theme) {
-    final config = widget.config ?? const FlexibleProductCardConfig();
-    
-    // Use custom title builder if provided
-    if (config.titleBuilder != null) {
-      return config.titleBuilder!(context, widget.product.name, widget.product);
-    }
-    
+  Widget _buildMaterial3Card(BuildContext context, ShopKitThemeConfig themeConfig, Widget content) {
+    return Material(
+      elevation: themeConfig.elevation,
+      borderRadius: BorderRadius.circular(themeConfig.borderRadius),
+      color: themeConfig.backgroundColor,
+      child: InkWell(
+        onTap: widget.onTap,
+        borderRadius: BorderRadius.circular(themeConfig.borderRadius),
+        child: content,
+      ),
+    ).animate()
+      .scale(duration: themeConfig.animationDuration, curve: themeConfig.animationCurve)
+      .fadeIn(duration: themeConfig.animationDuration);
+  }
+
+  Widget _buildMaterialYouCard(BuildContext context, ShopKitThemeConfig themeConfig, Widget content) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(themeConfig.borderRadius),
+        gradient: LinearGradient(
+          colors: [
+            Theme.of(context).colorScheme.surfaceContainer,
+            Theme.of(context).colorScheme.surfaceContainerHigh,
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: themeConfig.shadowColor!.withValues(alpha: 0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: widget.onTap,
+          borderRadius: BorderRadius.circular(themeConfig.borderRadius),
+          child: content,
+        ),
+      ),
+    ).animate()
+      .scale(duration: themeConfig.animationDuration, curve: themeConfig.animationCurve)
+      .shimmer(duration: 1000.ms, color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3));
+  }
+
+  Widget _buildNeumorphicCard(BuildContext context, ShopKitThemeConfig themeConfig, Widget content) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      decoration: BoxDecoration(
+        color: themeConfig.backgroundColor,
+        borderRadius: BorderRadius.circular(themeConfig.borderRadius),
+        boxShadow: [
+          // Light shadow (top-left)
+          BoxShadow(
+            color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.white,
+            offset: const Offset(-8, -8),
+            blurRadius: 16,
+            spreadRadius: 0,
+          ),
+          // Dark shadow (bottom-right)
+          BoxShadow(
+            color: isDark ? Colors.black.withValues(alpha: 0.3) : Colors.grey.shade400,
+            offset: const Offset(8, 8),
+            blurRadius: 16,
+            spreadRadius: 0,
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: widget.onTap,
+          borderRadius: BorderRadius.circular(themeConfig.borderRadius),
+          child: content,
+        ),
+      ),
+    ).animate()
+      .scale(duration: themeConfig.animationDuration, curve: themeConfig.animationCurve)
+      .then()
+      .shake(duration: 200.ms, hz: 2);
+  }
+
+  Widget _buildGlassmorphicCard(BuildContext context, ShopKitThemeConfig themeConfig, Widget content) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(themeConfig.borderRadius),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+        child: Container(
+          decoration: BoxDecoration(
+            color: themeConfig.backgroundColor,
+            borderRadius: BorderRadius.circular(themeConfig.borderRadius),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.2),
+              width: 1,
+            ),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Colors.white.withValues(alpha: 0.15),
+                Colors.white.withValues(alpha: 0.05),
+              ],
+            ),
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: widget.onTap,
+              borderRadius: BorderRadius.circular(themeConfig.borderRadius),
+              child: content,
+            ),
+          ),
+        ),
+      ),
+    ).animate()
+      .scale(duration: themeConfig.animationDuration, curve: themeConfig.animationCurve)
+      .fadeIn(duration: themeConfig.animationDuration)
+      .then()
+      .shimmer(duration: 2000.ms, color: Colors.white.withValues(alpha: 0.3));
+  }
+
+  Widget _buildCupertinoCard(BuildContext context, ShopKitThemeConfig themeConfig, Widget content) {
+    return Container(
+      decoration: BoxDecoration(
+        color: themeConfig.backgroundColor,
+        borderRadius: BorderRadius.circular(themeConfig.borderRadius),
+        border: Border.all(
+          color: Theme.of(context).dividerColor,
+          width: 0.5,
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: widget.onTap,
+          borderRadius: BorderRadius.circular(themeConfig.borderRadius),
+          child: content,
+        ),
+      ),
+    ).animate()
+      .fadeIn(duration: themeConfig.animationDuration)
+      .slideY(begin: 0.1, duration: themeConfig.animationDuration);
+  }
+
+  Widget _buildMinimalCard(BuildContext context, ShopKitThemeConfig themeConfig, Widget content) {
+    return Container(
+      decoration: BoxDecoration(
+        color: themeConfig.backgroundColor,
+        borderRadius: BorderRadius.circular(themeConfig.borderRadius),
+        border: Border.all(
+          color: Theme.of(context).dividerColor.withValues(alpha: 0.5),
+          width: 1,
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: widget.onTap,
+          borderRadius: BorderRadius.circular(themeConfig.borderRadius),
+          child: content,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRetroCard(BuildContext context, ShopKitThemeConfig themeConfig, Widget content) {
+    return Container(
+      decoration: BoxDecoration(
+        color: themeConfig.backgroundColor,
+        borderRadius: BorderRadius.circular(themeConfig.borderRadius),
+        boxShadow: [
+          BoxShadow(
+            color: themeConfig.shadowColor!,
+            offset: const Offset(6, 6),
+            blurRadius: 0, // Sharp shadow for retro look
+          ),
+          BoxShadow(
+            color: Colors.amber.withValues(alpha: 0.3),
+            offset: const Offset(-2, -2),
+            blurRadius: 0,
+          ),
+        ],
+        border: Border.all(color: Colors.black87, width: 2),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: widget.onTap,
+          borderRadius: BorderRadius.circular(themeConfig.borderRadius),
+          child: content,
+        ),
+      ),
+    ).animate()
+      .scale(duration: themeConfig.animationDuration, curve: themeConfig.animationCurve)
+      .then()
+      .shake(duration: 300.ms, hz: 5);
+  }
+
+  Widget _buildNeonCard(BuildContext context, ShopKitThemeConfig themeConfig, Widget content) {
+    return Container(
+      decoration: BoxDecoration(
+        color: themeConfig.backgroundColor,
+        borderRadius: BorderRadius.circular(themeConfig.borderRadius),
+        border: Border.all(
+          color: Colors.cyan,
+          width: 2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.cyan.withValues(alpha: 0.5),
+            blurRadius: 20,
+            spreadRadius: 0,
+          ),
+          BoxShadow(
+            color: Colors.purple.withValues(alpha: 0.3),
+            blurRadius: 40,
+            spreadRadius: 5,
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: widget.onTap,
+          borderRadius: BorderRadius.circular(themeConfig.borderRadius),
+          child: content,
+        ),
+      ),
+    ).animate()
+      .scale(duration: themeConfig.animationDuration, curve: themeConfig.animationCurve)
+      .then()
+      .shimmer(duration: 1500.ms, color: Colors.cyan.withValues(alpha: 0.8));
+  }
+
+  Widget _buildThemedImage(BuildContext context, ShopKitThemeConfig themeConfig, ProductModel product) {
+    final imageWidget = Container(
+      height: 120.h, // Responsive height
+      width: double.infinity,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular((themeConfig.borderRadius * 0.8).r),
+        color: Theme.of(context).colorScheme.surfaceContainer,
+      ),
+      child: product.imageUrl != null
+        ? ClipRRect(
+            borderRadius: BorderRadius.circular((themeConfig.borderRadius * 0.8).r),
+            child: Image.network(
+              product.imageUrl!,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) => Icon(
+                Icons.image,
+                size: 32.sp,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+          )
+        : Icon(
+            Icons.image,
+            size: 32.sp,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+    );
+
+    return Hero(
+      tag: widget.heroTag ?? 'product-${product.id}',
+      child: imageWidget,
+    );
+  }
+
+  Widget _buildThemedTitle(BuildContext context, ShopKitThemeConfig themeConfig, ProductModel product) {
     return Text(
-      widget.product.name,
-      style: config.titleStyle ?? TextStyle(
-        color: theme.onSurfaceColor,
-        fontSize: 14,
-        fontWeight: FontWeight.w500,
+      product.name,
+      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+        fontWeight: FontWeight.bold,
+        fontSize: 12.sp,
       ),
       maxLines: 2,
       overflow: TextOverflow.ellipsis,
     );
   }
 
-  Widget _buildPriceRow(BuildContext context, ShopKitTheme theme) {
-    final config = widget.config ?? const FlexibleProductCardConfig();
-    
-    // Use custom price builder if provided
-    if (config.priceBuilder != null) {
-      final originalPrice = widget.product.hasDiscount ? widget.product.price : null;
-      return config.priceBuilder!(context, widget.product.discountedPrice, originalPrice, widget.product);
-    }
-    
-    // FIX 5: Use intrinsic dimensions for price row to prevent overflow
-    return IntrinsicWidth(
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            widget.product.formattedPrice,
-            style: config.priceStyle ?? TextStyle(
-              color: theme.primaryColor,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          if (widget.product.hasDiscount) ...[
-            const SizedBox(width: 8),
-            Flexible(
-              child: Text(
-                widget.product.formattedOriginalPrice,
-                style: config.originalPriceStyle ?? TextStyle(
-                  color: theme.onSurfaceColor.withValues(alpha: 0.6),
-                  fontSize: 12,
-                  decoration: TextDecoration.lineThrough,
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
-        ],
+  Widget _buildThemedPrice(BuildContext context, ShopKitThemeConfig themeConfig, ProductModel product) {
+    return Text(
+      '\$${product.price.toStringAsFixed(2)}',
+      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+        color: Theme.of(context).colorScheme.primary,
+        fontWeight: FontWeight.bold,
+        fontSize: 14.sp,
       ),
     );
   }
 
-  Widget _buildActionSection(BuildContext context, ShopKitTheme theme) {
-    final config = widget.config ?? const FlexibleProductCardConfig();
-    
-    // Use custom action builder if provided
-    if (config.actionBuilder != null) {
-      return config.actionBuilder!(
-        context,
-        () {
-          if (widget.onAddToCart != null) {
-            final cartItem = CartItemModel(
-              id: 'cart_${widget.product.id}_${DateTime.now().millisecondsSinceEpoch}',
-              product: widget.product,
-              quantity: 1,
-              pricePerItem: widget.product.discountedPrice,
-            );
-            widget.onAddToCart!(cartItem);
-          }
-        },
-        widget.onToggleWishlist,
-        widget.product,
-      );
-    }
-    
+  Widget _buildThemedButton(BuildContext context, ShopKitThemeConfig themeConfig, ProductModel product) {
     return SizedBox(
       width: double.infinity,
-      child: AddToCartButtonNew(
-        product: widget.product,
-        onAddToCart: (product, quantity) {
+      height: 32.h, // Fixed compact height
+      child: ElevatedButton(
+        onPressed: () {
           final cartItem = CartItemModel(
-            id: 'cart_${product?.id}_${DateTime.now().millisecondsSinceEpoch}',
-            product: product!,
-            quantity: quantity,
-            pricePerItem: product.discountedPrice,
+            id: 'cart_${product.id}_${DateTime.now().millisecondsSinceEpoch}',
+            product: product,
+            quantity: 1,
+            pricePerItem: product.price,
           );
           widget.onAddToCart?.call(cartItem);
         },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Theme.of(context).colorScheme.primary,
+          foregroundColor: Theme.of(context).colorScheme.onPrimary,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular((themeConfig.borderRadius * 0.6).r),
+          ),
+          padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+        ),
+        child: Text(
+          'Add to Cart',
+          style: TextStyle(fontSize: 10.sp),
+        ),
       ),
     );
   }
 
-  void _onHover(bool isHovered) {
-    if (isHovered) {
-      _hoverController.forward();
-    } else {
-      _hoverController.reverse();
-    }
-  }
 }
 
 // CRITICAL FIXES SUMMARY:

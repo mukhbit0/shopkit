@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../config/flexible_widget_config.dart';
 import '../../theme/shopkit_theme.dart';
+import '../../theme/shopkit_theme_styles.dart';
 import '../../models/image_model.dart';
 
 /// A comprehensive image carousel widget with unlimited customization options
@@ -31,6 +33,7 @@ class ImageCarousel extends StatefulWidget {
     this.showZoomButton = true,
     this.autoPlay = false,
     this.autoPlayInterval,
+    this.themeStyle,
   });
 
   /// List of images to display
@@ -95,6 +98,9 @@ class ImageCarousel extends StatefulWidget {
 
   /// Auto-play interval duration
   final Duration? autoPlayInterval;
+
+  /// Built-in theme style support - pass theme name as string
+  final String? themeStyle;
 
   @override
   State<ImageCarousel> createState() => ImageCarouselState();

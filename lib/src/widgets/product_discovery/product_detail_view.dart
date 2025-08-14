@@ -871,7 +871,7 @@ class ProductDetailViewNewState extends State<ProductDetailViewNew>
           Flexible(
             // Fixed: Changed from Expanded to Flexible
             fit: FlexFit.loose, // Fixed: Added FlexFit.loose
-            child: AddToCartButtonNew(
+            child: AddToCartButton(
               product: widget.product,
               quantity: _selectedQuantity,
               onPressed: _handleAddToCart,

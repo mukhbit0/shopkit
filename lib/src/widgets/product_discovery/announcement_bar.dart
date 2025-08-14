@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../config/flexible_widget_config.dart';
 import '../../theme/shopkit_theme.dart';
+import '../../theme/shopkit_theme_styles.dart';
 import '../../models/announcement_model.dart';
 
 /// A comprehensive announcement bar widget with advanced features and unlimited customization
@@ -29,6 +31,7 @@ class AnnouncementBarNew extends StatefulWidget {
     this.behavior = AnnouncementBarBehavior.scroll,
     this.autoScrollInterval = const Duration(seconds: 4),
     this.animationDuration = const Duration(milliseconds: 300),
+    this.themeStyle,
   });
 
   /// List of announcements to display
@@ -90,6 +93,9 @@ class AnnouncementBarNew extends StatefulWidget {
 
   /// Animation duration
   final Duration animationDuration;
+
+  /// Built-in theme style support - pass theme name as string
+  final String? themeStyle;
 
   @override
   State<AnnouncementBarNew> createState() => AnnouncementBarNewState();

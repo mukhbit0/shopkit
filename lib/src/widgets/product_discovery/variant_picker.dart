@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../config/flexible_widget_config.dart';
 import '../../theme/shopkit_theme.dart';
+import '../../theme/shopkit_theme_styles.dart';
 import '../../models/variant_model.dart';
 
 /// A comprehensive variant picker widget with unlimited customization options
@@ -25,6 +27,7 @@ class VariantPicker extends StatefulWidget {
     this.showPrices = true,
     this.showAvailability = true,
     this.maxSelections,
+    this.themeStyle,
   });
 
   /// List of variants to display
@@ -74,6 +77,9 @@ class VariantPicker extends StatefulWidget {
 
   /// Maximum number of selections (for multi-select)
   final int? maxSelections;
+
+  /// Built-in theme style support - pass theme name as string
+  final String? themeStyle;
 
   @override
   State<VariantPicker> createState() => VariantPickerState();

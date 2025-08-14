@@ -82,24 +82,24 @@ class _PaymentMethodSelectorState extends State<PaymentMethodSelector> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    T _cfg<T>(String key, T fallback) {
+    T cfg<T>(String key, T fallback) {
       final fc = widget.flexibleConfig;
       if (fc != null) {
-        if (fc.has('paymentMethods.' + key)) { try { return fc.get<T>('paymentMethods.' + key, fallback); } catch (_) {} }
+        if (fc.has('paymentMethods.$key')) { try { return fc.get<T>('paymentMethods.$key', fallback); } catch (_) {} }
         if (fc.has(key)) { try { return fc.get<T>(key, fallback); } catch (_) {} }
       }
       return fallback;
     }
 
-    final padding = widget.padding ?? _cfg<EdgeInsets>('padding', const EdgeInsets.all(16));
-    final bgColor = widget.backgroundColor ?? _cfg<Color>('backgroundColor', colorScheme.surface);
-    final borderRadius = widget.borderRadius ?? _cfg<BorderRadius>('borderRadius', BorderRadius.circular(12));
-    final itemSpacing = _cfg<double>('itemSpacing', widget.itemSpacing);
-    final showAdd = _cfg<bool>('showAddButton', widget.showAddPaymentMethod);
-    final headerText = _cfg<String>('headerText', 'Payment Method');
-    final addLabel = _cfg<String>('addButtonLabel', 'Add');
-    final emptyTitle = _cfg<String>('emptyStateTitle', 'No Payment Methods');
-    final emptySubtitle = _cfg<String>('emptyStateSubtitle', 'Add a payment method to continue');
+    final padding = widget.padding ?? cfg<EdgeInsets>('padding', const EdgeInsets.all(16));
+    final bgColor = widget.backgroundColor ?? cfg<Color>('backgroundColor', colorScheme.surface);
+    final borderRadius = widget.borderRadius ?? cfg<BorderRadius>('borderRadius', BorderRadius.circular(12));
+    final itemSpacing = cfg<double>('itemSpacing', widget.itemSpacing);
+    final showAdd = cfg<bool>('showAddButton', widget.showAddPaymentMethod);
+    final headerText = cfg<String>('headerText', 'Payment Method');
+    final addLabel = cfg<String>('addButtonLabel', 'Add');
+    final emptyTitle = cfg<String>('emptyStateTitle', 'No Payment Methods');
+    final emptySubtitle = cfg<String>('emptyStateSubtitle', 'Add a payment method to continue');
 
     return Container(
       padding: padding,

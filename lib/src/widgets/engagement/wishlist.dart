@@ -232,7 +232,7 @@ class _WishlistState extends State<Wishlist> {
     final colorScheme = theme.colorScheme;
 
     // Helper to read from flexibleConfig with fallbacks to legacy config and then widget props
-    T _cfg<T>(String key, T fallback) {
+    T cfg0<T>(String key, T fallback) {
       // Try namespaced key first then generic key for convenience
       if (widget.flexibleConfig != null) {
         if (widget.flexibleConfig!.has('wishlist.$key')) {
@@ -246,16 +246,16 @@ class _WishlistState extends State<Wishlist> {
     }
 
     // Derived values with override order: flexibleConfig -> legacy config -> explicit widget prop / default
-    final padding = widget.padding ?? widget.config?.padding ?? _cfg<EdgeInsets>('padding', const EdgeInsets.all(16));
-    final bgColor = widget.backgroundColor ?? widget.config?.backgroundColor ?? _cfg<Color>('backgroundColor', colorScheme.surface);
-    final borderRadius = widget.borderRadius ?? widget.config?.borderRadius ?? _cfg<BorderRadius>('borderRadius', BorderRadius.circular(12));
-    final borderColor = widget.config?.borderColor ?? _cfg<Color>('borderColor', colorScheme.outline.withValues(alpha: 0.2));
-    final borderWidth = widget.config?.borderWidth ?? _cfg<double>('borderWidth', 1.0);
-    final spacing = _cfg<double>('spacing', widget.config?.spacing ?? widget.spacing);
-    final showMoveToCart = _cfg<bool>('showMoveToCartButton', widget.config?.showMoveToCartButton ?? widget.showMoveToCartButton);
-    final showShare = _cfg<bool>('showShareButton', widget.config?.showShareButton ?? widget.showShareButton);
-    final showRemove = _cfg<bool>('showRemoveButton', widget.config?.showRemoveButton ?? widget.showRemoveButton);
-    final ratingColor = widget.config?.ratingColor ?? _cfg<Color>('ratingColor', Colors.amber);
+    final padding = widget.padding ?? widget.config?.padding ?? cfg0<EdgeInsets>('padding', const EdgeInsets.all(16));
+    final bgColor = widget.backgroundColor ?? widget.config?.backgroundColor ?? cfg0<Color>('backgroundColor', colorScheme.surface);
+    final borderRadius = widget.borderRadius ?? widget.config?.borderRadius ?? cfg0<BorderRadius>('borderRadius', BorderRadius.circular(12));
+    final borderColor = widget.config?.borderColor ?? cfg0<Color>('borderColor', colorScheme.outline.withValues(alpha: 0.2));
+    final borderWidth = widget.config?.borderWidth ?? cfg0<double>('borderWidth', 1.0);
+    final spacing = cfg0<double>('spacing', widget.config?.spacing ?? widget.spacing);
+    final showMoveToCart = cfg0<bool>('showMoveToCartButton', widget.config?.showMoveToCartButton ?? widget.showMoveToCartButton);
+    final showShare = cfg0<bool>('showShareButton', widget.config?.showShareButton ?? widget.showShareButton);
+    final showRemove = cfg0<bool>('showRemoveButton', widget.config?.showRemoveButton ?? widget.showRemoveButton);
+    final ratingColor = widget.config?.ratingColor ?? cfg0<Color>('ratingColor', Colors.amber);
 
     // Store derived booleans for reuse down the tree via InheritedWidget pattern (future) or locals now
     final derived = _WishlistDerived(
