@@ -1,0 +1,197 @@
+# Test configuration for ShopKit
+# Configures test environments and coverage reporting
+
+# Test timeout configuration
+timeout: 30s
+
+# Test platforms
+platforms:
+  - flutter-tester
+
+# Test tags for organizing test suites
+tags:
+  unit: "test/unit/**"
+  widget: "test/widget/**" 
+  integration: "test/integration/**"
+  performance: "test/performance/**"
+
+# Coverage configuration
+coverage:
+  # Files to include in coverage
+  include:
+    - "lib/**"
+  
+  # Files to exclude from coverage
+  exclude:
+    - "lib/**/*.g.dart"
+    - "lib/**/*.freezed.dart"
+    - "lib/**/generated_plugin_registrant.dart"
+    - "test/**"
+    - "example/**"
+  
+  # Minimum coverage thresholds
+  thresholds:
+    line: 80
+    function: 80
+    branch: 70
+
+# Test environment variables
+environment:
+  FLUTTER_TEST: "true"
+  
+# Test reporting
+reporters:
+  - json
+  - github
+
+# Performance test configuration
+performance:
+  # Maximum execution time for performance tests
+  max_duration: 10s
+  
+  # Number of iterations for performance tests
+  iterations: 10
+  
+  # Memory usage thresholds
+  memory:
+    max_heap_size: "100MB"
+    max_rss: "150MB"
+
+# Accessibility test configuration  
+accessibility:
+  # Accessibility guidelines to test against
+  guidelines:
+    - wcag_aa
+    - material_design
+  
+  # Minimum contrast ratios
+  contrast:
+    normal_text: 4.5
+    large_text: 3.0
+  
+  # Font size scaling tests
+  text_scaling:
+    - 1.0
+    - 1.5
+    - 2.0
+    - 3.0
+
+# Device simulation for responsive tests
+devices:
+  mobile:
+    - name: "iPhone SE"
+      width: 375
+      height: 667
+      pixel_ratio: 2.0
+    - name: "iPhone 14 Pro"
+      width: 393
+      height: 852
+      pixel_ratio: 3.0
+    - name: "Samsung Galaxy S21"
+      width: 384
+      height: 854
+      pixel_ratio: 2.75
+  
+  tablet:
+    - name: "iPad"
+      width: 768
+      height: 1024
+      pixel_ratio: 2.0
+    - name: "iPad Pro 12.9"
+      width: 1024
+      height: 1366
+      pixel_ratio: 2.0
+  
+  desktop:
+    - name: "Desktop 1080p"
+      width: 1920
+      height: 1080
+      pixel_ratio: 1.0
+    - name: "Desktop 4K"
+      width: 3840
+      height: 2160
+      pixel_ratio: 2.0
+
+# Internationalization test configuration
+localization:
+  locales:
+    - en
+    - es
+    - fr
+    - de
+    - ar  # RTL language
+    - zh  # CJK language
+  
+  # Text direction tests
+  text_directions:
+    - ltr
+    - rtl
+
+# Network simulation for integration tests
+network:
+  # Connection types to simulate
+  connections:
+    - offline
+    - slow_3g
+    - fast_3g
+    - 4g
+    - wifi
+  
+  # Error scenarios
+  errors:
+    - timeout
+    - connection_refused
+    - dns_failure
+    - ssl_error
+
+# Golden file test configuration
+golden_files:
+  # Directory for storing golden files
+  directory: "test/golden/"
+  
+  # Image comparison threshold
+  threshold: 0.01
+  
+  # Platforms to generate golden files for
+  platforms:
+    - macos
+    - linux
+    - windows
+
+# Test data configuration
+test_data:
+  # Mock data generators
+  products:
+    count: 100
+    categories: ["Electronics", "Clothing", "Books", "Home", "Sports"]
+    price_range: [5.0, 999.99]
+  
+  users:
+    count: 20
+    verified_ratio: 0.8
+  
+  orders:
+    count: 50
+    status_distribution:
+      pending: 0.2
+      processing: 0.3
+      shipped: 0.3
+      delivered: 0.2
+
+# CI/CD integration
+ci:
+  # GitHub Actions configuration
+  github_actions:
+    on_push: true
+    on_pull_request: true
+    cache_dependencies: true
+  
+  # Coverage reporting
+  coverage_reporting:
+    codecov: true
+    coveralls: false
+  
+  # Artifacts to upload
+  artifacts:
+    - "coverage/"
+    - "test/reports/"

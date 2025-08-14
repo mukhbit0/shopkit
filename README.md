@@ -3,7 +3,6 @@
 A comprehensive Flutter e-commerce widget library with unlimited customization, multiple design systems, complete internationalization, and robust testing infrastructure.
 
 [![pub package](https://img.shields.io/pub/v/shopkit.svg)](https://pub.dev/packages/shopkit)
-[![codecov](https://codecov.io/gh/yourusername/shopkit/branch/main/graph/badge.svg)](https://codecov.io/gh/yourusername/shopkit)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![style: very good analysis](https://img.shields.io/badge/style-very_good_analysis-B22C89.svg)](https://pub.dev/packages/very_good_analysis)
 
