@@ -3,6 +3,7 @@
 /// A comprehensive collection of customizable e-commerce widgets for Flutter
 /// applications with built-in data models, headless architecture support,
 /// and extensive theming capabilities.
+library;
 ///
 /// ## Quick Start
 ///
@@ -91,7 +92,6 @@
 /// - [CartController] - Cart state management
 /// - [WishlistController] - Wishlist functionality
 /// - [ProductController] - Product state management
-library shopkit;
 
 // Export controllers
 export 'src/controllers/cart_controller.dart';
@@ -113,8 +113,8 @@ export 'src/theme/widget_theme_config.dart';
 // Export internationalization
 export 'src/utils/internationalization.dart';
 
-// Export legacy theme for backward compatibility
-export 'src/theme/ecommerce_theme.dart';
+// Export legacy theme for backward compatibility (DEPRECATED - Use ShopKitTheme instead)
+// export 'src/theme/ecommerce_theme.dart';
 
 // Export all models
 export 'src/models/address_model.dart';

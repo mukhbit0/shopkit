@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../../models/product_model.dart';
 import '../../models/cart_model.dart';
 import '../../models/variant_model.dart';
-import '../../theme/ecommerce_theme.dart';
 import '../../config/flexible_widget_config.dart';
 
 /// Configuration class for AddToCartButton widget customization
@@ -164,7 +163,6 @@ class FlexibleAddToCartButtonConfig {
 }
 
 /// An animated button for adding products to cart
-@Deprecated('Use AddToCartButton (unified theming-aware version) from package:shopkit/shopkit.dart. This legacy implementation will be removed in a future major release.')
 class AddToCartButton extends StatefulWidget {
   const AddToCartButton({
     super.key,
@@ -397,7 +395,7 @@ class _AddToCartButtonState extends State<AddToCartButton>
 
   @override
   Widget build(BuildContext context) {
-    final theme = context.ecommerceTheme;
+    final theme = Theme.of(context);
 
     if (widget.showQuantitySelector) {
       return _buildWithQuantitySelector(theme);
@@ -406,15 +404,15 @@ class _AddToCartButtonState extends State<AddToCartButton>
     return _buildSimpleButton(theme);
   }
 
-  Widget _buildSimpleButton(ECommerceTheme theme) {
+  Widget _buildSimpleButton(ThemeData theme) {
     return ScaleTransition(
       scale: _scaleAnimation,
       child: SizedBox(
         width:
             widget.width ?? _config?.get<double>('width', null) ?? widget.width,
         height: (widget.height ??
-            _config?.get<double>('height', theme.buttonHeight) ??
-            theme.buttonHeight),
+            _config?.get<double>('height', 48.0) ??
+            48.0),
         child: ElevatedButton(
           onPressed:
               widget.isLoading || widget.isOutOfStock ? null : _handleAddToCart,
@@ -425,15 +423,15 @@ class _AddToCartButtonState extends State<AddToCartButton>
     );
   }
 
-  Widget _buildWithQuantitySelector(ECommerceTheme theme) {
+  Widget _buildWithQuantitySelector(ThemeData theme) {
     return Row(
       children: [
         // Quantity Selector
         Container(
           decoration: BoxDecoration(
-            border: Border.all(color: theme.effectiveBorderColor),
+            border: Border.all(color: theme.colorScheme.outline),
             borderRadius: BorderRadius.circular(
-                widget.borderRadius ?? theme.buttonRadius),
+                widget.borderRadius ?? 8.0),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -450,7 +448,7 @@ class _AddToCartButtonState extends State<AddToCartButton>
                 alignment: Alignment.center,
                 child: Text(
                   _currentQuantity.toString(),
-                  style: theme.defaultTitleTextStyle.copyWith(fontSize: 16),
+                  style: theme.textTheme.titleMedium?.copyWith(fontSize: 16),
                 ),
               ),
               IconButton(
@@ -474,13 +472,13 @@ class _AddToCartButtonState extends State<AddToCartButton>
     );
   }
 
-  ButtonStyle _getButtonStyle(ECommerceTheme theme) {
+  ButtonStyle _getButtonStyle(ThemeData theme) {
     Color backgroundColor;
 
     if (widget.isOutOfStock) {
       backgroundColor = widget.disabledColor ??
-          _config?.getColor('disabledColor', theme.effectiveDisabledColor) ??
-          theme.effectiveDisabledColor;
+          _config?.getColor('disabledColor', theme.disabledColor) ??
+          theme.disabledColor;
     } else if (widget.isLoading) {
       backgroundColor = widget.loadingColor ??
           _config?.getColor(
@@ -488,8 +486,8 @@ class _AddToCartButtonState extends State<AddToCartButton>
           theme.primaryColor.withValues(alpha: 0.7);
     } else if (_showSuccessState || widget.isInCart) {
       backgroundColor = widget.successColor ??
-          _config?.getColor('successColor', theme.successColor) ??
-          theme.successColor;
+          _config?.getColor('successColor', Colors.green) ??
+          Colors.green;
     } else {
       backgroundColor = widget.backgroundColor ??
           _config?.getColor('backgroundColor', theme.primaryColor) ??
@@ -505,17 +503,17 @@ class _AddToCartButtonState extends State<AddToCartButton>
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(
           widget.borderRadius ??
-              _config?.get<double>('borderRadius', theme.buttonRadius) ??
-              theme.buttonRadius,
+              _config?.get<double>('borderRadius', 8.0) ??
+              8.0,
         ),
       ),
       minimumSize: Size.fromHeight(widget.height ??
-          _config?.get<double>('height', theme.buttonHeight) ??
-          theme.buttonHeight),
+          _config?.get<double>('height', 48.0) ??
+          48.0),
     );
   }
 
-  Widget _buildButtonContent(ECommerceTheme theme) {
+  Widget _buildButtonContent(ThemeData theme) {
     if (widget.isLoading) {
       return Row(
         mainAxisAlignment: MainAxisAlignment.center,

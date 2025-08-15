@@ -433,7 +433,7 @@ class _ProductDiscoveryScreenState extends State<ProductDiscoveryScreen>
     try {
       return AddToCartButton(
         product: _products[0],
-        onAddToCart: (product, qty) => _showSnackBar('Added ${product?.name} (x$qty) to cart'),
+        onAddToCart: (cartItem) => _showSnackBar('Added ${cartItem.product.name} (x${cartItem.quantity}) to cart'),
         config: const FlexibleWidgetConfig(
           config: {
             'width': 200.0,

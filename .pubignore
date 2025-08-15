@@ -1,0 +1,27 @@
+# Ignore extra documentation files that were created during development
+CUSTOMIZATION_ANALYSIS.md
+IMPROVEMENT_SUMMARY.md
+LAYOUT_ANALYSIS.md
+MIGRATION_ACTION_PLAN.md
+TESTING_SUMMARY.md
+THEME_GUIDE.md
+THEME_SYSTEM.md
+TRANSFORMATION_STATUS.md
+WIDGET_MIGRATION_STATUS.md
+example/SHOWCASE_README.md
+
+# Temporary files and build artifacts
+*.tmp
+*.temp
+.tmp/
+.temp/
+
+# Editor specific files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS specific files
+.DS_Store
+Thumbs.db

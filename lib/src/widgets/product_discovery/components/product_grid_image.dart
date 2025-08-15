@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../../theme/shopkit_theme.dart';
-import '../../../theme/shopkit_theme_styles.dart';
 import '../../../models/product_model.dart';
 import '../../../config/flexible_widget_config.dart';
 import '../product_grid_types.dart';
@@ -86,7 +85,7 @@ class ProductGridImage extends StatelessWidget {
         ClipRRect(
           borderRadius: layout == ProductGridLayout.list
               ? BorderRadius.circular(12.0)
-              : BorderRadius.only(
+              : const BorderRadius.only(
                   topLeft: Radius.circular(12.0),
                   topRight: Radius.circular(12.0),
                 ),
@@ -159,10 +158,10 @@ class _ThemedImagePlaceholder extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: primaryColor.withOpacity(0.1),
+      color: primaryColor.withValues(alpha: 0.1),
       child: Icon(
         Icons.image_outlined,
-        color: primaryColor.withOpacity(0.4),
+        color: primaryColor.withValues(alpha: 0.4),
         size: 40.0,
       ),
     );

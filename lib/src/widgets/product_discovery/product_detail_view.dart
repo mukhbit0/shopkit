@@ -7,9 +7,10 @@ import '../../models/product_model.dart';
 import '../../models/variant_model.dart';
 import '../../models/review_model.dart';
 import '../../models/image_model.dart';
+import '../../models/cart_model.dart';
 import 'image_carousal.dart';
 import 'variant_picker.dart';
-import 'add_to_cart_button.dart';
+import '../cart_management/add_to_cart_button.dart';
 
 /// A comprehensive product detail view widget with advanced features and unlimited customization
 /// Features: Multiple layouts, image galleries, variant selection, reviews, recommendations, and extensive theming
@@ -225,7 +226,16 @@ class ProductDetailViewNewState extends State<ProductDetailViewNew>
     }
   }
 
-  void _handleAddToCart() {
+  void _handleAddToCart(CartItemModel cartItem) {
+    if (widget.enableHaptics && _getConfig('enableAddToCartHaptics', true)) {
+      HapticFeedback.mediumImpact();
+    }
+
+    widget.onAddToCart
+        ?.call(widget.product, _selectedVariant, _selectedQuantity);
+  }
+
+  void _handleAddToCartSimple() {
     if (widget.enableHaptics && _getConfig('enableAddToCartHaptics', true)) {
       HapticFeedback.mediumImpact();
     }
@@ -886,7 +896,7 @@ class ProductDetailViewNewState extends State<ProductDetailViewNew>
             child: AddToCartButton(
               product: widget.product,
               quantity: _selectedQuantity,
-              onPressed: _handleAddToCart,
+              onAddToCart: _handleAddToCart,
               config: _config,
             ),
           ),
@@ -1257,7 +1267,7 @@ class ProductDetailViewNewState extends State<ProductDetailViewNew>
             children: [
               Expanded(
                 child: ElevatedButton(
-                  onPressed: _handleAddToCart,
+                  onPressed: _handleAddToCartSimple,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: _config?.getColor(
                             'addToCartButtonColor', theme.primaryColor) ??

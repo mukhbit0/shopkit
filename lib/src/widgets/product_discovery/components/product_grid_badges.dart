@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../../theme/shopkit_theme.dart';
-import '../../../theme/shopkit_theme_styles.dart';
 import '../../../models/product_model.dart';
 import '../../../config/flexible_widget_config.dart';
 
@@ -113,9 +112,9 @@ class ProductGridBadgesBuilder {
           borderRadius: BorderRadius.circular(borderRadius),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withValues(alpha: 0.1),
               blurRadius: elevation,
-              offset: Offset(0, 1),
+              offset: const Offset(0, 1),
             ),
           ],
         ),

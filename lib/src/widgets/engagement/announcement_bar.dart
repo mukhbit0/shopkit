@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'dart:ui';
 import '../../models/announcement_model.dart';
-import '../../theme/ecommerce_theme.dart';
 import '../../config/flexible_widget_config.dart';
 import '../../theme/shopkit_theme_styles.dart';
 
@@ -28,8 +26,11 @@ class AnnouncementBar extends StatefulWidget {
     this.animationDuration,
     this.autoHide = false,
     this.autoHideDuration,
-  this.config,
-  this.themeStyle,
+    this.config,
+    this.themeStyle,
+    this.textStyle,
+    this.maxLines,
+    this.addBottomMargin = false,
   });
 
   /// Announcement data to display
@@ -78,6 +79,15 @@ class AnnouncementBar extends StatefulWidget {
   /// the new ShopKitThemeConfig system styles the bar and overrides legacy
   /// color fallback logic (unless explicit colors are passed in props).
   final String? themeStyle;
+
+  /// Custom text style for the announcement message
+  final TextStyle? textStyle;
+
+  /// Maximum lines for the announcement text
+  final int? maxLines;
+
+  /// Whether to add bottom margin after the announcement
+  final bool addBottomMargin;
 
   @override
   State<AnnouncementBar> createState() => _AnnouncementBarState();
@@ -151,126 +161,73 @@ class _AnnouncementBarState extends State<AnnouncementBar>
     widget.onDismiss?.call();
   }
 
-  Color _getBackgroundColor(ECommerceTheme theme) {
-  final cfg = widget.config; // Access legacy flexible widget config if provided.
-    if (widget.backgroundColor != null) return widget.backgroundColor!;
-    if (cfg?.has('backgroundColor') == true) {
-      final dynamic val = cfg!.get<dynamic>('backgroundColor');
-      if (val is Color) return val;
-    }
-    if (widget.announcement.backgroundColor != null) {
-      return _parseColor(widget.announcement.backgroundColor!) ?? theme.primaryColor;
-    }
-
-    switch (widget.announcement.type) {
-      case AnnouncementType.promotion:
-      case AnnouncementType.sale:
-        return theme.primaryColor;
-      case AnnouncementType.newProduct:
-        return theme.successColor;
-      case AnnouncementType.shipping:
-        return theme.secondaryColor;
-      case AnnouncementType.maintenance:
-        return theme.warningColor;
-      case AnnouncementType.holiday:
-        return const Color(0xFF8B5CF6); // Purple
-      case AnnouncementType.general:
-        return theme.onSurfaceColor;
-    }
-  }
-
-  Color _getTextColor(ECommerceTheme theme) {
-  final cfg = widget.config;
-    if (widget.textColor != null) return widget.textColor!;
-    if (cfg?.has('textColor') == true) {
-      final dynamic val = cfg!.get<dynamic>('textColor');
-      if (val is Color) return val;
-    }
-    if (widget.announcement.textColor != null) {
-      return _parseColor(widget.announcement.textColor!) ?? Colors.white;
-    }
-    return Colors.white;
-  }
-
   @override
   Widget build(BuildContext context) {
-    final legacyTheme = context.ecommerceTheme;
-    final useNewTheme = widget.themeStyle != null;
-    ShopKitThemeConfig? themeCfg;
-    if (useNewTheme) {
+    // Use modern theming when available
+    if (widget.themeStyle != null) {
       final style = ShopKitThemeStyleExtension.fromString(widget.themeStyle!);
-      themeCfg = ShopKitThemeConfig.forStyle(style, context);
+      final themeConfig = ShopKitThemeConfig.forStyle(style, context);
+      return _buildThemedAnnouncement(context, themeConfig);
     }
-  final backgroundColor = useNewTheme
-    ? (widget.backgroundColor ?? (themeCfg!.primaryColor ?? Theme.of(context).colorScheme.primary))
-    : _getBackgroundColor(legacyTheme);
-  final textColor = useNewTheme
-    ? (widget.textColor ?? (themeCfg!.onPrimaryColor ?? Colors.white))
-    : _getTextColor(legacyTheme);
-    final showClose =
-        widget.showCloseButton ?? widget.announcement.isDismissible;
+    
+    // Simple fallback to Flutter theme
+    return _buildSimpleAnnouncement(context);
+  }
+
+  Widget _buildThemedAnnouncement(BuildContext context, ShopKitThemeConfig themeConfig) {
+    final backgroundColor = widget.backgroundColor ?? 
+        (themeConfig.primaryColor ?? Theme.of(context).colorScheme.primary);
+    final textColor = widget.textColor ?? 
+        (themeConfig.onPrimaryColor ?? Colors.white);
+    
+    return _buildAnnouncementContainer(
+      context, 
+      backgroundColor, 
+      textColor, 
+      themeConfig.borderRadius
+    );
+  }
+
+  Widget _buildSimpleAnnouncement(BuildContext context) {
+    final theme = Theme.of(context);
+    final backgroundColor = widget.backgroundColor ?? theme.colorScheme.primary;
+    final textColor = widget.textColor ?? theme.colorScheme.onPrimary;
+    
+    return _buildAnnouncementContainer(context, backgroundColor, textColor, 8.0);
+  }
+
+  Widget _buildAnnouncementContainer(BuildContext context, Color backgroundColor, Color textColor, double borderRadius) {
+    final showClose = widget.showCloseButton ?? widget.announcement.isDismissible;
 
     if (!widget.announcement.isActive || !_isVisible) {
       return const SizedBox.shrink();
     }
 
-  final bar = SlideTransition(
+    final bar = SlideTransition(
       position: _slideAnimation,
       child: Container(
         width: double.infinity,
         constraints: BoxConstraints(
-      minHeight: widget.height ?? 48,
+          minHeight: widget.height ?? 48,
         ),
         decoration: BoxDecoration(
-      color: useNewTheme && (themeCfg?.enableBlur ?? false)
-              ? backgroundColor.withValues(alpha: 0.85)
-              : backgroundColor,
-      gradient: useNewTheme && (themeCfg?.enableGradients ?? false)
-              ? LinearGradient(
-                  colors: [
-                    backgroundColor.withValues(alpha: 0.95),
-                    backgroundColor.withValues(alpha: 0.75),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                )
-              : null,
-      borderRadius: useNewTheme
-        ? BorderRadius.circular((themeCfg?.borderRadius ?? 16) * 0.6)
-              : null,
-      border: useNewTheme && (themeCfg?.enableGradients ?? false)
-              ? Border.all(
-          color: (themeCfg?.primaryColor ?? backgroundColor)
-                      .withValues(alpha: 0.25),
-                )
-              : null,
-      boxShadow: useNewTheme && (themeCfg?.enableShadows ?? false)
-              ? [
-                  BoxShadow(
-          color: (themeCfg?.shadowColor ?? Colors.black)
-                        .withValues(alpha: 0.15),
-                    blurRadius: 20,
-                    offset: const Offset(0, 8),
-                  ),
-                ]
-              : [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
-                    blurRadius: 4,
-                    offset: widget.position == AnnouncementPosition.top
-                        ? const Offset(0, 2)
-                        : const Offset(0, -2),
-                  ),
-                ],
+          color: backgroundColor,
+          borderRadius: BorderRadius.circular(borderRadius * 0.6),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.1),
+              blurRadius: 4,
+              offset: widget.position == AnnouncementPosition.top
+                  ? const Offset(0, 2)
+                  : const Offset(0, -2),
+            ),
+          ],
         ),
         child: SafeArea(
           top: widget.position == AnnouncementPosition.top,
           bottom: widget.position == AnnouncementPosition.bottom,
           child: Padding(
-            padding: EdgeInsets.symmetric(
-        horizontal: useNewTheme ? 16 : legacyTheme.spacing,
-        vertical: useNewTheme ? 10 : legacyTheme.spacing * 0.5,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             child: Row(
               children: [
                 // Icon
@@ -282,107 +239,44 @@ class _AnnouncementBarState extends State<AnnouncementBar>
                       child: Image.network(
                         widget.announcement.iconUrl!,
                         color: textColor,
-                        errorBuilder: (context, error, stackTrace) => Text(
-                          widget.announcement.type.icon,
-                          style: const TextStyle(fontSize: 16),
-                        ),
                       ),
                     )
                   else
-                    Text(
-                      widget.announcement.iconUrl ??
-                          widget.announcement.type.icon,
-                      style: const TextStyle(fontSize: 16),
+                    Icon(
+                      _getIconData(widget.announcement.iconUrl!),
+                      color: textColor,
+                      size: 20,
                     ),
                   const SizedBox(width: 12),
                 ],
-
-                // Content
+                // Text content
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Title
-                      Text(
-                        widget.announcement.title,
-                        style: TextStyle(
+                  child: Text(
+                    widget.announcement.message,
+                    style: widget.textStyle ??
+                        Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: textColor,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
+                          fontWeight: FontWeight.w500,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-
-                      // Message
-                      if (widget.announcement.message.isNotEmpty) ...[
-                        const SizedBox(height: 2),
-                        Text(
-                          widget.announcement.message,
-                          style: TextStyle(
-                            color: textColor.withValues(alpha: 0.9),
-                            fontSize: 12,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ],
+                    maxLines: widget.maxLines ?? 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
-
-                // Action Button
-                if (widget.announcement.hasAction) ...[
-                  const SizedBox(width: 12),
-                  GestureDetector(
-                    onTap: widget.onActionTap,
-            child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 220),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: (widget.actionColor ?? textColor)
-                            .withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(
-                useNewTheme ? (themeCfg?.borderRadius ?? 16) * 0.4 : 16),
-                        border: useNewTheme
-                            ? Border.all(
-                  color: (themeCfg?.primaryColor ?? textColor)
-                                    .withValues(alpha: 0.3),
-                              )
-                            : null,
-                      ),
-                      child: Text(
-                        widget.announcement.actionText!,
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: widget.actionColor ?? textColor,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-
-                // Close Button
+                // Close button
                 if (showClose) ...[
                   const SizedBox(width: 8),
                   IconButton(
                     onPressed: _dismiss,
                     icon: Icon(
                       Icons.close,
-                      size: 18,
-                      color:
-                          widget.closeColor ?? textColor.withValues(alpha: 0.8),
+                      color: textColor.withValues(alpha: 0.8),
+                      size: 20,
                     ),
-                    padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(
                       minWidth: 32,
                       minHeight: 32,
                     ),
+                    padding: EdgeInsets.zero,
                   ),
                 ],
               ],
@@ -392,30 +286,34 @@ class _AnnouncementBarState extends State<AnnouncementBar>
       ),
     );
 
-  if (useNewTheme && (themeCfg?.enableBlur ?? false)) {
-      return ClipRRect(
-        borderRadius:
-      BorderRadius.circular((themeCfg?.borderRadius ?? 16) * 0.6),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-          child: bar,
-        ),
-      );
-    }
-    return bar;
+    return widget.position == AnnouncementPosition.top
+        ? Column(
+            children: [
+              bar,
+              if (widget.addBottomMargin) const SizedBox(height: 8),
+            ],
+          )
+        : Column(
+            children: [
+              if (widget.addBottomMargin) const SizedBox(height: 8),
+              bar,
+            ],
+          );
   }
 
-  Color? _parseColor(String colorString) {
-    try {
-      if (colorString.startsWith('#')) {
-        return Color(
-            int.parse(colorString.substring(1), radix: 16) + 0xFF000000);
-      } else if (colorString.startsWith('0x')) {
-        return Color(int.parse(colorString));
-      }
-    } catch (e) {
-      // Return null if parsing fails
+  IconData _getIconData(String iconString) {
+    // Simple icon mapping - can be expanded
+    switch (iconString.toLowerCase()) {
+      case 'info':
+        return Icons.info_outline;
+      case 'warning':
+        return Icons.warning_outlined;
+      case 'error':
+        return Icons.error_outline;
+      case 'success':
+        return Icons.check_circle_outline;
+      default:
+        return Icons.announcement;
     }
-    return null;
   }
 }
