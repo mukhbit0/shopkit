@@ -220,6 +220,8 @@ class ThemeShowcaseScreen extends StatelessWidget {
             AddToCartButton(
               product: _getSampleProduct(),
               text: 'Add to Cart',
+              width: 160.w,
+              height: 44.h,
               onAddToCart: (cartItem) {},
             ),
           ],

@@ -94,6 +94,7 @@ class FlexibleWidgetConfig {
       case 'button':
         return {
           'height': 48.0,
+          'width': 200.0,
           'minWidth': 88.0,
           'enableElevation': true,
           'elevation': 2.0,

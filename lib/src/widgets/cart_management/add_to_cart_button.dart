@@ -408,10 +408,9 @@ class _AddToCartButtonState extends State<AddToCartButton>
     return ScaleTransition(
       scale: _scaleAnimation,
       child: SizedBox(
-        width:
-            widget.width ?? _config?.get<double>('width', null) ?? widget.width,
+        width: widget.width ?? _config?.getOr<double>('width', 200.0) ?? 200.0,
         height: (widget.height ??
-            _config?.get<double>('height', 48.0) ??
+            _config?.getOr<double>('height', 48.0) ??
             48.0),
         child: ElevatedButton(
           onPressed:
@@ -503,12 +502,12 @@ class _AddToCartButtonState extends State<AddToCartButton>
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(
           widget.borderRadius ??
-              _config?.get<double>('borderRadius', 8.0) ??
+              _config?.getOr<double>('borderRadius', 8.0) ??
               8.0,
         ),
       ),
       minimumSize: Size.fromHeight(widget.height ??
-          _config?.get<double>('height', 48.0) ??
+          _config?.getOr<double>('height', 48.0) ??
           48.0),
     );
   }
@@ -530,7 +529,7 @@ class _AddToCartButtonState extends State<AddToCartButton>
           ),
           const SizedBox(width: 8),
           Text(widget.loadingText ??
-              _config?.get<String>('loadingText', 'Adding...') ??
+              _config?.getOr<String>('loadingText', 'Adding...') ??
               'Adding...'),
         ],
       );
@@ -545,7 +544,7 @@ class _AddToCartButtonState extends State<AddToCartButton>
             const SizedBox(width: 8),
           ],
           Text(widget.outOfStockText ??
-              _config?.get<String>('outOfStockText', 'Out of Stock') ??
+              _config?.getOr<String>('outOfStockText', 'Out of Stock') ??
               'Out of Stock'),
         ],
       );
@@ -563,7 +562,7 @@ class _AddToCartButtonState extends State<AddToCartButton>
                 child: const Icon(Icons.check, size: 16),
               ),
               const SizedBox(width: 8),
-              Text(_config?.get<String>('successText', 'Added!') ?? 'Added!'),
+              Text(_config?.getOr<String>('successText', 'Added!') ?? 'Added!'),
             ],
           );
         },
@@ -579,7 +578,7 @@ class _AddToCartButtonState extends State<AddToCartButton>
             const SizedBox(width: 8),
           ],
           Text(widget.inCartText ??
-              _config?.get<String>('inCartText', 'In Cart') ??
+              _config?.getOr<String>('inCartText', 'In Cart') ??
               'In Cart'),
         ],
       );
@@ -589,15 +588,15 @@ class _AddToCartButtonState extends State<AddToCartButton>
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         if ((widget.showIcon ||
-            _config?.get<bool>('showIcon', widget.showIcon) == true)) ...[
+            _config?.getOr<bool>('showIcon', widget.showIcon) == true)) ...[
           const Icon(Icons.add_shopping_cart, size: 16),
           const SizedBox(width: 8),
         ],
         Text(widget.text ??
-            _config?.get<String>('text', 'Add to Cart') ??
+            _config?.getOr<String>('text', 'Add to Cart') ??
             'Add to Cart'),
         if ((widget.showQuantitySelector ||
-                _config?.get<bool>(
+                _config?.getOr<bool>(
                         'showQuantitySelector', widget.showQuantitySelector) ==
                     true) &&
             _currentQuantity > 1) ...[
