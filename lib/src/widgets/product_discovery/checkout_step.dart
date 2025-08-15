@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../config/flexible_widget_config.dart';
 import '../../theme/shopkit_theme.dart';
+import '../../theme/shopkit_theme_styles.dart';
 
 /// A comprehensive checkout step widget with advanced features and unlimited customization
 /// Features: Multiple layouts, animations, validation, progress tracking, and extensive theming
@@ -29,6 +30,7 @@ class CheckoutStepNew extends StatefulWidget {
     this.style = CheckoutStepStyle.vertical,
     this.progressStyle = CheckoutProgressStyle.linear,
     this.validationMode = CheckoutValidationMode.onNext,
+    this.themeStyle, // NEW: Built-in theme styling support
   });
 
   /// List of checkout steps
@@ -93,6 +95,10 @@ class CheckoutStepNew extends StatefulWidget {
 
   /// Validation mode
   final CheckoutValidationMode validationMode;
+  
+  /// Built-in theme styling support - just pass a string!
+  /// Supported values: 'material3', 'materialYou', 'neumorphism', 'glassmorphism', 'cupertino', 'minimal', 'retro', 'neon'
+  final String? themeStyle;
 
   @override
   State<CheckoutStepNew> createState() => CheckoutStepNewState();
@@ -351,7 +357,13 @@ class CheckoutStepNewState extends State<CheckoutStepNew>
 
     final theme = ShopKitThemeProvider.of(context);
 
-    Widget content = _buildCheckoutSteps(context, theme);
+    // Apply theme-specific styling if themeStyle is provided
+    Widget content;
+    if (widget.themeStyle != null) {
+      content = _buildThemedCheckoutSteps(context, theme, widget.themeStyle!);
+    } else {
+      content = _buildCheckoutSteps(context, theme);
+    }
 
     if (widget.enableAnimations) {
       content = SlideTransition(
@@ -1091,6 +1103,30 @@ class CheckoutStepNewState extends State<CheckoutStepNew>
         _stepCompletions[stepIndex] = completed;
       });
     }
+  }
+
+  /// Build themed checkout steps with ShopKitThemeConfig
+  Widget _buildThemedCheckoutSteps(BuildContext context, ShopKitTheme theme, String themeStyleString) {
+    final themeStyle = ShopKitThemeStyleExtension.fromString(themeStyleString);
+    final themeConfig = ShopKitThemeConfig.forStyle(themeStyle, context);
+    
+    Widget content = _buildCheckoutSteps(context, theme);
+    
+    // Apply theme-specific styling
+    return Container(
+      decoration: BoxDecoration(
+        color: themeConfig.backgroundColor ?? theme.surfaceColor,
+        borderRadius: BorderRadius.circular(themeConfig.borderRadius),
+        boxShadow: themeConfig.enableShadows ? [
+          BoxShadow(
+            color: (themeConfig.shadowColor ?? theme.onSurfaceColor).withValues(alpha: 0.1),
+            blurRadius: themeConfig.elevation * 2,
+            offset: Offset(0, themeConfig.elevation),
+          ),
+        ] : null,
+      ),
+      child: content,
+    );
   }
 }
 

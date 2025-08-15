@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../config/flexible_widget_config.dart';
 import '../../theme/shopkit_theme.dart';
 import '../../theme/shopkit_theme_styles.dart';
@@ -263,7 +262,7 @@ class VariantPickerState extends State<VariantPicker>
     }
     final bg = cfg.backgroundColor ?? Theme.of(context).colorScheme.surface;
     return Container(
-      padding: EdgeInsets.all(16.w),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: bg.withValues(alpha: cfg.enableBlur ? 0.9 : 1.0),
         borderRadius: BorderRadius.circular(cfg.borderRadius),
@@ -284,11 +283,11 @@ class VariantPickerState extends State<VariantPicker>
               _getConfig('title', 'Select Variant'),
               style: TextStyle(
                 color: (cfg.onPrimaryColor ?? Colors.black),
-                fontSize: 18.sp,
+                fontSize: 18,
                 fontWeight: FontWeight.w600,
               ),
             ),
-          if (_getConfig('showTitle', true)) SizedBox(height: 12.h),
+          if (_getConfig('showTitle', true)) const SizedBox(height: 12),
           if (widget.groupByType && _groupedVariants.isNotEmpty)
             _buildThemedGroupedVariants(context, cfg)
           else
@@ -310,27 +309,27 @@ class VariantPickerState extends State<VariantPicker>
           itemCount: widget.variants.length,
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: crossAxisCount,
-            mainAxisSpacing: 8.h,
-            crossAxisSpacing: 8.w,
+            mainAxisSpacing: 8,
+            crossAxisSpacing: 8,
             childAspectRatio: 1.6,
           ),
           itemBuilder: (context, index) => _buildThemedVariantItem(context, cfg, widget.variants[index], index),
         );
       case VariantPickerLayout.chips:
         return Wrap(
-          spacing: 8.w,
-          runSpacing: 8.h,
+          spacing: 8,
+          runSpacing: 8,
           children: [for (int i = 0; i < widget.variants.length; i++) _buildThemedVariantItem(context, cfg, widget.variants[i], i)],
         );
       case VariantPickerLayout.list:
         return Column(
-          children: [for (int i = 0; i < widget.variants.length; i++) Padding(padding: EdgeInsets.only(bottom: 8.h), child: _buildThemedVariantItem(context, cfg, widget.variants[i], i))],
+          children: [for (int i = 0; i < widget.variants.length; i++) Padding(padding: const EdgeInsets.only(bottom: 8), child: _buildThemedVariantItem(context, cfg, widget.variants[i], i))],
         );
       case VariantPickerLayout.dropdown:
       case VariantPickerLayout.carousel:
       case VariantPickerLayout.buttons:
         return Column(
-          children: [for (int i = 0; i < widget.variants.length; i++) Padding(padding: EdgeInsets.only(bottom: 8.h), child: _buildThemedVariantItem(context, cfg, widget.variants[i], i))],
+          children: [for (int i = 0; i < widget.variants.length; i++) Padding(padding: const EdgeInsets.only(bottom: 8), child: _buildThemedVariantItem(context, cfg, widget.variants[i], i))],
         );
     }
   }
@@ -342,7 +341,7 @@ class VariantPickerState extends State<VariantPicker>
       onTap: () => _handleVariantSelection(variant),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
-        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
           color: isSelected ? selectedColor : (cfg.backgroundColor ?? Colors.white).withValues(alpha: 0.6),
           borderRadius: BorderRadius.circular(cfg.borderRadius * 0.5),
@@ -373,7 +372,7 @@ class VariantPickerState extends State<VariantPicker>
                 Text(
                   variant.name,
                   style: TextStyle(
-                    fontSize: 13.sp,
+                    fontSize: 13,
                     fontWeight: FontWeight.w600,
                     color: isSelected ? (cfg.onPrimaryColor ?? Colors.white) : Colors.black87,
                   ),
@@ -381,11 +380,11 @@ class VariantPickerState extends State<VariantPicker>
                 ),
               if (widget.showPrices && variant.hasAdditionalCost)
                 Padding(
-                  padding: EdgeInsets.only(top: 4.h),
+                  padding: const EdgeInsets.only(top: 4),
                   child: Text(
                     variant.getFormattedAdditionalPrice(_getConfig('currency', 'USD')),
                     style: TextStyle(
-                      fontSize: 11.sp,
+                      fontSize: 11,
                       color: isSelected ? (cfg.onPrimaryColor ?? Colors.white).withValues(alpha: 0.85) : Colors.black54,
                     ),
                   ),
@@ -395,8 +394,8 @@ class VariantPickerState extends State<VariantPicker>
         ),
     if (widget.showAvailability)
           Container(
-            width: 10.w,
-            height: 10.w,
+            width: 10,
+            height: 10,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
       color: variant.isInStock ? Colors.green : Colors.red,
@@ -411,15 +410,15 @@ class VariantPickerState extends State<VariantPicker>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: _groupedVariants.entries.map((entry) {
         return Padding(
-          padding: EdgeInsets.only(bottom: 16.h),
+          padding: const EdgeInsets.only(bottom: 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(entry.key, style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600)),
-              SizedBox(height: 8.h),
+              Text(entry.key, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+              const SizedBox(height: 8),
               Wrap(
-                spacing: 8.w,
-                runSpacing: 8.h,
+                spacing: 8,
+                runSpacing: 8,
                 children: [for (int i = 0; i < entry.value.length; i++) _buildThemedVariantItem(context, cfg, entry.value[i], i)],
               ),
             ],
@@ -432,22 +431,22 @@ class VariantPickerState extends State<VariantPicker>
   Widget _buildThemedSelectedInfo(BuildContext context, ShopKitThemeConfig cfg) {
     final primary = (cfg.primaryColor ?? Theme.of(context).colorScheme.primary);
     return Container(
-      margin: EdgeInsets.only(top: 12.h),
-      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+      margin: const EdgeInsets.only(top: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: primary.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(cfg.borderRadius * 0.5),
       ),
       child: Row(
         children: [
-          Icon(Icons.check_circle, size: 18.sp, color: primary),
-          SizedBox(width: 8.w),
+          Icon(Icons.check_circle, size: 18, color: primary),
+          const SizedBox(width: 8),
           Expanded(
             child: Text(
               _selectedVariants.length == 1
                 ? _selectedVariants.first.name
                 : '${_selectedVariants.length} selected',
-              style: TextStyle(fontSize: 13.sp),
+              style: const TextStyle(fontSize: 13),
             ),
           ),
         ],
@@ -457,7 +456,7 @@ class VariantPickerState extends State<VariantPicker>
 
   Widget _buildThemedEmptyState(BuildContext context, ShopKitThemeConfig cfg) {
     return Container(
-      padding: EdgeInsets.all(24.w),
+      padding: const EdgeInsets.all(24),
       alignment: Alignment.center,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(cfg.borderRadius),
@@ -465,7 +464,7 @@ class VariantPickerState extends State<VariantPicker>
       ),
       child: Text(
         _getConfig('emptyStateText', 'No variants available'),
-        style: TextStyle(fontSize: 14.sp, color: (cfg.onPrimaryColor ?? Colors.black54)),
+        style: TextStyle(fontSize: 14, color: (cfg.onPrimaryColor ?? Colors.black54)),
         textAlign: TextAlign.center,
       ),
     );
@@ -1339,3 +1338,4 @@ enum VariantPickerLayout {
   carousel,
   buttons,
 }
+

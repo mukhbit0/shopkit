@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../config/flexible_widget_config.dart';
 import '../../theme/shopkit_theme.dart';
+import '../../theme/shopkit_theme_styles.dart';
 import '../../models/product_model.dart';
 import '../../models/variant_model.dart';
 import '../../models/review_model.dart';
@@ -47,6 +48,7 @@ class ProductDetailViewNew extends StatefulWidget {
     this.style = ProductDetailStyle.standard,
     this.layout = ProductDetailLayout.scrollable,
     this.imageStyle = ProductDetailImageStyle.carousel,
+    this.themeStyle, // NEW: Built-in theme styling support
   });
 
   /// Product to display
@@ -102,6 +104,10 @@ class ProductDetailViewNew extends StatefulWidget {
   final ProductDetailStyle style;
   final ProductDetailLayout layout;
   final ProductDetailImageStyle imageStyle;
+  
+  /// Built-in theme styling support - just pass a string!
+  /// Supported values: 'material3', 'materialYou', 'neumorphism', 'glassmorphism', 'cupertino', 'minimal', 'retro', 'neon'
+  final String? themeStyle;
 
   @override
   State<ProductDetailViewNew> createState() => ProductDetailViewNewState();
@@ -281,7 +287,13 @@ class ProductDetailViewNewState extends State<ProductDetailViewNew>
 
     final theme = ShopKitThemeProvider.of(context);
 
-    Widget content = _buildProductDetail(context, theme);
+    // Apply theme-specific styling if themeStyle is provided
+    Widget content;
+    if (widget.themeStyle != null) {
+      content = _buildThemedProductDetail(context, theme, widget.themeStyle!);
+    } else {
+      content = _buildProductDetail(context, theme);
+    }
 
     if (widget.enableAnimations) {
       content = SlideTransition(
@@ -1560,6 +1572,33 @@ class ProductDetailViewNewState extends State<ProductDetailViewNew>
     if (widget.enableReviews) count++;
     if (widget.enableRecommendations) count++;
     return count;
+  }
+
+  /// Build themed product detail with ShopKitThemeConfig
+  Widget _buildThemedProductDetail(BuildContext context, ShopKitTheme theme, String themeStyleString) {
+    final themeStyle = ShopKitThemeStyleExtension.fromString(themeStyleString);
+    final themeConfig = ShopKitThemeConfig.forStyle(themeStyle, context);
+    
+    // Get themed container decoration
+    final decoration = BoxDecoration(
+      color: themeConfig.backgroundColor ?? theme.surfaceColor,
+      borderRadius: BorderRadius.circular(themeConfig.borderRadius),
+      boxShadow: themeConfig.enableShadows ? [
+        BoxShadow(
+          color: (themeConfig.shadowColor ?? theme.onSurfaceColor).withValues(alpha: 0.1),
+          blurRadius: themeConfig.elevation * 2,
+          offset: Offset(0, themeConfig.elevation),
+        ),
+      ] : null,
+    );
+    
+    Widget content = _buildProductDetail(context, theme);
+    
+    // Apply theme-specific styling
+    return Container(
+      decoration: decoration,
+      child: content,
+    );
   }
 
   /// Public API for external control

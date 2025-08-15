@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../config/flexible_widget_config.dart';
 import '../../theme/shopkit_theme.dart';
 import '../../theme/shopkit_theme_styles.dart';
@@ -262,9 +261,9 @@ class CategoryTabsState extends State<CategoryTabs>
       return Tab(
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
-            padding: EdgeInsets.symmetric(
-              horizontal: 12.w,
-              vertical: 8.h,
+            padding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 8,
             ),
           decoration: isSelected && cfg.enableGradients ? BoxDecoration(
             gradient: LinearGradient(
@@ -282,7 +281,7 @@ class CategoryTabsState extends State<CategoryTabs>
                 ? (cfg.onPrimaryColor ?? Colors.white)
                 : (cfg.onPrimaryColor ?? Colors.black).withValues(alpha: 0.7),
               fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-              fontSize: 14.sp,
+              fontSize: 14,
             ),
           ),
         ),
@@ -731,3 +730,5 @@ class _DotPainter extends BoxPainter {
     canvas.drawCircle(center, radius, paint);
   }
 }
+
+

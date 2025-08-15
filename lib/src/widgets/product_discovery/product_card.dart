@@ -1,7 +1,6 @@
 // Updated ProductCard with layout fixes
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'dart:ui';
 import '../../models/product_model.dart';
 import '../../models/cart_model.dart';
@@ -244,72 +243,72 @@ class ProductCardState extends State<ProductCard>
       elevation: 4,
       margin: EdgeInsets.zero,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12.r),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: InkWell(
         onTap: widget.onTap,
-        borderRadius: BorderRadius.circular(12.r),
+        borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: EdgeInsets.all(12.w),
+          padding: const EdgeInsets.all(12),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Image
               Container(
-                height: 120.h,
+                height: 120,
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8.r),
+                  borderRadius: BorderRadius.circular(8),
                   color: Theme.of(context).colorScheme.surfaceContainer,
                 ),
                 child: widget.product.imageUrl != null
                   ? ClipRRect(
-                      borderRadius: BorderRadius.circular(8.r),
+                      borderRadius: BorderRadius.circular(8),
                       child: Image.network(
                         widget.product.imageUrl!,
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) => Icon(
                           Icons.image,
-                          size: 32.sp,
+                          size: 32,
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                       ),
                     )
                   : Icon(
                       Icons.image,
-                      size: 32.sp,
+                      size: 32,
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
               ),
-              SizedBox(height: 8.h),
+              const SizedBox(height: 8),
               // Title
               Flexible(
                 child: Text(
                   widget.product.name,
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.bold,
-                    fontSize: 12.sp,
+                    fontSize: 12,
                   ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              SizedBox(height: 6.h),
+              const SizedBox(height: 6),
               // Price
               Text(
                 '\$${widget.product.price.toStringAsFixed(2)}',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   color: Theme.of(context).colorScheme.primary,
                   fontWeight: FontWeight.bold,
-                  fontSize: 14.sp,
+                  fontSize: 14,
                 ),
               ),
-              SizedBox(height: 8.h),
+              const SizedBox(height: 8),
               // Add to Cart Button
               SizedBox(
                 width: double.infinity,
-                height: 32.h,
+                height: 32,
                 child: ElevatedButton(
                   onPressed: () {
                     final cartItem = CartItemModel(
@@ -321,11 +320,11 @@ class ProductCardState extends State<ProductCard>
                     widget.onAddToCart?.call(cartItem);
                   },
                   style: ElevatedButton.styleFrom(
-                    padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   ),
-                  child: Text(
+                  child: const Text(
                     'Add to Cart',
-                    style: TextStyle(fontSize: 10.sp),
+                    style: TextStyle(fontSize: 10),
                   ),
                 ),
               ),
@@ -367,19 +366,19 @@ class ProductCardState extends State<ProductCard>
 
   Widget _buildCardContent(BuildContext context, ShopKitThemeConfig themeConfig, ProductModel product) {
     return Padding(
-      padding: EdgeInsets.all(12.w),
+      padding: const EdgeInsets.all(12),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildThemedImage(context, themeConfig, product),
-          SizedBox(height: 8.h),
+          const SizedBox(height: 8),
           Flexible(
             child: _buildThemedTitle(context, themeConfig, product),
           ),
-          SizedBox(height: 6.h),
+          const SizedBox(height: 6),
           _buildThemedPrice(context, themeConfig, product),
-          SizedBox(height: 8.h),
+          const SizedBox(height: 8),
           _buildThemedButton(context, themeConfig, product),
         ],
       ),
@@ -625,28 +624,28 @@ class ProductCardState extends State<ProductCard>
 
   Widget _buildThemedImage(BuildContext context, ShopKitThemeConfig themeConfig, ProductModel product) {
     final imageWidget = Container(
-      height: 120.h, // Responsive height
+      height: 120, // Responsive height
       width: double.infinity,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular((themeConfig.borderRadius * 0.8).r),
+        borderRadius: BorderRadius.circular((themeConfig.borderRadius * 0.8)),
         color: Theme.of(context).colorScheme.surfaceContainer,
       ),
       child: product.imageUrl != null
         ? ClipRRect(
-            borderRadius: BorderRadius.circular((themeConfig.borderRadius * 0.8).r),
+            borderRadius: BorderRadius.circular((themeConfig.borderRadius * 0.8)),
             child: Image.network(
               product.imageUrl!,
               fit: BoxFit.cover,
               errorBuilder: (context, error, stackTrace) => Icon(
                 Icons.image,
-                size: 32.sp,
+                size: 32,
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
           )
         : Icon(
             Icons.image,
-            size: 32.sp,
+            size: 32,
             color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
     );
@@ -662,7 +661,7 @@ class ProductCardState extends State<ProductCard>
       product.name,
       style: Theme.of(context).textTheme.titleSmall?.copyWith(
         fontWeight: FontWeight.bold,
-        fontSize: 12.sp,
+        fontSize: 12,
       ),
       maxLines: 2,
       overflow: TextOverflow.ellipsis,
@@ -675,7 +674,7 @@ class ProductCardState extends State<ProductCard>
       style: Theme.of(context).textTheme.titleMedium?.copyWith(
         color: Theme.of(context).colorScheme.primary,
         fontWeight: FontWeight.bold,
-        fontSize: 14.sp,
+        fontSize: 14,
       ),
     );
   }
@@ -683,7 +682,7 @@ class ProductCardState extends State<ProductCard>
   Widget _buildThemedButton(BuildContext context, ShopKitThemeConfig themeConfig, ProductModel product) {
     return SizedBox(
       width: double.infinity,
-      height: 32.h, // Fixed compact height
+      height: 32, // Fixed compact height
       child: ElevatedButton(
         onPressed: () {
           final cartItem = CartItemModel(
@@ -698,13 +697,13 @@ class ProductCardState extends State<ProductCard>
           backgroundColor: Theme.of(context).colorScheme.primary,
           foregroundColor: Theme.of(context).colorScheme.onPrimary,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular((themeConfig.borderRadius * 0.6).r),
+            borderRadius: BorderRadius.circular((themeConfig.borderRadius * 0.6)),
           ),
-          padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         ),
-        child: Text(
+        child: const Text(
           'Add to Cart',
-          style: TextStyle(fontSize: 10.sp),
+          style: TextStyle(fontSize: 10),
         ),
       ),
     );
@@ -725,3 +724,5 @@ class ProductCardState extends State<ProductCard>
 // 3. Use Flexible(fit: FlexFit.tight) only when you want equal distribution
 // 4. Add overflow: TextOverflow.ellipsis to text widgets in constrained spaces
 // 5. Use IntrinsicWidth/IntrinsicHeight for natural sizing when needed
+
+

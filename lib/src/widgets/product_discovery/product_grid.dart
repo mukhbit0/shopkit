@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../config/flexible_widget_config.dart';
 import '../../theme/shopkit_theme.dart';
+import '../../theme/shopkit_theme_styles.dart';
 import '../../models/product_model.dart';
 import 'product_grid_types.dart';
 import 'components/product_grid_image.dart';
@@ -51,8 +51,9 @@ class ProductGrid extends StatefulWidget {
     this.style = ProductGridStyle.card,
     this.layout = ProductGridLayout.grid,
     this.imageStyle = ProductGridImageStyle.cover,
-  this.animationType = ProductGridAnimationType.fadeIn,
-  this.enableResponsive = true,
+    this.animationType = ProductGridAnimationType.fadeIn,
+    this.enableResponsive = true,
+    this.themeStyle,
   });
 
   /// List of products to display
@@ -168,8 +169,12 @@ class ProductGrid extends StatefulWidget {
 
   /// Animation type
   final ProductGridAnimationType animationType;
+
   /// Whether to adapt crossAxisCount based on available width breakpoints
   final bool enableResponsive;
+
+  /// Theme style for consistent visual styling (material3, neumorphism, glassmorphism, etc.)
+  final String? themeStyle;
 
   @override
   State<ProductGrid> createState() => ProductGridState();
@@ -383,25 +388,35 @@ class ProductGridState extends State<ProductGrid>
       return widget.customBuilder!(context, _filteredProducts, this);
     }
 
+    // Support new theming system
+    ShopKitThemeConfig? themeConfig;
+    if (widget.themeStyle != null) {
+      final style = ShopKitThemeStyleExtension.fromString(widget.themeStyle!);
+      themeConfig = ShopKitThemeConfig.forStyle(style, context);
+    }
+
     final theme = ShopKitThemeProvider.of(context);
 
-    return _buildProductGrid(context, theme);
+    return _buildProductGrid(context, theme, themeConfig);
   }
 
-  Widget _buildProductGrid(BuildContext context, ShopKitTheme theme) {
+  Widget _buildProductGrid(BuildContext context, ShopKitTheme theme, [ShopKitThemeConfig? themeConfig]) {
     return Column(
       children: [
-        if (widget.enableSearch) _buildSearchBar(context, theme),
-        if (widget.enableFilter) _buildFilterBar(context, theme),
-        if (_selectedProducts.isNotEmpty) _buildSelectionBar(context, theme),
+        if (widget.enableSearch) _buildSearchBar(context, theme, themeConfig),
+        if (widget.enableFilter) _buildFilterBar(context, theme, themeConfig),
+        if (_selectedProducts.isNotEmpty) _buildSelectionBar(context, theme, themeConfig),
         Expanded(
-          child: _buildGridContent(context, theme),
+          child: _buildGridContent(context, theme, themeConfig),
         ),
       ],
     );
   }
 
-  Widget _buildSearchBar(BuildContext context, ShopKitTheme theme) {
+  Widget _buildSearchBar(BuildContext context, ShopKitTheme theme, [ShopKitThemeConfig? themeConfig]) {
+    final backgroundColor = themeConfig?.backgroundColor ?? theme.surfaceColor;
+    final borderRadius = BorderRadius.circular(themeConfig?.borderRadius ?? 12.0);
+    
     return Container(
       padding: EdgeInsets.all(_getConfig('searchBarPadding', 16.0)),
       child: TextField(
@@ -416,25 +431,25 @@ class ProductGridState extends State<ProductGrid>
               )
             : null,
           border: OutlineInputBorder(
-            borderRadius: _config?.getBorderRadius('searchBarBorderRadius', BorderRadius.circular(12)) ?? BorderRadius.circular(12),
+            borderRadius: borderRadius,
             borderSide: BorderSide(color: theme.onSurfaceColor.withValues(alpha: 0.2)),
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: _config?.getBorderRadius('searchBarBorderRadius', BorderRadius.circular(12)) ?? BorderRadius.circular(12),
+            borderRadius: borderRadius,
             borderSide: BorderSide(color: theme.onSurfaceColor.withValues(alpha: 0.2)),
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: _config?.getBorderRadius('searchBarBorderRadius', BorderRadius.circular(12)) ?? BorderRadius.circular(12),
+            borderRadius: borderRadius,
             borderSide: BorderSide(color: theme.primaryColor, width: 2),
           ),
           filled: true,
-          fillColor: theme.surfaceColor,
+          fillColor: backgroundColor,
         ),
       ),
     );
   }
 
-  Widget _buildFilterBar(BuildContext context, ShopKitTheme theme) {
+  Widget _buildFilterBar(BuildContext context, ShopKitTheme theme, [ShopKitThemeConfig? themeConfig]) {
     return Container(
       height: _getConfig('filterBarHeight', 60.0),
       padding: EdgeInsets.symmetric(horizontal: _getConfig('filterBarPadding', 16.0)),
@@ -455,7 +470,7 @@ class ProductGridState extends State<ProductGrid>
     );
   }
 
-  Widget _buildSelectionBar(BuildContext context, ShopKitTheme theme) {
+  Widget _buildSelectionBar(BuildContext context, ShopKitTheme theme, [ShopKitThemeConfig? themeConfig]) {
     return Container(
       padding: EdgeInsets.all(_getConfig('selectionBarPadding', 16.0)),
       color: theme.primaryColor.withValues(alpha: 0.1),
@@ -486,7 +501,7 @@ class ProductGridState extends State<ProductGrid>
     );
   }
 
-  Widget _buildGridContent(BuildContext context, ShopKitTheme theme) {
+  Widget _buildGridContent(BuildContext context, ShopKitTheme theme, [ShopKitThemeConfig? themeConfig]) {
     if (widget.hasError) {
       return _buildErrorState(context, theme);
     }
@@ -499,7 +514,7 @@ class ProductGridState extends State<ProductGrid>
       return _buildEmptyState(context, theme);
     }
 
-    Widget content = _buildGrid(context, theme);
+    Widget content = _buildGrid(context, theme, themeConfig);
 
     if (widget.enableRefresh && widget.onRefresh != null) {
       content = RefreshIndicator(
@@ -512,18 +527,18 @@ class ProductGridState extends State<ProductGrid>
     return content;
   }
 
-  Widget _buildGrid(BuildContext context, ShopKitTheme theme) {
+  Widget _buildGrid(BuildContext context, ShopKitTheme theme, [ShopKitThemeConfig? themeConfig]) {
     switch (widget.layout) {
       case ProductGridLayout.list:
-        return _buildListLayout(context, theme);
+        return _buildListLayout(context, theme, themeConfig);
       case ProductGridLayout.staggered:
-        return _buildStaggeredLayout(context, theme);
+        return _buildStaggeredLayout(context, theme, themeConfig);
       case ProductGridLayout.grid:
-        return _buildGridLayout(context, theme);
+        return _buildGridLayout(context, theme, themeConfig);
     }
   }
 
-  Widget _buildGridLayout(BuildContext context, ShopKitTheme theme) {
+  Widget _buildGridLayout(BuildContext context, ShopKitTheme theme, [ShopKitThemeConfig? themeConfig]) {
     final width = MediaQuery.of(context).size.width;
     int crossAxis = widget.crossAxisCount;
     if (widget.enableResponsive) {
@@ -552,12 +567,12 @@ class ProductGridState extends State<ProductGrid>
           return _buildLoadMoreIndicator(context, theme);
         }
         
-        return _buildProductItem(context, theme, _filteredProducts[index], index);
+        return _buildProductItem(context, theme, _filteredProducts[index], index, themeConfig);
       },
     );
   }
 
-  Widget _buildListLayout(BuildContext context, ShopKitTheme theme) {
+  Widget _buildListLayout(BuildContext context, ShopKitTheme theme, [ShopKitThemeConfig? themeConfig]) {
     return ListView.builder(
       controller: _scrollController,
       padding: EdgeInsets.all(_getConfig('listPadding', 16.0)),
@@ -569,24 +584,24 @@ class ProductGridState extends State<ProductGrid>
         
         return Container(
           margin: EdgeInsets.only(bottom: _getConfig('listItemSpacing', 16.0)),
-          child: _buildProductListItem(context, theme, _filteredProducts[index], index),
+          child: _buildProductListItem(context, theme, _filteredProducts[index], index, themeConfig),
         );
       },
     );
   }
 
-  Widget _buildStaggeredLayout(BuildContext context, ShopKitTheme theme) {
+  Widget _buildStaggeredLayout(BuildContext context, ShopKitTheme theme, [ShopKitThemeConfig? themeConfig]) {
     // For now, fallback to grid layout
     // In a real implementation, you'd use flutter_staggered_grid_view package
-    return _buildGridLayout(context, theme);
+    return _buildGridLayout(context, theme, themeConfig);
   }
 
-  Widget _buildProductItem(BuildContext context, ShopKitTheme theme, ProductModel product, int index) {
+  Widget _buildProductItem(BuildContext context, ShopKitTheme theme, ProductModel product, int index, [ShopKitThemeConfig? themeConfig]) {
     if (widget.customItemBuilder != null) {
       return widget.customItemBuilder!(context, product, index, this);
     }
 
-    Widget item = _buildProductCard(context, theme, product, index);
+    Widget item = _buildProductCard(context, theme, product, index, themeConfig);
 
     // Apply animations
     if (widget.enableAnimations) {
@@ -596,27 +611,39 @@ class ProductGridState extends State<ProductGrid>
     return item;
   }
 
-  Widget _buildProductCard(BuildContext context, ShopKitTheme theme, ProductModel product, int index) {
+  Widget _buildProductCard(BuildContext context, ShopKitTheme theme, ProductModel product, int index, [ShopKitThemeConfig? themeConfig]) {
     final isSelected = _selectedProducts.contains(product);
+    
+    // Use theme config if available, otherwise fallback to legacy config  
+    final borderRadius = themeConfig?.borderRadius != null 
+      ? BorderRadius.circular(themeConfig!.borderRadius)
+      : (_config?.getBorderRadius('productCardBorderRadius', BorderRadius.circular(12)) ?? BorderRadius.circular(12));
+    final showBorder = _getConfig('showProductCardBorder', false);
+    final showShadow = themeConfig?.enableShadows ?? _getConfig('showProductCardShadow', true);
+    final shadowOpacity = _getConfig('productCardShadowOpacity', 0.1);
+    final shadowBlur = (themeConfig?.elevation ?? _getConfig('productCardShadowBlur', 8.0)) as double;
+    final shadowOffset = (themeConfig?.elevation ?? _getConfig('productCardShadowOffset', 2.0)) as double;
     
     return GestureDetector(
       onTap: () => _handleProductTap(product, index),
       onLongPress: widget.enableSelection ? () => _handleProductLongPress(product, index) : null,
       child: Container(
         decoration: BoxDecoration(
-          color: isSelected ? theme.primaryColor.withValues(alpha: 0.1) : theme.surfaceColor,
-          borderRadius: _config?.getBorderRadius('productCardBorderRadius', BorderRadius.circular(12)) ?? BorderRadius.circular(12),
+          color: isSelected 
+            ? theme.primaryColor.withValues(alpha: 0.1) 
+            : (themeConfig?.backgroundColor ?? theme.surfaceColor),
+          borderRadius: borderRadius,
           border: isSelected 
             ? Border.all(color: theme.primaryColor, width: 2)
-            : _getConfig('showProductCardBorder', false) 
+            : showBorder 
               ? Border.all(color: theme.onSurfaceColor.withValues(alpha: 0.1))
               : null,
-          boxShadow: _getConfig('showProductCardShadow', true)
+          boxShadow: (showShadow == true)
             ? [
                 BoxShadow(
-                  color: theme.onSurfaceColor.withValues(alpha: _getConfig('productCardShadowOpacity', 0.1)),
-                  blurRadius: _getConfig('productCardShadowBlur', 8.0),
-                  offset: Offset(0, _getConfig('productCardShadowOffset', 2.0)),
+                  color: themeConfig?.shadowColor ?? theme.onSurfaceColor.withValues(alpha: shadowOpacity),
+                  blurRadius: shadowBlur,
+                  offset: Offset(0, shadowOffset),
                 ),
               ]
             : null,
@@ -634,28 +661,43 @@ class ProductGridState extends State<ProductGrid>
     );
   }
 
-  Widget _buildProductListItem(BuildContext context, ShopKitTheme theme, ProductModel product, int index) {
+  Widget _buildProductListItem(BuildContext context, ShopKitTheme theme, ProductModel product, int index, [ShopKitThemeConfig? themeConfig]) {
     final isSelected = _selectedProducts.contains(product);
+    
+    // Use theme config if available, otherwise fallback to legacy config  
+    final borderRadius = themeConfig?.borderRadius != null 
+      ? BorderRadius.circular(themeConfig!.borderRadius)
+      : (_config?.getBorderRadius('listItemBorderRadius', BorderRadius.circular(12)) ?? BorderRadius.circular(12));
+    final showBorder = _getConfig('showListItemBorder', false);
+    final showShadow = themeConfig?.enableShadows ?? _getConfig('showListItemShadow', true);
+    final shadowOpacity = _getConfig('listItemShadowOpacity', 0.1);
+    final shadowBlur = (themeConfig?.elevation ?? _getConfig('listItemShadowBlur', 8.0)) as double;
+    final shadowOffset = (themeConfig?.elevation ?? _getConfig('listItemShadowOffset', 2.0)) as double;
+    final itemHeight = _getConfig('listItemHeight', 120.0);
+    final imageWidth = _getConfig('listImageWidth', 100.0);
+    final itemSpacing = _getConfig('listItemSpacing', 12.0);
     
     return GestureDetector(
       onTap: () => _handleProductTap(product, index),
       onLongPress: widget.enableSelection ? () => _handleProductLongPress(product, index) : null,
       child: Container(
-        height: _getConfig('listItemHeight', 120.0),
+        height: itemHeight,
         decoration: BoxDecoration(
-          color: isSelected ? theme.primaryColor.withValues(alpha: 0.1) : theme.surfaceColor,
-          borderRadius: _config?.getBorderRadius('listItemBorderRadius', BorderRadius.circular(12)) ?? BorderRadius.circular(12),
+          color: isSelected 
+            ? theme.primaryColor.withValues(alpha: 0.1) 
+            : (themeConfig?.backgroundColor ?? theme.surfaceColor),
+          borderRadius: borderRadius,
           border: isSelected 
             ? Border.all(color: theme.primaryColor, width: 2)
-            : _getConfig('showListItemBorder', false) 
+            : showBorder 
               ? Border.all(color: theme.onSurfaceColor.withValues(alpha: 0.1))
               : null,
-          boxShadow: _getConfig('showListItemShadow', true)
+          boxShadow: (showShadow == true)
             ? [
                 BoxShadow(
-                  color: theme.onSurfaceColor.withValues(alpha: _getConfig('listItemShadowOpacity', 0.1)),
-                  blurRadius: _getConfig('listItemShadowBlur', 8.0),
-                  offset: Offset(0, _getConfig('listItemShadowOffset', 2.0)),
+                  color: themeConfig?.shadowColor ?? theme.onSurfaceColor.withValues(alpha: shadowOpacity),
+                  blurRadius: shadowBlur,
+                  offset: Offset(0, shadowOffset),
                 ),
               ]
             : null,
@@ -663,11 +705,11 @@ class ProductGridState extends State<ProductGrid>
         child: Row(
           children: [
             SizedBox(
-              width: _getConfig('listImageWidth', 100.0),
+              width: imageWidth,
               height: double.infinity,
               child: _buildProductImage(context, theme, product),
             ),
-            SizedBox(width: _getConfig('listItemSpacing', 12.0)),
+            SizedBox(width: itemSpacing),
             Expanded(
               child: _buildProductInfo(context, theme, product),
             ),

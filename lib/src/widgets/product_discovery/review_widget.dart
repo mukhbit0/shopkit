@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../config/flexible_widget_config.dart';
 import '../../theme/shopkit_theme.dart';
+import '../../theme/shopkit_theme_styles.dart';
 import '../../models/review_model.dart';
 
 /// A comprehensive review widget with advanced features and unlimited customization
@@ -34,6 +35,7 @@ class ReviewWidgetNew extends StatefulWidget {
     this.layout = ReviewLayout.list,
     this.itemsPerPage = 10,
     this.currentPage = 0,
+    this.themeStyle, // NEW: Built-in theme styling support
   });
 
   /// List of reviews to display
@@ -82,6 +84,10 @@ class ReviewWidgetNew extends StatefulWidget {
   /// Pagination
   final int itemsPerPage;
   final int currentPage;
+  
+  /// Built-in theme styling support - just pass a string!
+  /// Supported values: 'material3', 'materialYou', 'neumorphism', 'glassmorphism', 'cupertino', 'minimal', 'retro', 'neon'
+  final String? themeStyle;
 
   @override
   State<ReviewWidgetNew> createState() => ReviewWidgetNewState();
@@ -310,7 +316,13 @@ class ReviewWidgetNewState extends State<ReviewWidgetNew>
 
     final theme = ShopKitThemeProvider.of(context);
 
-    Widget content = _buildReviewWidget(context, theme);
+    // Apply theme-specific styling if themeStyle is provided
+    Widget content;
+    if (widget.themeStyle != null) {
+      content = _buildThemedReviewWidget(context, theme, widget.themeStyle!);
+    } else {
+      content = _buildReviewWidget(context, theme);
+    }
 
     if (widget.enableAnimations) {
       content = SlideTransition(
@@ -1189,6 +1201,30 @@ class ReviewWidgetNewState extends State<ReviewWidgetNew>
   void refreshData() {
     _applyFiltersAndSort();
     _calculateSummary();
+  }
+
+  /// Build themed review widget with ShopKitThemeConfig
+  Widget _buildThemedReviewWidget(BuildContext context, ShopKitTheme theme, String themeStyleString) {
+    final themeStyle = ShopKitThemeStyleExtension.fromString(themeStyleString);
+    final themeConfig = ShopKitThemeConfig.forStyle(themeStyle, context);
+    
+    Widget content = _buildReviewWidget(context, theme);
+    
+    // Apply theme-specific styling
+    return Container(
+      decoration: BoxDecoration(
+        color: themeConfig.backgroundColor ?? theme.surfaceColor,
+        borderRadius: BorderRadius.circular(themeConfig.borderRadius),
+        boxShadow: themeConfig.enableShadows ? [
+          BoxShadow(
+            color: (themeConfig.shadowColor ?? theme.onSurfaceColor).withValues(alpha: 0.1),
+            blurRadius: themeConfig.elevation * 2,
+            offset: Offset(0, themeConfig.elevation),
+          ),
+        ] : null,
+      ),
+      child: content,
+    );
   }
 }
 

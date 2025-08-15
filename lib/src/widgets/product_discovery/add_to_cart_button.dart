@@ -1,7 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../config/flexible_widget_config.dart';
 import '../../theme/shopkit_theme_styles.dart';
 import '../../models/product_model.dart';
@@ -597,14 +596,14 @@ class AddToCartButtonState extends State<AddToCartButton>
             size: _getIconSize(),
             color: themeConfig.onPrimaryColor,
           ),
-          if (widget.showText) SizedBox(width: 8.w),
+          if (widget.showText) const SizedBox(width: 8),
         ],
         if (widget.showText)
           Text(
             text,
             style: TextStyle(
               color: themeConfig.onPrimaryColor,
-              fontSize: 16.sp,
+              fontSize: 16,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -641,7 +640,7 @@ class AddToCartButtonState extends State<AddToCartButton>
           _buildBasicQuantitySelector(context),
         
         if (widget.showQuantitySelector && widget.quantityStyle == QuantitySelectorStyle.above)
-          SizedBox(height: 8.0.h),
+          const SizedBox(height: 8.0),
         
         Row(
           mainAxisSize: MainAxisSize.min,
@@ -650,14 +649,14 @@ class AddToCartButtonState extends State<AddToCartButton>
               _buildBasicQuantitySelector(context),
             
             if (widget.showQuantitySelector && widget.quantityStyle == QuantitySelectorStyle.inline)
-              SizedBox(width: 8.0.w),
+              const SizedBox(width: 8.0),
             
             Flexible(child: _buildBasicButton(context)),
           ],
         ),
         
         if (widget.showQuantitySelector && widget.quantityStyle == QuantitySelectorStyle.below)
-          SizedBox(height: 8.0.h),
+          const SizedBox(height: 8.0),
         
         if (widget.showQuantitySelector && widget.quantityStyle == QuantitySelectorStyle.below)
           _buildBasicQuantitySelector(context),
@@ -685,10 +684,10 @@ class AddToCartButtonState extends State<AddToCartButton>
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             if (widget.showIcon && widget.isLoading)
-              SizedBox(
-                width: 16.sp,
-                height: 16.sp,
-                child: const CircularProgressIndicator(
+              const SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(
                   strokeWidth: 2.0,
                   valueColor: AlwaysStoppedAnimation(Colors.white),
                 ),
@@ -701,7 +700,7 @@ class AddToCartButtonState extends State<AddToCartButton>
               ),
             
             if (widget.showIcon && widget.showText)
-              SizedBox(width: 8.0.w),
+              const SizedBox(width: 8.0),
             
             if (widget.showText && widget.style != AddToCartButtonStyle.icon)
               Text(
@@ -734,8 +733,8 @@ class AddToCartButtonState extends State<AddToCartButton>
               ? () => _updateQuantity(_currentQuantity - 1)
               : null,
             child: Container(
-              width: 32.0.w,
-              height: 32.0.h,
+              width: 32.0,
+              height: 32.0,
               decoration: BoxDecoration(
                 color: _currentQuantity > widget.minQuantity 
                   ? Theme.of(context).primaryColor.withValues(alpha: 0.1)
@@ -744,7 +743,7 @@ class AddToCartButtonState extends State<AddToCartButton>
               ),
               child: Icon(
                 Icons.remove,
-                size: 16.0.sp,
+                size: 16.0,
                 color: _currentQuantity > widget.minQuantity 
                   ? Theme.of(context).primaryColor
                   : Colors.grey,
@@ -753,8 +752,8 @@ class AddToCartButtonState extends State<AddToCartButton>
           ),
           
           Container(
-            width: 40.0.w,
-            padding: EdgeInsets.symmetric(vertical: 8.0.h),
+            width: 40.0,
+            padding: const EdgeInsets.symmetric(vertical: 8.0),
             child: Text(
               _currentQuantity.toString(),
               style: const TextStyle(
@@ -770,8 +769,8 @@ class AddToCartButtonState extends State<AddToCartButton>
               ? () => _updateQuantity(_currentQuantity + 1)
               : null,
             child: Container(
-              width: 32.0.w,
-              height: 32.0.h,
+              width: 32.0,
+              height: 32.0,
               decoration: BoxDecoration(
                 color: _currentQuantity < widget.maxQuantity 
                   ? Theme.of(context).primaryColor.withValues(alpha: 0.1)
@@ -780,7 +779,7 @@ class AddToCartButtonState extends State<AddToCartButton>
               ),
               child: Icon(
                 Icons.add,
-                size: 16.0.sp,
+                size: 16.0,
                 color: _currentQuantity < widget.maxQuantity 
                   ? Theme.of(context).primaryColor
                   : Colors.grey,
@@ -798,44 +797,44 @@ class AddToCartButtonState extends State<AddToCartButton>
   double _getButtonHeight() {
     switch (widget.size) {
       case AddToCartButtonSize.small:
-        return _getConfig('smallButtonHeight', 32.0.h);
+        return _getConfig('smallButtonHeight', 32.0);
       case AddToCartButtonSize.large:
-        return _getConfig('largeButtonHeight', 56.0.h);
+        return _getConfig('largeButtonHeight', 56.0);
   case AddToCartButtonSize.medium:
-        return _getConfig('mediumButtonHeight', 44.0.h);
+        return _getConfig('mediumButtonHeight', 44.0);
     }
   }
 
   double _getHorizontalPadding() {
     switch (widget.size) {
       case AddToCartButtonSize.small:
-        return _getConfig('smallButtonHorizontalPadding', 12.0.w);
+        return _getConfig('smallButtonHorizontalPadding', 12.0);
       case AddToCartButtonSize.large:
-        return _getConfig('largeButtonHorizontalPadding', 24.0.w);
+        return _getConfig('largeButtonHorizontalPadding', 24.0);
   case AddToCartButtonSize.medium:
-        return _getConfig('mediumButtonHorizontalPadding', 16.0.w);
+        return _getConfig('mediumButtonHorizontalPadding', 16.0);
     }
   }
 
   double _getVerticalPadding() {
     switch (widget.size) {
       case AddToCartButtonSize.small:
-        return _getConfig('smallButtonVerticalPadding', 6.0.h);
+        return _getConfig('smallButtonVerticalPadding', 6.0);
       case AddToCartButtonSize.large:
-        return _getConfig('largeButtonVerticalPadding', 12.0.h);
+        return _getConfig('largeButtonVerticalPadding', 12.0);
   case AddToCartButtonSize.medium:
-        return _getConfig('mediumButtonVerticalPadding', 8.0.h);
+        return _getConfig('mediumButtonVerticalPadding', 8.0);
     }
   }
 
   double _getIconSize() {
     switch (widget.size) {
       case AddToCartButtonSize.small:
-        return _getConfig('smallButtonIconSize', 16.0.sp);
+        return _getConfig('smallButtonIconSize', 16.0);
       case AddToCartButtonSize.large:
-        return _getConfig('largeButtonIconSize', 24.0.sp);
+        return _getConfig('largeButtonIconSize', 24.0);
   case AddToCartButtonSize.medium:
-        return _getConfig('mediumButtonIconSize', 20.0.sp);
+        return _getConfig('mediumButtonIconSize', 20.0);
     }
   }
 
@@ -938,3 +937,4 @@ enum AddToCartAnimationType {
   bounce,
   pulse,
 }
+

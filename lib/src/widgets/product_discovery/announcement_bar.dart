@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../config/flexible_widget_config.dart';
 import '../../theme/shopkit_theme.dart';
 import '../../theme/shopkit_theme_styles.dart';
@@ -415,7 +414,7 @@ class AnnouncementBarNewState extends State<AnnouncementBarNew>
       context,
       Container(
         width: double.infinity,
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           color: _primary(cfg, context),
           gradient: cfg.enableGradients ? LinearGradient(
@@ -443,8 +442,8 @@ class AnnouncementBarNewState extends State<AnnouncementBarNew>
       context,
       Container(
         width: double.infinity,
-        margin: EdgeInsets.all(12.w),
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+        margin: const EdgeInsets.all(12),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
           color: cfg.backgroundColor ?? Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(cfg.borderRadius),
@@ -466,7 +465,7 @@ class AnnouncementBarNewState extends State<AnnouncementBarNew>
       context,
       Container(
         width: double.infinity,
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
@@ -488,7 +487,7 @@ class AnnouncementBarNewState extends State<AnnouncementBarNew>
       context,
       Container(
         width: double.infinity,
-        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         color: (cfg.backgroundColor ?? Colors.transparent),
         child: _buildThemedContentRow(context, cfg),
       ),
@@ -500,7 +499,7 @@ class AnnouncementBarNewState extends State<AnnouncementBarNew>
       context,
       Container(
         width: double.infinity,
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           color: (cfg.backgroundColor ?? Colors.transparent),
           borderRadius: BorderRadius.circular(cfg.borderRadius),
@@ -521,14 +520,14 @@ class AnnouncementBarNewState extends State<AnnouncementBarNew>
         ),
         if (widget.enableActions && announcement.actionText != null && announcement.actionUrl != null)
           Padding(
-            padding: EdgeInsets.only(left: 8.w),
+            padding: const EdgeInsets.only(left: 8),
             child: OutlinedButton(
               style: OutlinedButton.styleFrom(
                 foregroundColor: _onColor(cfg),
                 side: BorderSide(color: _onColor(cfg).withValues(alpha: 0.5)),
               ),
               onPressed: () => widget.onActionTap?.call(announcement, announcement.actionUrl!),
-              child: Text(announcement.actionText!, style: TextStyle(fontSize: 12.sp)),
+              child: Text(announcement.actionText!, style: const TextStyle(fontSize: 12)),
             ),
           ),
       ],
@@ -547,18 +546,18 @@ class AnnouncementBarNewState extends State<AnnouncementBarNew>
             announcement.title,
             style: TextStyle(
               color: textColor,
-              fontSize: 14.sp,
+              fontSize: 14,
               fontWeight: FontWeight.w600,
             ),
           ),
           if (announcement.message.isNotEmpty)
             Padding(
-              padding: EdgeInsets.only(top: 4.h),
+              padding: const EdgeInsets.only(top: 4),
               child: Text(
                 announcement.message,
                 style: TextStyle(
                   color: textColor.withValues(alpha: 0.85),
-                  fontSize: 12.sp,
+                  fontSize: 12,
                 ),
               ),
             ),
@@ -1024,3 +1023,5 @@ enum AnnouncementBarBehavior {
   scroll,
   marquee,
 }
+
+

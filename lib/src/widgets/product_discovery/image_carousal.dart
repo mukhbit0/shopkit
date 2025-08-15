@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../config/flexible_widget_config.dart';
 import '../../theme/shopkit_theme.dart';
 import '../../theme/shopkit_theme_styles.dart';
@@ -517,8 +516,8 @@ class ImageCarouselState extends State<ImageCarousel>
       ),
       child: Center(
         child: SizedBox(
-          width: 28.w,
-          height: 28.w,
+          width: 28,
+          height: 28,
           child: CircularProgressIndicator(
             strokeWidth: 3,
             value: loadingProgress?.expectedTotalBytes != null
@@ -535,7 +534,7 @@ class ImageCarouselState extends State<ImageCarousel>
     return Container(
       color: (cfg.backgroundColor ?? Colors.grey.shade200).withValues(alpha: 0.7),
       child: Center(
-        child: Icon(Icons.broken_image, color: cfg.primaryColor ?? Colors.redAccent, size: 42.sp),
+        child: Icon(Icons.broken_image, color: cfg.primaryColor ?? Colors.redAccent, size: 42),
       ),
     );
   }
@@ -662,9 +661,9 @@ class ImageCarouselState extends State<ImageCarousel>
           final isActive = index == _currentIndex;
           return AnimatedContainer(
             duration: const Duration(milliseconds: 250),
-            margin: EdgeInsets.symmetric(horizontal: 4.w),
-            width: isActive ? 22.w : 8.w,
-            height: 8.h,
+            margin: const EdgeInsets.symmetric(horizontal: 4),
+            width: isActive ? 22 : 8,
+            height: 8,
             decoration: BoxDecoration(
               color: isActive
                   ? (cfg.primaryColor ?? Colors.blue)
@@ -685,7 +684,7 @@ class ImageCarouselState extends State<ImageCarousel>
         onTap: _toggleZoom,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
-          padding: EdgeInsets.all(10.w),
+          padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
             color: (cfg.primaryColor ?? Colors.blue).withValues(alpha: 0.85),
             shape: BoxShape.circle,
@@ -697,7 +696,7 @@ class ImageCarouselState extends State<ImageCarousel>
               )
             ] : null,
           ),
-          child: Icon(_isZoomed ? Icons.zoom_out : Icons.zoom_in, size: 18.sp, color: cfg.onPrimaryColor ?? Colors.white),
+          child: Icon(_isZoomed ? Icons.zoom_out : Icons.zoom_in, size: 18, color: cfg.onPrimaryColor ?? Colors.white),
         ),
       ),
     );
@@ -720,8 +719,8 @@ class ImageCarouselState extends State<ImageCarousel>
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        margin: EdgeInsets.all(12.w),
-        padding: EdgeInsets.all(8.w),
+        margin: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
           color: (cfg.primaryColor ?? Colors.blue).withValues(alpha: 0.65),
           shape: BoxShape.circle,
@@ -733,7 +732,7 @@ class ImageCarouselState extends State<ImageCarousel>
             ),
           ] : null,
         ),
-        child: Icon(icon, size: 18.sp, color: cfg.onPrimaryColor ?? Colors.white),
+        child: Icon(icon, size: 18, color: cfg.onPrimaryColor ?? Colors.white),
       ),
     );
   }
@@ -743,7 +742,7 @@ class ImageCarouselState extends State<ImageCarousel>
       top: 12,
       left: 12,
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
           color: (cfg.primaryColor ?? Colors.black).withValues(alpha: 0.65),
           borderRadius: BorderRadius.circular(40),
@@ -752,7 +751,7 @@ class ImageCarouselState extends State<ImageCarousel>
           '${_currentIndex + 1} / ${widget.images.length}',
           style: TextStyle(
             color: cfg.onPrimaryColor ?? Colors.white,
-            fontSize: 12.sp,
+            fontSize: 12,
             fontWeight: FontWeight.w600,
             letterSpacing: 0.5,
           ),
@@ -781,22 +780,22 @@ class ImageCarouselState extends State<ImageCarousel>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.image_outlined, size: 48.sp, color: (cfg.primaryColor ?? Colors.blue).withValues(alpha: 0.7)),
-            SizedBox(height: 12.h),
+            Icon(Icons.image_outlined, size: 48, color: (cfg.primaryColor ?? Colors.blue).withValues(alpha: 0.7)),
+            const SizedBox(height: 12),
             Text(
               _getConfig('emptyStateTitle', 'No Images'),
               style: TextStyle(
                 color: cfg.onPrimaryColor ?? Colors.black87,
-                fontSize: 16.sp,
+                fontSize: 16,
                 fontWeight: FontWeight.w600,
               ),
             ),
-            SizedBox(height: 6.h),
+            const SizedBox(height: 6),
             Text(
               _getConfig('emptyStateSubtitle', 'No images available to display'),
               style: TextStyle(
                 color: (cfg.onPrimaryColor ?? Colors.black87).withValues(alpha: 0.7),
-                fontSize: 12.sp,
+                fontSize: 12,
               ),
               textAlign: TextAlign.center,
             ),
@@ -1554,5 +1553,7 @@ class _FullscreenImageViewState extends State<_FullscreenImageView> {
     );
   }
 }
+
+
 
 

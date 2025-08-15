@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../config/flexible_widget_config.dart';
 import '../../theme/shopkit_theme.dart';
+import '../../theme/shopkit_theme_styles.dart';
 
 /// A comprehensive sticky header widget with advanced features and unlimited customization
 /// Features: Multiple styles, scroll effects, parallax, animations, and extensive theming
@@ -31,6 +32,7 @@ class StickyHeaderNew extends StatefulWidget {
     this.style = StickyHeaderStyle.standard,
     this.scrollEffect = StickyHeaderScrollEffect.fade,
     this.behavior = StickyHeaderBehavior.pinned,
+    this.themeStyle, // NEW: Built-in theme styling support
   });
 
   /// Header widget
@@ -101,6 +103,10 @@ class StickyHeaderNew extends StatefulWidget {
 
   /// Behavior of the sticky header
   final StickyHeaderBehavior behavior;
+  
+  /// Built-in theme styling support - just pass a string!
+  /// Supported values: 'material3', 'materialYou', 'neumorphism', 'glassmorphism', 'cupertino', 'minimal', 'retro', 'neon'
+  final String? themeStyle;
 
   @override
   State<StickyHeaderNew> createState() => StickyHeaderNewState();
@@ -270,6 +276,11 @@ class StickyHeaderNewState extends State<StickyHeaderNew>
     }
 
     final theme = ShopKitThemeProvider.of(context);
+
+    // Apply theme-specific styling if themeStyle is provided
+    if (widget.themeStyle != null) {
+      return _buildThemedStickyHeader(context, theme, widget.themeStyle!);
+    }
 
     return _buildStickyHeader(context, theme);
   }
@@ -603,6 +614,30 @@ class StickyHeaderNewState extends State<StickyHeaderNew>
       _fadeController.reset();
       _scaleController.reset();
     }
+  }
+
+  /// Build themed sticky header with ShopKitThemeConfig
+  Widget _buildThemedStickyHeader(BuildContext context, ShopKitTheme theme, String themeStyleString) {
+    final themeStyle = ShopKitThemeStyleExtension.fromString(themeStyleString);
+    final themeConfig = ShopKitThemeConfig.forStyle(themeStyle, context);
+    
+    Widget content = _buildStickyHeader(context, theme);
+    
+    // Apply theme-specific styling
+    return Container(
+      decoration: BoxDecoration(
+        color: themeConfig.backgroundColor ?? theme.surfaceColor,
+        borderRadius: BorderRadius.circular(themeConfig.borderRadius),
+        boxShadow: themeConfig.enableShadows ? [
+          BoxShadow(
+            color: (themeConfig.shadowColor ?? theme.onSurfaceColor).withValues(alpha: 0.1),
+            blurRadius: themeConfig.elevation * 2,
+            offset: Offset(0, themeConfig.elevation),
+          ),
+        ] : null,
+      ),
+      child: content,
+    );
   }
 }
 

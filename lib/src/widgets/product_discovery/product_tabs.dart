@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/product_detail_model.dart';
 import '../../config/flexible_widget_config.dart';
+import '../../theme/shopkit_theme_styles.dart';
 
 /// A tabbed widget for displaying product detail information
 class ProductTabs extends StatefulWidget {
@@ -18,6 +19,7 @@ class ProductTabs extends StatefulWidget {
     this.isScrollable = true,
     this.borderRadius,
     this.flexibleConfig,
+    this.themeStyle, // NEW: Built-in theme styling support
   });
 
   /// List of tabs to display
@@ -53,6 +55,10 @@ class ProductTabs extends StatefulWidget {
   /// Border radius for the tab container
   final BorderRadius? borderRadius;
   final FlexibleWidgetConfig? flexibleConfig;
+  
+  /// Built-in theme styling support - just pass a string!
+  /// Supported values: 'material3', 'materialYou', 'neumorphism', 'glassmorphism', 'cupertino', 'minimal', 'retro', 'neon'
+  final String? themeStyle;
 
   @override
   State<ProductTabs> createState() => _ProductTabsState();
@@ -92,6 +98,11 @@ class _ProductTabsState extends State<ProductTabs>
 
   @override
   Widget build(BuildContext context) {
+    // Apply theme-specific styling if themeStyle is provided
+    if (widget.themeStyle != null) {
+      return _buildThemedTabs(context, widget.themeStyle!);
+    }
+    
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
@@ -339,6 +350,66 @@ class _ProductTabsState extends State<ProductTabs>
       default:
         return Icons.info;
     }
+  }
+
+  /// Build themed tabs with ShopKitThemeConfig
+  Widget _buildThemedTabs(BuildContext context, String themeStyleString) {
+    final themeStyle = ShopKitThemeStyleExtension.fromString(themeStyleString);
+    final themeConfig = ShopKitThemeConfig.forStyle(themeStyle, context);
+    
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    if (widget.tabs.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    // Use theme config for styling
+    final backgroundColor = widget.backgroundColor ?? themeConfig.backgroundColor ?? colorScheme.surface;
+    final selectedColor = widget.selectedTabColor ?? themeConfig.primaryColor ?? colorScheme.primary;
+    final borderRadius = widget.borderRadius ?? BorderRadius.circular(themeConfig.borderRadius);
+
+    Widget content = Column(
+      children: [
+        Container(
+          decoration: BoxDecoration(
+            color: backgroundColor,
+            borderRadius: borderRadius,
+            boxShadow: themeConfig.enableShadows ? [
+              BoxShadow(
+                color: (themeConfig.shadowColor ?? colorScheme.shadow).withValues(alpha: 0.1),
+                blurRadius: themeConfig.elevation * 2,
+                offset: Offset(0, themeConfig.elevation),
+              ),
+            ] : null,
+          ),
+          child: TabBar(
+            controller: _tabController,
+            isScrollable: widget.isScrollable,
+            indicatorColor: selectedColor,
+            labelColor: selectedColor,
+            unselectedLabelColor: colorScheme.onSurface.withValues(alpha: 0.6),
+            tabs: widget.tabs.map((tab) => Tab(
+              text: tab.title,
+              icon: (tab.icon?.isNotEmpty ?? false) ? Icon(_getIconData(tab.icon!)) : null,
+            )).toList(),
+          ),
+        ),
+        Expanded(
+          child: TabBarView(
+            controller: _tabController,
+            children: widget.tabs.map((tab) => Container(
+              padding: widget.contentPadding ?? const EdgeInsets.all(16),
+              child: SingleChildScrollView(
+                child: Text(tab.content),
+              ),
+            )).toList(),
+          ),
+        ),
+      ],
+    );
+
+    return content;
   }
 }
 

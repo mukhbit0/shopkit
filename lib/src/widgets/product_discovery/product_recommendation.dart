@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../config/flexible_widget_config.dart';
 import '../../models/product_model.dart';
+import '../../theme/shopkit_theme_styles.dart';
 import 'product_card.dart';
 
 /// A widget for displaying product recommendations
@@ -23,7 +24,8 @@ class ProductRecommendation extends StatelessWidget {
     this.borderRadius,
     this.cardAspectRatio = 0.75,
     this.cardElevation = 2.0,
-  this.flexibleConfig,
+    this.themeStyle,
+    this.flexibleConfig,
   });
 
   /// List of recommended products
@@ -73,6 +75,10 @@ class ProductRecommendation extends StatelessWidget {
 
   /// Elevation for product cards
   final double cardElevation;
+
+  /// Theme style for consistent visual styling (material3, neumorphism, glassmorphism, etc.)
+  final String? themeStyle;
+
   final FlexibleWidgetConfig? flexibleConfig;
 
   @override
@@ -87,6 +93,13 @@ class ProductRecommendation extends StatelessWidget {
     final displayProducts =
         itemCount != null ? products.take(itemCount!).toList() : products;
 
+    // Theme configuration helper
+    ShopKitThemeConfig? themeConfig;
+    if (themeStyle != null) {
+      final style = ShopKitThemeStyleExtension.fromString(themeStyle!);
+      themeConfig = ShopKitThemeConfig.forStyle(style, context);
+    }
+
     T cfg<T>(String key, T fallback) {
       final fc = flexibleConfig;
       if (fc != null) {
@@ -97,15 +110,15 @@ class ProductRecommendation extends StatelessWidget {
     }
 
     final resolvedPadding = cfg<EdgeInsets>('padding', padding ?? const EdgeInsets.all(16));
-    final bg = cfg<Color>('backgroundColor', backgroundColor ?? colorScheme.surface);
-    final radius = cfg<BorderRadius>('borderRadius', borderRadius ?? BorderRadius.circular(12));
+    final bg = cfg<Color>('backgroundColor', backgroundColor ?? themeConfig?.backgroundColor ?? colorScheme.surface);
+    final radius = cfg<BorderRadius>('borderRadius', borderRadius ?? BorderRadius.circular(themeConfig?.borderRadius ?? 12));
     final spacingVal = cfg<double>('spacing', spacing);
     final scrollable = cfg<bool>('isScrollable', isScrollable);
     final showViewAll = cfg<bool>('showViewAllButton', showViewAllButton);
     final sectionTitle = cfg<String>('title', title);
     final sectionSubtitle = cfg<String>('subtitle', subtitle ?? '');
     final cardAspect = cfg<double>('cardAspectRatio', cardAspectRatio);
-    final cardElev = cfg<double>('cardElevation', cardElevation);
+    final cardElev = cfg<double>('cardElevation', themeConfig?.elevation ?? cardElevation);
     final itemCountOverride = cfg<int>('itemCount', itemCount ?? -1);
     final effectiveProducts = itemCountOverride > -1
         ? displayProducts.take(itemCountOverride).toList()
@@ -116,6 +129,13 @@ class ProductRecommendation extends StatelessWidget {
       decoration: BoxDecoration(
         color: bg,
         borderRadius: radius,
+        boxShadow: themeConfig?.enableShadows == true ? [
+          BoxShadow(
+            color: themeConfig?.shadowColor ?? Colors.black12,
+            blurRadius: themeConfig?.elevation ?? 2,
+            offset: Offset(0, themeConfig?.elevation ?? 2),
+          ),
+        ] : null,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -211,6 +231,7 @@ class ProductRecommendation extends StatelessWidget {
   Widget _buildProductCard(ProductModel product, ThemeData theme, double aspect, double elevation) {
     return ProductCard(
       product: product,
+      themeStyle: themeStyle, // Pass themeStyle to child components
       onTap: () => onProductTap?.call(product),
       onAddToCart:
           onAddToCart != null ? (cartItem) => onAddToCart?.call(product) : null,

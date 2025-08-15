@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../config/flexible_widget_config.dart';
 import '../../theme/shopkit_theme.dart';
 import '../../theme/shopkit_theme_styles.dart';
@@ -428,7 +427,7 @@ class ProductSearchBarAdvancedState extends State<ProductSearchBarAdvanced>
     final bg = cfg.backgroundColor ?? Theme.of(context).colorScheme.surface;
     final radius = BorderRadius.circular(cfg.borderRadius);
     return Container(
-      height: _getConfig('searchBarHeight', 56.0.h),
+      height: _getConfig('searchBarHeight', 56.0),
       decoration: BoxDecoration(
         color: bg.withValues(alpha: cfg.enableBlur ? 0.6 : 1.0),
         borderRadius: radius,
@@ -441,11 +440,11 @@ class ProductSearchBarAdvancedState extends State<ProductSearchBarAdvanced>
           ),
         ] : null,
       ),
-      padding: EdgeInsets.symmetric(horizontal: 12.w),
+      padding: const EdgeInsets.symmetric(horizontal: 12),
       child: Row(
         children: [
-          Icon(Icons.search, color: cfg.onPrimaryColor ?? Colors.black54, size: 22.sp),
-          SizedBox(width: 8.w),
+          Icon(Icons.search, color: cfg.onPrimaryColor ?? Colors.black54, size: 22),
+          const SizedBox(width: 8),
           Expanded(
             child: TextField(
               controller: _controller,
@@ -461,7 +460,7 @@ class ProductSearchBarAdvancedState extends State<ProductSearchBarAdvanced>
           if (_currentQuery.isNotEmpty)
             GestureDetector(
               onTap: _clearQuery,
-              child: Icon(Icons.clear, size: 20.sp, color: (cfg.onPrimaryColor ?? Colors.black54).withValues(alpha: 0.7)),
+              child: Icon(Icons.clear, size: 20, color: (cfg.onPrimaryColor ?? Colors.black54).withValues(alpha: 0.7)),
             ),
         ],
       ),
@@ -490,7 +489,7 @@ class ProductSearchBarAdvancedState extends State<ProductSearchBarAdvanced>
 
   Widget _buildThemedSuggestionsList(BuildContext context, ShopKitThemeConfig cfg) {
     if (!_showSuggestions) return const SizedBox.shrink();
-    final maxHeight = _getConfig('suggestionsMaxHeight', 260.0.h);
+    final maxHeight = _getConfig('suggestionsMaxHeight', 260.0);
     final items = [
       ..._filteredSuggestions.take(widget.maxSuggestions),
       if (widget.enableHistory) ..._filteredHistory.take(widget.maxHistory),
@@ -498,7 +497,7 @@ class ProductSearchBarAdvancedState extends State<ProductSearchBarAdvanced>
     if (items.isEmpty) return const SizedBox.shrink();
     return Container(
       constraints: BoxConstraints(maxHeight: maxHeight),
-      margin: EdgeInsets.only(top: 8.h),
+      margin: const EdgeInsets.only(top: 8),
       decoration: BoxDecoration(
         color: (cfg.backgroundColor ?? Colors.white).withValues(alpha: cfg.enableBlur ? 0.9 : 1.0),
         borderRadius: BorderRadius.circular(cfg.borderRadius * 0.7),
@@ -506,22 +505,22 @@ class ProductSearchBarAdvancedState extends State<ProductSearchBarAdvanced>
       ),
       child: ListView.builder(
         shrinkWrap: true,
-        padding: EdgeInsets.symmetric(vertical: 4.h),
+        padding: const EdgeInsets.symmetric(vertical: 4),
         itemCount: items.length,
         itemBuilder: (context, index) {
           final suggestion = items[index];
           return InkWell(
             onTap: () => _handleSuggestionTap(suggestion),
             child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               child: Row(
                 children: [
-                  Icon(Icons.search, size: 16.sp, color: (cfg.onPrimaryColor ?? Colors.black54).withValues(alpha: 0.6)),
-                  SizedBox(width: 8.w),
+                  Icon(Icons.search, size: 16, color: (cfg.onPrimaryColor ?? Colors.black54).withValues(alpha: 0.6)),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       suggestion,
-                      style: TextStyle(fontSize: 14.sp),
+                      style: const TextStyle(fontSize: 14),
                     ),
                   ),
                 ],
@@ -537,7 +536,7 @@ class ProductSearchBarAdvancedState extends State<ProductSearchBarAdvanced>
     final searchBarStyle = _getConfig('searchBarStyle', 'elevated');
     
     return Container(
-      height: _getConfig('searchBarHeight', 56.0.h),
+      height: _getConfig('searchBarHeight', 56.0),
       decoration: _buildSearchBarDecoration(theme, searchBarStyle),
       child: Row(
         children: [
@@ -607,24 +606,24 @@ class ProductSearchBarAdvancedState extends State<ProductSearchBarAdvanced>
 
   Widget _buildLeadingIcon(BuildContext context, ShopKitTheme theme) {
     return Container(
-      padding: EdgeInsets.only(left: _getConfig('leadingIconPadding', 16.0.w)),
+      padding: EdgeInsets.only(left: _getConfig('leadingIconPadding', 16.0)),
       child: Icon(
         Icons.search,
         color: _config?.getColor('searchIconColor', theme.onSurfaceColor.withValues(alpha: 0.6)) ?? theme.onSurfaceColor.withValues(alpha: 0.6),
-        size: _getConfig('searchIconSize', 24.0.sp),
+        size: _getConfig('searchIconSize', 24.0),
       ),
     );
   }
 
   Widget _buildSearchField(BuildContext context, ShopKitTheme theme) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: _getConfig('searchFieldPadding', 16.0.w)),
+      padding: EdgeInsets.symmetric(horizontal: _getConfig('searchFieldPadding', 16.0)),
       child: TextField(
         controller: _controller,
         focusNode: _focusNode,
         style: TextStyle(
           color: _config?.getColor('searchTextColor', theme.onSurfaceColor) ?? theme.onSurfaceColor,
-          fontSize: _getConfig('searchTextFontSize', 16.0.sp),
+          fontSize: _getConfig('searchTextFontSize', 16.0),
           fontWeight: _config?.getFontWeight('searchTextFontWeight', FontWeight.w400) ?? FontWeight.w400,
           fontFamily: _getConfig('fontFamily', null),
         ),
@@ -931,3 +930,5 @@ class ProductSearchBarAdvancedState extends State<ProductSearchBarAdvanced>
     _performSearch(searchQuery);
   }
 }
+
+
