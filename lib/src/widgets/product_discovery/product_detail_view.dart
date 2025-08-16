@@ -1,16 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../config/flexible_widget_config.dart';
-import '../../theme/shopkit_theme.dart';
+import 'package:shopkit/shopkit.dart';
+
 import '../../theme/shopkit_theme_styles.dart';
-import '../../models/product_model.dart';
-import '../../models/variant_model.dart';
-import '../../models/review_model.dart';
-import '../../models/image_model.dart';
-import '../../models/cart_model.dart';
-import 'image_carousal.dart';
-import 'variant_picker.dart';
-import '../cart_management/add_to_cart_button.dart';
 
 /// A comprehensive product detail view widget with advanced features and unlimited customization
 /// Features: Multiple layouts, image galleries, variant selection, reviews, recommendations, and extensive theming
