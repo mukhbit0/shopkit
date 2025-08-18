@@ -107,10 +107,7 @@ export 'src/utils/internationalization.dart';
 
 // Export deprecated shims for examples/tests. These are kept for
 // backward compatibility and are marked deprecated. Prefer ShopKitTheme.
-export 'src/legacy/flexible_widget_config.dart';
-
-// Export legacy theme for backward compatibility (DEPRECATED - Use ShopKitTheme instead)
-// export 'src/theme/ecommerce_theme.dart';
+// Note: Legacy FlexibleWidgetConfig removed - use ShopKitTheme instead
 
 // Export all models
 export 'src/models/address_model.dart';

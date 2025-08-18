@@ -568,7 +568,7 @@ class CheckoutStepNewState extends State<CheckoutStepNew>
                       padding: const EdgeInsets.all(16.0),
                       decoration: BoxDecoration(
                         color: isActive
-                          ? (_pick(_checkoutTheme?.activeColor, theme.primaryColor)).withOpacity(0.1)
+                          ? (_pick(_checkoutTheme?.activeColor, theme.primaryColor)).withValues(alpha: 0.1)
                           : Colors.transparent,
                         borderRadius: BorderRadius.circular(8.0),
                         border: isActive
@@ -619,7 +619,7 @@ class CheckoutStepNewState extends State<CheckoutStepNew>
           boxShadow: isActive
             ? [
                 BoxShadow(
-                  color: _pick(_checkoutTheme?.activeColor, theme.primaryColor).withOpacity(0.3),
+                  color: _pick(_checkoutTheme?.activeColor, theme.primaryColor).withValues(alpha: 0.3),
                   blurRadius: 8.0,
                   offset: const Offset(0, 2),
                 ),
@@ -680,7 +680,7 @@ class CheckoutStepNewState extends State<CheckoutStepNew>
           Text(
             step.description,
             style: TextStyle(
-              color: theme.onSurfaceColor.withOpacity(0.7),
+              color: theme.onSurfaceColor.withValues(alpha: 0.7),
               fontSize: 14.0,
               height: 1.5,
             ),

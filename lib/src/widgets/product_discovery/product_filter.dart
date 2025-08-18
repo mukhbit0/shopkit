@@ -103,7 +103,7 @@ class _ProductFilterState extends State<ProductFilter> {
       decoration: BoxDecoration(
         color: filterTheme?.backgroundColor ?? theme.colorScheme.surface,
         borderRadius: filterTheme?.borderRadius ?? BorderRadius.circular(shopKitTheme?.radii.md ?? 12.0),
-        border: Border.all(color: theme.colorScheme.outline.withOpacity(0.2)),
+        border: Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -154,7 +154,7 @@ class _ProductFilterState extends State<ProductFilter> {
             ),
           ),
           if (_isExpanded) ...[
-            Divider(color: theme.colorScheme.outline.withOpacity(0.2), height: 1),
+            Divider(color: theme.colorScheme.outline.withValues(alpha: 0.2), height: 1),
             Padding(
               padding: EdgeInsets.all(spacing?.md ?? 16.0),
               child: Column(

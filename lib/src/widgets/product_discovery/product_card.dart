@@ -1,6 +1,5 @@
 // Updated ProductCard with layout fixes
 import 'package:flutter/material.dart';
-import 'dart:ui';
 import '../../models/product_model.dart';
 import '../../models/cart_model.dart';
 import '../../theme/theme.dart';

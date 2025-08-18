@@ -413,7 +413,7 @@ void _handleItemRemove(CartItemModel item) {
       child: Center(
         child: Column(
           children: [
-            Icon(Icons.shopping_cart_outlined, size: 64, color: theme.colorScheme.onSurface.withOpacity(0.4)),
+            Icon(Icons.shopping_cart_outlined, size: 64, color: theme.colorScheme.onSurface.withValues(alpha: 0.4)),
             SizedBox(height: shopKitTheme?.spacing.md ?? 16.0),
             Text('Your cart is empty', style: shopKitTheme?.typography.headline2),
           ],

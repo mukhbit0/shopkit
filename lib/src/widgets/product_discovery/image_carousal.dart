@@ -230,7 +230,7 @@ class ImageCarouselState extends State<ImageCarousel> with TickerProviderStateMi
       loadingBuilder: (context, child, progress) =>
           progress == null ? child : Center(child: CircularProgressIndicator(color: shopKitTheme?.colors.primary)),
       errorBuilder: (context, error, stack) =>
-          Container(color: theme.colorScheme.surfaceVariant, child: Icon(Icons.broken_image, color: theme.colorScheme.onSurfaceVariant)),
+          Container(color: theme.colorScheme.surfaceContainerHighest, child: Icon(Icons.broken_image, color: theme.colorScheme.onSurfaceVariant)),
     );
 
     return GestureDetector(
@@ -254,7 +254,7 @@ class ImageCarouselState extends State<ImageCarousel> with TickerProviderStateMi
       right: 0,
       child: Container(
         height: 80.0,
-        color: (carouselTheme?.arrowBackgroundColor ?? Colors.black).withOpacity(0.5),
+        color: (carouselTheme?.arrowBackgroundColor ?? Colors.black).withValues(alpha: 0.5),
         padding: EdgeInsets.all(shopKitTheme?.spacing.sm ?? 8.0),
         child: ListView.separated(
           scrollDirection: Axis.horizontal,
@@ -318,7 +318,7 @@ class ImageCarouselState extends State<ImageCarousel> with TickerProviderStateMi
           decoration: BoxDecoration(
             color: isActive 
                 ? (carouselTheme?.activeIndicatorColor ?? shopKitTheme?.colors.primary ?? theme.colorScheme.primary)
-                : (carouselTheme?.indicatorColor ?? theme.colorScheme.onSurface.withOpacity(0.4)),
+                : (carouselTheme?.indicatorColor ?? theme.colorScheme.onSurface.withValues(alpha: 0.4)),
             borderRadius: BorderRadius.circular(shopKitTheme?.radii.full ?? 999),
           ),
         );
@@ -330,7 +330,7 @@ class ImageCarouselState extends State<ImageCarousel> with TickerProviderStateMi
     return Container(
       height: widget.height ?? MediaQuery.of(context).size.width * widget.aspectRatio,
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceVariant,
+        color: theme.colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(shopKitTheme?.radii.lg ?? 16.0),
       ),
       child: Center(

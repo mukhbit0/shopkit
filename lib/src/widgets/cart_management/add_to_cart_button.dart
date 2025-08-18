@@ -213,7 +213,7 @@ class _AddToCartButtonState extends State<AddToCartButton>
       children: [
         Container(
           decoration: BoxDecoration(
-            border: Border.all(color: theme.colorScheme.outline.withOpacity(0.5)),
+            border: Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.5)),
             borderRadius: buttonTheme?.borderRadius ?? BorderRadius.circular(shopKitTheme?.radii.full ?? 999),
           ),
           child: Row(
@@ -247,7 +247,7 @@ class _AddToCartButtonState extends State<AddToCartButton>
     
     Color getBackgroundColor() {
       if (widget.isOutOfStock) return buttonTheme?.disabledColor ?? theme.disabledColor;
-      if (widget.isLoading) return buttonTheme?.backgroundColor?.withOpacity(0.7) ?? shopKitTheme?.colors.primary.withOpacity(0.7) ?? theme.colorScheme.primary.withOpacity(0.7);
+      if (widget.isLoading) return buttonTheme?.backgroundColor?.withValues(alpha: 0.7) ?? shopKitTheme?.colors.primary.withValues(alpha: 0.7) ?? theme.colorScheme.primary.withValues(alpha: 0.7);
       if (_showSuccessState || widget.isInCart) return buttonTheme?.successColor ?? shopKitTheme?.colors.success ?? Colors.green;
       return buttonTheme?.backgroundColor ?? shopKitTheme?.colors.primary ?? theme.colorScheme.primary;
     }

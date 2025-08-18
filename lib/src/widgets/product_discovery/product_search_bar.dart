@@ -28,6 +28,7 @@ class ProductSearchBarAdvanced extends StatefulWidget {
     this.enableHistory = true,
     this.enableAutoComplete = true,
     this.enableAnalytics = false,
+    this.enableHaptics = true,
     this.debounceDelay = const Duration(milliseconds: 300),
     this.maxSuggestions = 5,
     this.maxHistory = 10,
@@ -90,6 +91,9 @@ class ProductSearchBarAdvanced extends StatefulWidget {
   /// Whether to enable search analytics
   final bool enableAnalytics;
 
+  /// Whether to enable haptic feedback
+  final bool enableHaptics;
+
   /// Debounce delay for search
   final Duration debounceDelay;
 
@@ -122,9 +126,6 @@ class ProductSearchBarAdvancedState extends State<ProductSearchBarAdvanced>
   bool _isListening = false;
   Timer? _debounceTimer;
   Timer? _focusHideTimer;
-
-  // Configuration helpers
-  T _getConfig<T>(String key, T defaultValue) => defaultValue; // legacy dynamic config removed
 
   @override
   void initState() {
@@ -268,7 +269,7 @@ class ProductSearchBarAdvancedState extends State<ProductSearchBarAdvanced>
   void _performSearch(String query) {
     if (query.trim().isEmpty) return;
 
-  if (_getConfig('enableHaptics', true)) { // constant true path still allows future toggle
+  if (widget.enableHaptics) { // use widget property instead of config
       HapticFeedback.lightImpact();
     }
 
@@ -279,7 +280,7 @@ class ProductSearchBarAdvancedState extends State<ProductSearchBarAdvanced>
     _suggestionController.reverse();
     
     // Remove focus if configured
-  if (true) {
+    if (widget.enableHaptics) {
       _focusNode.unfocus();
     }
 
@@ -302,7 +303,7 @@ class ProductSearchBarAdvancedState extends State<ProductSearchBarAdvanced>
   }
 
   void _handleVoiceSearch() async {
-    if (_getConfig('enableHaptics', true)) {
+    if (widget.enableHaptics) {
       HapticFeedback.mediumImpact();
     }
 
@@ -314,7 +315,7 @@ class ProductSearchBarAdvancedState extends State<ProductSearchBarAdvanced>
     setState(() => _isListening = false);
 
     // For demo purposes, we'll just show a mock result
-  if (true) {
+    if (widget.enableVoiceSearch) {
       const mockResult = 'wireless headphones';
       _controller.text = mockResult;
       _currentQuery = mockResult;
@@ -323,7 +324,7 @@ class ProductSearchBarAdvancedState extends State<ProductSearchBarAdvanced>
   }
 
   void _clearSearch() {
-  if (true) {
+    if (widget.enableHaptics) {
       HapticFeedback.lightImpact();
     }
 

@@ -199,7 +199,7 @@ class CartBubbleAdvancedState extends State<CartBubbleAdvanced> with TickerProvi
         shape: BoxShape.circle,
         boxShadow: bubbleTheme?.boxShadow ?? [
           BoxShadow(
-            color: Colors.black.withOpacity(0.15),
+            color: Colors.black.withValues(alpha: 0.15),
             blurRadius: 12.0,
             offset: const Offset(0, 4.0),
           ),
@@ -276,7 +276,7 @@ class CartBubbleAdvancedState extends State<CartBubbleAdvanced> with TickerProvi
               style: shopKitTheme?.typography.button.copyWith(color: bubbleTheme?.iconColor ?? shopKitTheme.colors.onPrimary),
             ),
           if (widget.showTotalPrice && widget.showItemCount)
-            Text(" / ", style: TextStyle(color: bubbleTheme?.iconColor?.withOpacity(0.8) ?? shopKitTheme?.colors.onPrimary.withOpacity(0.8))),
+            Text(' / ', style: TextStyle(color: bubbleTheme?.iconColor?.withValues(alpha: 0.8) ?? shopKitTheme?.colors.onPrimary.withValues(alpha: 0.8))),
           if (widget.showTotalPrice)
             Text(
               '\$${_totalPrice.toStringAsFixed(2)}',
