@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../models/product_model.dart';
 import '../../models/cart_model.dart';
 import '../../models/variant_model.dart';
-import '../../config/flexible_widget_config.dart';
-import '../../theme/shopkit_theme_styles.dart';
+import '../../theme/theme.dart'; // Import the new, unified theme system
+import 'add_to_cart_button.dart'; // Assuming AddToCartButton is also refactored
 
-/// A sticky add-to-cart widget that appears at the bottom of the screen
+/// A sticky add-to-cart widget that appears at the bottom of the screen, styled via ShopKitTheme.
 class StickyAddToCart extends StatefulWidget {
+  /// Creates a sticky add-to-cart bar.
+  /// The constructor is now clean, focusing on data and behavior.
   const StickyAddToCart({
     super.key,
     required this.product,
@@ -19,80 +22,43 @@ class StickyAddToCart extends StatefulWidget {
     this.showProductInfo = true,
     this.showQuantitySelector = true,
     this.showVariantSelector = true,
-    this.backgroundColor,
-    this.elevation = 8.0,
-    this.borderRadius,
-    this.padding,
-    this.margin,
-    this.animationDuration = const Duration(milliseconds: 300),
-  this.flexibleConfig,
-  this.themeStyle,
   });
 
-  /// Product to add to cart
+  /// The product to be added to the cart.
   final ProductModel product;
 
-  /// Callback when add to cart is tapped
+  /// Callback when the add to cart button is tapped.
   final ValueChanged<CartItemModel> onAddToCart;
 
-  /// Currently selected variant
+  /// The currently selected product variant.
   final VariantModel? selectedVariant;
 
-  /// Current quantity
+  /// The current quantity to be added.
   final int quantity;
 
-  /// Callback when quantity changes
+  /// Callback when the quantity changes.
   final ValueChanged<int>? onQuantityChanged;
 
-  /// Callback when variant changes
+  /// Callback when the variant changes.
   final ValueChanged<VariantModel>? onVariantChanged;
 
-  /// Whether the widget is visible
+  /// Controls the visibility of the widget.
   final bool isVisible;
 
-  /// Whether to show product info (image, name, price)
+  /// If true, shows the product's image, name, and price.
   final bool showProductInfo;
 
-  /// Whether to show quantity selector
+  /// If true, shows the quantity selector.
   final bool showQuantitySelector;
 
-  /// Whether to show variant selector
+  /// If true, shows the variant selector if variants are available.
   final bool showVariantSelector;
-
-  /// Background color
-  final Color? backgroundColor;
-
-  /// Elevation of the widget
-  final double elevation;
-
-  /// Border radius
-  final BorderRadius? borderRadius;
-
-  /// Internal padding
-  final EdgeInsets? padding;
-
-  /// External margin
-  final EdgeInsets? margin;
-
-  /// Animation duration for show/hide
-  final Duration animationDuration;
-
-  /// Universal flexible configuration for deep overrides.
-  /// Namespaced keys: stickyAddToCart.*
-  /// Supported keys: backgroundColor, elevation, borderRadius, padding, margin,
-  /// showProductInfo, showQuantitySelector, showVariantSelector, isVisible,
-  /// buttonLabel, outOfStockLabel, quantityStep (int), enableAnimations (bool)
-  final FlexibleWidgetConfig? flexibleConfig;
-
-  /// New theming system style name (material3, glassmorphism, etc.)
-  final String? themeStyle;
 
   @override
   State<StickyAddToCart> createState() => _StickyAddToCartState();
 }
 
-class _StickyAddToCartState extends State<StickyAddToCart>
-    with SingleTickerProviderStateMixin {
+class _StickyAddToCartState extends State<StickyAddToCart> with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<Offset> _slideAnimation;
   late int _currentQuantity;
@@ -104,22 +70,25 @@ class _StickyAddToCartState extends State<StickyAddToCart>
     _currentQuantity = widget.quantity;
     _currentVariant = widget.selectedVariant;
 
-    _animationController = AnimationController(
-      duration: widget.animationDuration,
-      vsync: this,
-    );
-
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 1),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeInOut,
-    ));
+    // Animation setup will use theme values once context is available.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _setupAnimations());
 
     if (widget.isVisible) {
-      _animationController.forward();
+      // Forward animation after a short delay to ensure it's visible on screen load.
+      Future.delayed(const Duration(milliseconds: 50), () {
+        if (mounted) _animationController.forward();
+      });
     }
+  }
+  
+  void _setupAnimations() {
+    final shopKitTheme = Theme.of(context).extension<ShopKitTheme>();
+    _animationController = AnimationController(
+      duration: shopKitTheme?.animations.normal ?? const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _slideAnimation = Tween<Offset>(begin: const Offset(0, 1), end: Offset.zero)
+        .animate(CurvedAnimation(parent: _animationController, curve: shopKitTheme?.animations.easeOut ?? Curves.easeOut));
   }
 
   @override
@@ -133,11 +102,9 @@ class _StickyAddToCartState extends State<StickyAddToCart>
         _animationController.reverse();
       }
     }
-
     if (widget.quantity != oldWidget.quantity) {
       _currentQuantity = widget.quantity;
     }
-
     if (widget.selectedVariant != oldWidget.selectedVariant) {
       _currentVariant = widget.selectedVariant;
     }
@@ -149,173 +116,120 @@ class _StickyAddToCartState extends State<StickyAddToCart>
     super.dispose();
   }
 
+  void _updateQuantity(int newQuantity) {
+    setState(() => _currentQuantity = newQuantity);
+    widget.onQuantityChanged?.call(newQuantity);
+  }
+
+  void _onAddToCartPressed(CartItemModel cartItem) {
+    // Side-effects: haptic feedback for better UX
+    HapticFeedback.lightImpact();
+
+    // Normalize / validate received cart item
+    final variant = cartItem.variant ?? _currentVariant;
+    final quantity = (cartItem.quantity <= 0) ? 1 : cartItem.quantity.clamp(1, 999);
+
+    final pricePerItem = (cartItem.pricePerItem <= 0)
+        ? (widget.product.discountedPrice + (variant?.additionalPrice ?? 0))
+        : cartItem.pricePerItem;
+
+    final id = (cartItem.id.isEmpty)
+        ? '${widget.product.id}_${variant?.id ?? 'default'}_${DateTime.now().millisecondsSinceEpoch}'
+        : cartItem.id;
+
+    final normalized = CartItemModel.createSafe(
+      id: id,
+      product: widget.product,
+      variant: variant,
+      quantity: quantity,
+      pricePerItem: pricePerItem,
+    );
+
+    // Forward normalized item to consumer
+    widget.onAddToCart(normalized);
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final mediaQuery = MediaQuery.of(context);
-
-    // New theming system (initial integration). If themeStyle provided, compute config.
-    ShopKitThemeConfig? themeCfg;
-    if (widget.themeStyle != null) {
-      final style = ShopKitThemeStyleExtension.fromString(widget.themeStyle!);
-      themeCfg = ShopKitThemeConfig.forStyle(style, context);
-    }
-
-    // Config resolution helper
-    T cfg<T>(String key, T fallback) {
-      final fc = widget.flexibleConfig;
-      if (fc != null) {
-        if (fc.has('stickyAddToCart.$key')) {
-          try { return fc.get<T>('stickyAddToCart.$key', fallback); } catch (_) {}
-        }
-        if (fc.has(key)) {
-          try { return fc.get<T>(key, fallback); } catch (_) {}
-        }
-      }
-      return fallback;
-    }
-
-    final isVisible = cfg<bool>('isVisible', widget.isVisible);
-    final padding = widget.padding ?? cfg<EdgeInsets>('padding', const EdgeInsets.all(16));
-    final margin = widget.margin ?? cfg<EdgeInsets>('margin', EdgeInsets.only(bottom: mediaQuery.viewPadding.bottom));
-  final bgColor = themeCfg?.primaryColor ?? widget.backgroundColor ?? cfg<Color>('backgroundColor', colorScheme.surface);
-    final borderRadius = widget.borderRadius ?? cfg<BorderRadius>('borderRadius', const BorderRadius.vertical(top: Radius.circular(16)));
-    final showProductInfo = cfg<bool>('showProductInfo', widget.showProductInfo);
-    final showQuantitySelector = cfg<bool>('showQuantitySelector', widget.showQuantitySelector);
-    final showVariantSelector = cfg<bool>('showVariantSelector', widget.showVariantSelector);
-    final buttonLabel = cfg<String>('buttonLabel', 'Add to Cart');
-    final outOfStockLabel = cfg<String>('outOfStockLabel', 'Out of Stock');
-
-    // Keep animation controller in sync with visibility override
-    if (isVisible && !_animationController.isAnimating && _animationController.status != AnimationStatus.forward) {
-      _animationController.forward();
-    } else if (!isVisible && !_animationController.isAnimating && _animationController.status != AnimationStatus.reverse) {
-      _animationController.reverse();
-    }
+    final shopKitTheme = theme.extension<ShopKitTheme>();
+    // Note: No component theme for StickyAddToCart yet, so we use base theme values.
+    
+    final bottomPadding = MediaQuery.of(context).viewPadding.bottom;
 
     return SlideTransition(
       position: _slideAnimation,
-      child: Container(
-        margin: margin,
-        child: Material(
-          elevation: widget.elevation,
-          borderRadius: borderRadius,
-          child: Container(
-            padding: padding,
-            decoration: BoxDecoration(
-              color: themeCfg?.enableBlur == true ? bgColor.withValues(alpha: 0.85) : bgColor,
-              gradient: themeCfg?.enableGradients == true
-                  ? LinearGradient(
-                      colors: [
-                        bgColor.withValues(alpha: 0.95),
-                        bgColor.withValues(alpha: 0.75),
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    )
-                  : null,
-              borderRadius: borderRadius,
-            ),
-            child: SafeArea(
-              top: false,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Product info row
-                  if (showProductInfo) ...[
-                    _buildProductInfo(theme),
-                    const SizedBox(height: 12),
-                  ],
-
-                  // Variant selector
-                  if (showVariantSelector &&
-                      widget.product.variants?.isNotEmpty == true) ...[
-                    _buildVariantSelector(theme),
-                    const SizedBox(height: 12),
-                  ],
-
-                  // Quantity and add to cart row
-                  _buildActionRow(theme, showQuantitySelector, buttonLabel, outOfStockLabel),
-                ],
-              ),
-            ),
+      child: Material(
+        elevation: 8.0, // A common default for this type of element
+        color: shopKitTheme?.colors.surface ?? theme.colorScheme.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(shopKitTheme?.radii.lg ?? 16.0)),
+        ),
+        child: Container(
+          padding: EdgeInsets.fromLTRB(
+            shopKitTheme?.spacing.md ?? 16.0,
+            shopKitTheme?.spacing.md ?? 16.0,
+            shopKitTheme?.spacing.md ?? 16.0,
+            (shopKitTheme?.spacing.md ?? 16.0) + bottomPadding,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (widget.showProductInfo) ...[
+                _buildProductInfo(theme, shopKitTheme),
+                SizedBox(height: shopKitTheme?.spacing.md ?? 16.0),
+              ],
+              if (widget.showVariantSelector && widget.product.variants?.isNotEmpty == true) ...[
+                _buildVariantSelector(theme, shopKitTheme),
+                SizedBox(height: shopKitTheme?.spacing.md ?? 16.0),
+              ],
+              _buildActionRow(theme, shopKitTheme),
+            ],
           ),
         ),
       ),
     );
   }
 
-  Widget _buildProductInfo(ThemeData theme) {
+  Widget _buildProductInfo(ThemeData theme, ShopKitTheme? shopKitTheme) {
     return Row(
       children: [
-        // Product image
         ClipRRect(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(shopKitTheme?.radii.sm ?? 8.0),
           child: widget.product.imageUrl != null
               ? Image.network(
                   widget.product.imageUrl!,
-                  width: 60,
-                  height: 60,
-                  fit: BoxFit.cover,
+                  width: 60, height: 60, fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) => Container(
-                    width: 60,
-                    height: 60,
+                    width: 60, height: 60,
                     color: theme.colorScheme.surfaceContainerHighest,
-                    child: Icon(
-                      Icons.image_not_supported,
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
+                    child: Icon(Icons.image_not_supported, color: theme.colorScheme.onSurfaceVariant),
                   ),
                 )
               : Container(
-                  width: 60,
-                  height: 60,
+                  width: 60, height: 60,
                   color: theme.colorScheme.surfaceContainerHighest,
-                  child: Icon(
-                    Icons.shopping_bag,
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
+                  child: Icon(Icons.shopping_bag, color: theme.colorScheme.onSurfaceVariant),
                 ),
         ),
-
-        const SizedBox(width: 12),
-
-        // Product details
+        SizedBox(width: shopKitTheme?.spacing.md ?? 16.0),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 widget.product.name,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
+                style: shopKitTheme?.typography.body1.copyWith(fontWeight: FontWeight.bold) ?? theme.textTheme.titleMedium,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 4),
-              Row(
-                children: [
-                  if (widget.product.discountPercentage != null) ...[
-                    Text(
-                      '\$${widget.product.price.toStringAsFixed(2)}',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        decoration: TextDecoration.lineThrough,
-                        color:
-                            theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                  ],
-                  Text(
-                    '\$${widget.product.discountedPrice.toStringAsFixed(2)}',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.primary,
-                    ),
-                  ),
-                ],
+              SizedBox(height: shopKitTheme?.spacing.xs ?? 4.0),
+              Text(
+                widget.product.formattedPrice,
+                style: shopKitTheme?.typography.body1.copyWith(
+                  color: shopKitTheme.colors.primary,
+                  fontWeight: FontWeight.bold,
+                ) ?? theme.textTheme.titleMedium?.copyWith(color: theme.colorScheme.primary, fontWeight: FontWeight.bold),
               ),
             ],
           ),
@@ -324,180 +238,83 @@ class _StickyAddToCartState extends State<StickyAddToCart>
     );
   }
 
-  Widget _buildVariantSelector(ThemeData theme) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Select Variant',
-          style: theme.textTheme.titleSmall?.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        const SizedBox(height: 8),
-        SizedBox(
-          height: 40,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: widget.product.variants!.length,
-            separatorBuilder: (context, index) => const SizedBox(width: 8),
-            itemBuilder: (context, index) {
-              final variant = widget.product.variants![index];
-              final isSelected = _currentVariant?.id == variant.id;
-
-              return InkWell(
-                onTap: () {
-                  setState(() {
-                    _currentVariant = variant;
-                  });
-                  widget.onVariantChanged?.call(variant);
-                },
-                borderRadius: BorderRadius.circular(8),
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? theme.colorScheme.primary
-                        : theme.colorScheme.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: isSelected
-                          ? theme.colorScheme.primary
-                          : theme.colorScheme.outline.withValues(alpha: 0.2),
-                    ),
-                  ),
-                  child: Text(
-                    variant.name,
-                    style: TextStyle(
-                      color: isSelected
-                          ? theme.colorScheme.onPrimary
-                          : theme.colorScheme.onSurfaceVariant,
-                      fontWeight: isSelected ? FontWeight.w600 : null,
-                    ),
-                  ),
-                ),
-              );
+  Widget _buildVariantSelector(ThemeData theme, ShopKitTheme? shopKitTheme) {
+    // This could be replaced by the dedicated VariantPicker widget if desired
+    return SizedBox(
+      height: 40,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: widget.product.variants!.length,
+        separatorBuilder: (context, index) => SizedBox(width: shopKitTheme?.spacing.sm ?? 8.0),
+        itemBuilder: (context, index) {
+          final variant = widget.product.variants![index];
+          final isSelected = _currentVariant?.id == variant.id;
+          return ChoiceChip(
+            label: Text(variant.name),
+            selected: isSelected,
+            onSelected: (selected) {
+              if (selected) {
+                setState(() => _currentVariant = variant);
+                widget.onVariantChanged?.call(variant);
+              }
             },
-          ),
-        ),
-      ],
+            selectedColor: shopKitTheme?.colors.primary ?? theme.colorScheme.primary,
+            labelStyle: shopKitTheme?.typography.body2.copyWith(
+              color: isSelected ? shopKitTheme.colors.onPrimary : shopKitTheme.colors.onSurface,
+            ),
+          );
+        },
+      ),
     );
   }
 
-  Widget _buildActionRow(ThemeData theme, bool showQuantitySelector, String buttonLabel, String outOfStockLabel) {
+  Widget _buildActionRow(ThemeData theme, ShopKitTheme? shopKitTheme) {
     return Row(
       children: [
-        // Quantity selector
-        if (showQuantitySelector) ...[
-          _buildQuantitySelector(theme),
-          const SizedBox(width: 16),
+        if (widget.showQuantitySelector) ...[
+          _buildQuantitySelector(theme, shopKitTheme),
+          SizedBox(width: shopKitTheme?.spacing.md ?? 16.0),
         ],
-
-        // Add to cart button
         Expanded(
-          child: ElevatedButton(
-            onPressed: widget.product.isInStock ? _onAddToCartPressed : null,
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            child: Text(
-              widget.product.isInStock ? buttonLabel : outOfStockLabel,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
+          child: AddToCartButton(
+            product: widget.product,
+            quantity: _currentQuantity,
+            isOutOfStock: !widget.product.isInStock,
+            // Route the AddToCartButton callback to the local helper so
+            // the sticky widget builds the cart item consistently and
+            // any side-effects (haptics, analytics) can be centralized.
+            onAddToCart: (cartItem) => _onAddToCartPressed(cartItem),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildQuantitySelector(ThemeData theme) {
+  Widget _buildQuantitySelector(ThemeData theme, ShopKitTheme? shopKitTheme) {
     return Container(
       decoration: BoxDecoration(
-        border:
-            Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.3)),
-        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: theme.colorScheme.outline.withOpacity(0.5)),
+        borderRadius: BorderRadius.circular(shopKitTheme?.radii.full ?? 999),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          InkWell(
-            onTap: _currentQuantity > 1
-                ? () => _updateQuantity(_currentQuantity - 1)
-                : null,
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(8),
-              bottomLeft: Radius.circular(8),
-            ),
-            child: Container(
-              padding: const EdgeInsets.all(8),
-              child: Icon(
-                Icons.remove,
-                size: 18,
-                color: _currentQuantity > 1
-                    ? theme.colorScheme.onSurface
-                    : theme.colorScheme.onSurface.withValues(alpha: 0.3),
-              ),
-            ),
+          IconButton(
+            onPressed: _currentQuantity > 1 ? () => _updateQuantity(_currentQuantity - 1) : null,
+            icon: const Icon(Icons.remove),
+            iconSize: 18,
           ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              border: Border.symmetric(
-                vertical: BorderSide(
-                  color: theme.colorScheme.outline.withValues(alpha: 0.3),
-                ),
-              ),
-            ),
-            child: Text(
-              '$_currentQuantity',
-              style: theme.textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-            ),
+          Text(
+            '$_currentQuantity',
+            style: shopKitTheme?.typography.body1.copyWith(fontWeight: FontWeight.bold) ?? theme.textTheme.titleMedium,
           ),
-          InkWell(
-            onTap: () => _updateQuantity(_currentQuantity + 1),
-            borderRadius: const BorderRadius.only(
-              topRight: Radius.circular(8),
-              bottomRight: Radius.circular(8),
-            ),
-            child: Container(
-              padding: const EdgeInsets.all(8),
-              child: Icon(
-                Icons.add,
-                size: 18,
-                color: theme.colorScheme.onSurface,
-              ),
-            ),
+          IconButton(
+            onPressed: () => _updateQuantity(_currentQuantity + 1),
+            icon: const Icon(Icons.add),
+            iconSize: 18,
           ),
         ],
       ),
     );
-  }
-
-  void _updateQuantity(int newQuantity) {
-    setState(() {
-      _currentQuantity = newQuantity;
-    });
-    widget.onQuantityChanged?.call(newQuantity);
-  }
-
-  void _onAddToCartPressed() {
-    final cartItem = CartItemModel(
-      id: '${widget.product.id}_${_currentVariant?.id ?? 'default'}_${DateTime.now().millisecondsSinceEpoch}',
-      product: widget.product,
-      variant: _currentVariant,
-      quantity: _currentQuantity,
-      pricePerItem: widget.product.discountedPrice,
-    );
-
-    widget.onAddToCart(cartItem);
   }
 }

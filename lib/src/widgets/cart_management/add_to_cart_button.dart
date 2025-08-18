@@ -2,168 +2,17 @@ import 'package:flutter/material.dart';
 import '../../models/product_model.dart';
 import '../../models/cart_model.dart';
 import '../../models/variant_model.dart';
-import '../../config/flexible_widget_config.dart';
+import '../../theme/theme.dart'; // Import the new, unified theme system
 
-/// Configuration class for AddToCartButton widget customization
-class FlexibleAddToCartButtonConfig {
-  const FlexibleAddToCartButtonConfig({
-    this.padding,
-    this.margin,
-    this.borderRadius,
-    this.backgroundColor,
-    this.textColor,
-    this.disabledColor,
-    this.loadingColor,
-    this.successColor,
-    this.borderColor,
-    this.borderWidth,
-    this.elevation,
-    this.shadowColor,
-    this.width,
-    this.height,
-    this.textStyle,
-    this.iconSize,
-    this.iconColor,
-    this.loadingIndicatorColor,
-    this.animationDuration,
-    this.showIcon,
-    this.showQuantitySelector,
-    this.showLoadingIndicator,
-    this.text,
-    this.inCartText,
-    this.outOfStockText,
-    this.loadingText,
-    this.addIcon,
-    this.inCartIcon,
-    this.minQuantity,
-    this.maxQuantity,
-    this.buttonBuilder,
-    this.quantitySelectorBuilder,
-    this.loadingBuilder,
-  });
-
-  final EdgeInsets? padding;
-  final EdgeInsets? margin;
-  final BorderRadius? borderRadius;
-  final Color? backgroundColor;
-  final Color? textColor;
-  final Color? disabledColor;
-  final Color? loadingColor;
-  final Color? successColor;
-  final Color? borderColor;
-  final double? borderWidth;
-  final double? elevation;
-  final Color? shadowColor;
-  final double? width;
-  final double? height;
-  final TextStyle? textStyle;
-  final double? iconSize;
-  final Color? iconColor;
-  final Color? loadingIndicatorColor;
-  final Duration? animationDuration;
-  final bool? showIcon;
-  final bool? showQuantitySelector;
-  final bool? showLoadingIndicator;
-  final String? text;
-  final String? inCartText;
-  final String? outOfStockText;
-  final String? loadingText;
-  final IconData? addIcon;
-  final IconData? inCartIcon;
-  final int? minQuantity;
-  final int? maxQuantity;
-
-  // Builder functions for complete customization
-  final Widget Function(BuildContext context, VoidCallback? onPressed,
-      bool isLoading, bool isInCart, bool isOutOfStock)? buttonBuilder;
-  final Widget Function(
-      BuildContext context,
-      int quantity,
-      VoidCallback onIncrement,
-      VoidCallback onDecrement)? quantitySelectorBuilder;
-  final Widget Function(BuildContext context)? loadingBuilder;
-
-  FlexibleAddToCartButtonConfig copyWith({
-    EdgeInsets? padding,
-    EdgeInsets? margin,
-    BorderRadius? borderRadius,
-    Color? backgroundColor,
-    Color? textColor,
-    Color? disabledColor,
-    Color? loadingColor,
-    Color? successColor,
-    Color? borderColor,
-    double? borderWidth,
-    double? elevation,
-    Color? shadowColor,
-    double? width,
-    double? height,
-    TextStyle? textStyle,
-    double? iconSize,
-    Color? iconColor,
-    Color? loadingIndicatorColor,
-    Duration? animationDuration,
-    bool? showIcon,
-    bool? showQuantitySelector,
-    bool? showLoadingIndicator,
-    String? text,
-    String? inCartText,
-    String? outOfStockText,
-    String? loadingText,
-    IconData? addIcon,
-    IconData? inCartIcon,
-    int? minQuantity,
-    int? maxQuantity,
-    Widget Function(BuildContext context, VoidCallback? onPressed,
-            bool isLoading, bool isInCart, bool isOutOfStock)?
-        buttonBuilder,
-    Widget Function(BuildContext context, int quantity,
-            VoidCallback onIncrement, VoidCallback onDecrement)?
-        quantitySelectorBuilder,
-    Widget Function(BuildContext context)? loadingBuilder,
-  }) {
-    return FlexibleAddToCartButtonConfig(
-      padding: padding ?? this.padding,
-      margin: margin ?? this.margin,
-      borderRadius: borderRadius ?? this.borderRadius,
-      backgroundColor: backgroundColor ?? this.backgroundColor,
-      textColor: textColor ?? this.textColor,
-      disabledColor: disabledColor ?? this.disabledColor,
-      loadingColor: loadingColor ?? this.loadingColor,
-      successColor: successColor ?? this.successColor,
-      borderColor: borderColor ?? this.borderColor,
-      borderWidth: borderWidth ?? this.borderWidth,
-      elevation: elevation ?? this.elevation,
-      shadowColor: shadowColor ?? this.shadowColor,
-      width: width ?? this.width,
-      height: height ?? this.height,
-      textStyle: textStyle ?? this.textStyle,
-      iconSize: iconSize ?? this.iconSize,
-      iconColor: iconColor ?? this.iconColor,
-      loadingIndicatorColor:
-          loadingIndicatorColor ?? this.loadingIndicatorColor,
-      animationDuration: animationDuration ?? this.animationDuration,
-      showIcon: showIcon ?? this.showIcon,
-      showQuantitySelector: showQuantitySelector ?? this.showQuantitySelector,
-      showLoadingIndicator: showLoadingIndicator ?? this.showLoadingIndicator,
-      text: text ?? this.text,
-      inCartText: inCartText ?? this.inCartText,
-      outOfStockText: outOfStockText ?? this.outOfStockText,
-      loadingText: loadingText ?? this.loadingText,
-      addIcon: addIcon ?? this.addIcon,
-      inCartIcon: inCartIcon ?? this.inCartIcon,
-      minQuantity: minQuantity ?? this.minQuantity,
-      maxQuantity: maxQuantity ?? this.maxQuantity,
-      buttonBuilder: buttonBuilder ?? this.buttonBuilder,
-      quantitySelectorBuilder:
-          quantitySelectorBuilder ?? this.quantitySelectorBuilder,
-      loadingBuilder: loadingBuilder ?? this.loadingBuilder,
-    );
-  }
-}
-
-/// An animated button for adding products to cart
+/// An animated button for adding products to the cart, styled via ShopKitTheme.
+///
+/// This widget handles various states like loading, success (in cart), and out of stock,
+/// with smooth animations. Its appearance is now controlled centrally through the
+/// `AddToCartButtonTheme` within your app's `ShopKitTheme`.
 class AddToCartButton extends StatefulWidget {
+  /// Creates an Add to Cart button.
+  ///
+  /// The constructor is now focused on data and behavior, not styling.
   const AddToCartButton({
     super.key,
     required this.product,
@@ -174,99 +23,60 @@ class AddToCartButton extends StatefulWidget {
     this.isInCart = false,
     this.isLoading = false,
     this.isOutOfStock = false,
-    this.text,
-    this.inCartText,
-    this.outOfStockText,
-    this.loadingText,
-    this.width,
-    this.height,
-    this.borderRadius,
-    this.backgroundColor,
-    this.textColor,
-    this.disabledColor,
-    this.loadingColor,
-    this.successColor,
     this.showIcon = true,
     this.showQuantitySelector = false,
     this.minQuantity = 1,
     this.maxQuantity = 99,
-    this.config,
+    // --- Text content can be overridden for specific instances ---
+    this.text = 'Add to Cart',
+    this.inCartText = 'In Cart',
+    this.outOfStockText = 'Out of Stock',
+    this.loadingText = 'Adding...',
+    this.successText = 'Added!',
   });
 
-  /// Product to add to cart
+  /// The product to be added to the cart.
   final ProductModel product;
 
-  /// Selected product variant
+  /// The selected product variant, if any.
   final VariantModel? variant;
 
-  /// Quantity to add
+  /// The quantity of the product to add.
   final int quantity;
 
-  /// Callback when button is pressed
+  /// Callback fired when the button is pressed.
   final void Function(CartItemModel)? onAddToCart;
 
-  /// Callback when add animation completes
+  /// Callback fired after the success animation completes.
   final VoidCallback? onAddToCartAnimationComplete;
 
-  /// Whether product is already in cart
+  /// Determines if the product is already in the cart to show a success state.
   final bool isInCart;
 
-  /// Whether button is in loading state
+  /// If true, shows a loading indicator.
   final bool isLoading;
 
-  /// Whether product is out of stock
+  /// If true, disables the button and shows an "Out of Stock" message.
   final bool isOutOfStock;
 
-  /// Custom button text
-  final String? text;
-
-  /// Text when product is in cart
-  final String? inCartText;
-
-  /// Text when product is out of stock
-  final String? outOfStockText;
-
-  /// Text when loading
-  final String? loadingText;
-
-  /// Custom button width
-  final double? width;
-
-  /// Custom button height
-  final double? height;
-
-  /// Custom border radius
-  final double? borderRadius;
-
-  /// Custom background color
-  final Color? backgroundColor;
-
-  /// Custom text color
-  final Color? textColor;
-
-  /// Custom disabled color
-  final Color? disabledColor;
-
-  /// Custom loading color
-  final Color? loadingColor;
-
-  /// Custom success color (when in cart)
-  final Color? successColor;
-
-  /// Whether to show cart icon
+  /// Toggles the visibility of the leading icon.
   final bool showIcon;
 
-  /// Whether to show quantity selector
+  /// If true, displays a quantity selector next to the button.
   final bool showQuantitySelector;
 
-  /// Minimum quantity allowed
+  /// The minimum quantity selectable.
   final int minQuantity;
 
-  /// Maximum quantity allowed
+  /// The maximum quantity selectable.
   final int maxQuantity;
 
-  /// Generic flexible configuration (new). When provided it augments/overrides the legacy individual properties.
-  final FlexibleWidgetConfig? config;
+  // --- Customizable Text Properties ---
+  final String text;
+  final String inCartText;
+  final String outOfStockText;
+  final String loadingText;
+  final String successText;
 
   @override
   State<AddToCartButton> createState() => _AddToCartButtonState();
@@ -278,7 +88,6 @@ class _AddToCartButtonState extends State<AddToCartButton>
   late AnimationController _checkController;
   late Animation<double> _scaleAnimation;
   late Animation<double> _checkAnimation;
-  FlexibleWidgetConfig? _config;
 
   int _currentQuantity = 1;
   bool _showSuccessState = false;
@@ -287,55 +96,16 @@ class _AddToCartButtonState extends State<AddToCartButton>
   void initState() {
     super.initState();
     _currentQuantity = widget.quantity;
-    _config = widget.config ??
-        FlexibleWidgetConfig.forWidget('add_to_cart_button_legacy',
-            context: context,
-            overrides: {
-              // Seed overrides with any explicitly passed widget properties so they win over theme defaults
-              if (widget.width != null) 'width': widget.width!,
-              if (widget.height != null) 'height': widget.height!,
-              if (widget.backgroundColor != null)
-                'backgroundColor': widget.backgroundColor!,
-              if (widget.textColor != null) 'textColor': widget.textColor!,
-              if (widget.disabledColor != null)
-                'disabledColor': widget.disabledColor!,
-              if (widget.loadingColor != null)
-                'loadingColor': widget.loadingColor!,
-              if (widget.successColor != null)
-                'successColor': widget.successColor!,
-              if (widget.borderRadius != null)
-                'borderRadius': widget.borderRadius!,
-              'showIcon': widget.showIcon,
-              'showQuantitySelector': widget.showQuantitySelector,
-              'minQuantity': widget.minQuantity,
-              'maxQuantity': widget.maxQuantity,
-            });
 
-    _scaleController = AnimationController(
-      duration: const Duration(milliseconds: 150),
-      vsync: this,
-    );
+    // Initialize animation controllers. Durations will be sourced from the theme.
+    _scaleController = AnimationController(vsync: this);
+    _checkController = AnimationController(vsync: this);
 
-    _checkController = AnimationController(
-      duration: const Duration(milliseconds: 600),
-      vsync: this,
-    );
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95)
+        .animate(CurvedAnimation(parent: _scaleController, curve: Curves.easeInOut));
 
-    _scaleAnimation = Tween<double>(
-      begin: 1.0,
-      end: 0.95,
-    ).animate(CurvedAnimation(
-      parent: _scaleController,
-      curve: Curves.easeInOut,
-    ));
-
-    _checkAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _checkController,
-      curve: Curves.elasticOut,
-    ));
+    _checkAnimation = Tween<double>(begin: 0.0, end: 1.0)
+        .animate(CurvedAnimation(parent: _checkController, curve: Curves.elasticOut));
   }
 
   @override
@@ -344,49 +114,64 @@ class _AddToCartButtonState extends State<AddToCartButton>
     _checkController.dispose();
     super.dispose();
   }
+  
+  @override
+  void didUpdateWidget(covariant AddToCartButton oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.quantity != oldWidget.quantity) {
+      _currentQuantity = widget.quantity;
+    }
+  }
 
   void _handleAddToCart() async {
     if (widget.isLoading || widget.isOutOfStock) return;
 
-    // Scale animation on press
+    // Get animation durations and curves from the theme
+    final shopKitTheme = Theme.of(context).extension<ShopKitTheme>();
+    _scaleController.duration = shopKitTheme?.scaleDuration ?? const Duration(milliseconds: 200);
+    _checkController.duration = shopKitTheme?.bounceDuration ?? const Duration(milliseconds: 600);
+
+    // Update animations with theme curves
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95)
+        .animate(CurvedAnimation(
+          parent: _scaleController, 
+          curve: shopKitTheme?.easeInOutCurve ?? Curves.easeInOut
+        ));
+
+    _checkAnimation = Tween<double>(begin: 0.0, end: 1.0)
+        .animate(CurvedAnimation(
+          parent: _checkController, 
+          curve: shopKitTheme?.elasticCurve ?? Curves.elasticOut
+        ));
+
     await _scaleController.forward();
     await _scaleController.reverse();
 
-    // Create cart item
-    final cartItem = CartItemModel(
-      id: '${widget.product.id}_${widget.variant?.id ?? 'default'}_${DateTime.now().millisecondsSinceEpoch}',
+    final cartItem = CartItemModel.createSafe(
       product: widget.product,
       variant: widget.variant,
       quantity: _currentQuantity,
-      pricePerItem: widget.product.discountedPrice +
-          (widget.variant?.additionalPrice ?? 0),
+      pricePerItem: widget.product.discountedPrice + (widget.variant?.additionalPrice ?? 0),
     );
 
-    // Call callback
     widget.onAddToCart?.call(cartItem);
 
-    // Show success animation
-    setState(() {
-      _showSuccessState = true;
-    });
+    if (mounted) {
+      setState(() => _showSuccessState = true);
+    }
 
     await _checkController.forward();
-
-    // Reset after delay
-    await Future.delayed(const Duration(milliseconds: 1500));
+    await Future.delayed(shopKitTheme?.verySlowAnimation ?? const Duration(milliseconds: 800));
 
     if (mounted) {
-      setState(() {
-        _showSuccessState = false;
-      });
+      setState(() => _showSuccessState = false);
       _checkController.reset();
       widget.onAddToCartAnimationComplete?.call();
     }
   }
 
   void _updateQuantity(int newQuantity) {
-    if (newQuantity >= widget.minQuantity &&
-        newQuantity <= widget.maxQuantity) {
+    if (newQuantity >= widget.minQuantity && newQuantity <= widget.maxQuantity) {
       setState(() {
         _currentQuantity = newQuantity;
       });
@@ -395,215 +180,154 @@ class _AddToCartButtonState extends State<AddToCartButton>
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     if (widget.showQuantitySelector) {
-      return _buildWithQuantitySelector(theme);
+      return _buildWithQuantitySelector();
     }
-
-    return _buildSimpleButton(theme);
+    return _buildSimpleButton();
   }
 
-  Widget _buildSimpleButton(ThemeData theme) {
+  Widget _buildSimpleButton() {
+    final shopKitTheme = Theme.of(context).extension<ShopKitTheme>();
+    final buttonTheme = shopKitTheme?.addToCartButtonTheme;
+    final theme = Theme.of(context);
+
     return ScaleTransition(
       scale: _scaleAnimation,
       child: SizedBox(
-        width: widget.width ?? _config?.getOr<double>('width', 200.0) ?? 200.0,
-        height: (widget.height ??
-            _config?.getOr<double>('height', 48.0) ??
-            48.0),
+        height: buttonTheme?.height ?? 48.0,
         child: ElevatedButton(
-          onPressed:
-              widget.isLoading || widget.isOutOfStock ? null : _handleAddToCart,
-          style: _getButtonStyle(theme),
-          child: _buildButtonContent(theme),
+          onPressed: widget.isLoading || widget.isOutOfStock ? null : _handleAddToCart,
+          style: _getButtonStyle(theme, shopKitTheme),
+          child: _buildButtonContent(theme, shopKitTheme),
         ),
       ),
     );
   }
 
-  Widget _buildWithQuantitySelector(ThemeData theme) {
+  Widget _buildWithQuantitySelector() {
+    final theme = Theme.of(context);
+    final shopKitTheme = Theme.of(context).extension<ShopKitTheme>();
+    final buttonTheme = shopKitTheme?.addToCartButtonTheme;
+
     return Row(
       children: [
-        // Quantity Selector
         Container(
           decoration: BoxDecoration(
-            border: Border.all(color: theme.colorScheme.outline),
-            borderRadius: BorderRadius.circular(
-                widget.borderRadius ?? 8.0),
+            border: Border.all(color: theme.colorScheme.outline.withOpacity(0.5)),
+            borderRadius: buttonTheme?.borderRadius ?? BorderRadius.circular(shopKitTheme?.radii.full ?? 999),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               IconButton(
-                onPressed: _currentQuantity > widget.minQuantity
-                    ? () => _updateQuantity(_currentQuantity - 1)
-                    : null,
+                onPressed: _currentQuantity > widget.minQuantity ? () => _updateQuantity(_currentQuantity - 1) : null,
                 icon: const Icon(Icons.remove),
-                iconSize: 16,
+                iconSize: 18,
               ),
-              Container(
-                width: 40,
-                alignment: Alignment.center,
-                child: Text(
-                  _currentQuantity.toString(),
-                  style: theme.textTheme.titleMedium?.copyWith(fontSize: 16),
-                ),
+              Text(
+                _currentQuantity.toString(),
+                style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
               ),
               IconButton(
-                onPressed: _currentQuantity < widget.maxQuantity
-                    ? () => _updateQuantity(_currentQuantity + 1)
-                    : null,
+                onPressed: _currentQuantity < widget.maxQuantity ? () => _updateQuantity(_currentQuantity + 1) : null,
                 icon: const Icon(Icons.add),
-                iconSize: 16,
+                iconSize: 18,
               ),
             ],
           ),
         ),
-
-        const SizedBox(width: 12),
-
-        // Add to Cart Button
-        Expanded(
-          child: _buildSimpleButton(theme),
-        ),
+        SizedBox(width: shopKitTheme?.spacing.sm ?? 8.0),
+        Expanded(child: _buildSimpleButton()),
       ],
     );
   }
 
-  ButtonStyle _getButtonStyle(ThemeData theme) {
-    Color backgroundColor;
-
-    if (widget.isOutOfStock) {
-      backgroundColor = widget.disabledColor ??
-          _config?.getColor('disabledColor', theme.disabledColor) ??
-          theme.disabledColor;
-    } else if (widget.isLoading) {
-      backgroundColor = widget.loadingColor ??
-          _config?.getColor(
-              'loadingColor', theme.primaryColor.withValues(alpha: 0.7)) ??
-          theme.primaryColor.withValues(alpha: 0.7);
-    } else if (_showSuccessState || widget.isInCart) {
-      backgroundColor = widget.successColor ??
-          _config?.getColor('successColor', Colors.green) ??
-          Colors.green;
-    } else {
-      backgroundColor = widget.backgroundColor ??
-          _config?.getColor('backgroundColor', theme.primaryColor) ??
-          theme.primaryColor;
+  ButtonStyle _getButtonStyle(ThemeData theme, ShopKitTheme? shopKitTheme) {
+    final buttonTheme = shopKitTheme?.addToCartButtonTheme;
+    
+    Color getBackgroundColor() {
+      if (widget.isOutOfStock) return buttonTheme?.disabledColor ?? theme.disabledColor;
+      if (widget.isLoading) return buttonTheme?.backgroundColor?.withOpacity(0.7) ?? shopKitTheme?.colors.primary.withOpacity(0.7) ?? theme.colorScheme.primary.withOpacity(0.7);
+      if (_showSuccessState || widget.isInCart) return buttonTheme?.successColor ?? shopKitTheme?.colors.success ?? Colors.green;
+      return buttonTheme?.backgroundColor ?? shopKitTheme?.colors.primary ?? theme.colorScheme.primary;
     }
 
     return ElevatedButton.styleFrom(
-      backgroundColor: backgroundColor,
-      foregroundColor: widget.textColor ??
-          _config?.getColor('textColor', Colors.white) ??
-          Colors.white,
-      elevation: 0,
+      backgroundColor: getBackgroundColor(),
+      foregroundColor: buttonTheme?.foregroundColor ?? shopKitTheme?.colors.onPrimary ?? theme.colorScheme.onPrimary,
+      elevation: buttonTheme?.elevation ?? 0,
+      textStyle: buttonTheme?.textStyle ?? shopKitTheme?.typography.button,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(
-          widget.borderRadius ??
-              _config?.getOr<double>('borderRadius', 8.0) ??
-              8.0,
-        ),
+        borderRadius: buttonTheme?.borderRadius ?? BorderRadius.circular(shopKitTheme?.radii.full ?? 999),
       ),
-      minimumSize: Size.fromHeight(widget.height ??
-          _config?.getOr<double>('height', 48.0) ??
-          48.0),
     );
   }
 
-  Widget _buildButtonContent(ThemeData theme) {
+  Widget _buildButtonContent(ThemeData theme, ShopKitTheme? shopKitTheme) {
+    Widget content;
+    IconData? icon;
+    String label;
+
     if (widget.isLoading) {
-      return Row(
+      label = widget.loadingText;
+      content = Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-           SizedBox(
-            width: 16,
-            height: 16,
+          SizedBox(
+            width: 20,
+            height: 20,
             child: CircularProgressIndicator(
-              strokeWidth: 2,
+              strokeWidth: 2.5,
               valueColor: AlwaysStoppedAnimation<Color>(
-                  _config?.getColor('loadingIndicatorColor', Colors.white) ??
-                      Colors.white),
+                shopKitTheme?.addToCartButtonTheme?.foregroundColor ?? shopKitTheme?.colors.onPrimary ?? theme.colorScheme.onPrimary
+              ),
             ),
           ),
-          const SizedBox(width: 8),
-          Text(widget.loadingText ??
-              _config?.getOr<String>('loadingText', 'Adding...') ??
-              'Adding...'),
+          SizedBox(width: shopKitTheme?.spacing.sm ?? 8.0),
+          Text(label),
         ],
       );
-    }
+    } else {
+      if (widget.isOutOfStock) {
+        label = widget.outOfStockText;
+        icon = Icons.block;
+      } else if (_showSuccessState) {
+        label = widget.successText;
+        icon = Icons.check_circle_outline;
+      } else if (widget.isInCart) {
+        label = widget.inCartText;
+        icon = Icons.check_circle;
+      } else {
+        label = widget.text;
+        icon = Icons.add_shopping_cart;
+      }
 
-    if (widget.isOutOfStock) {
-      return Row(
+      content = Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           if (widget.showIcon) ...[
-            const Icon(Icons.block, size: 16),
-            const SizedBox(width: 8),
+            Icon(icon, size: 20),
+            SizedBox(width: shopKitTheme?.spacing.sm ?? 8.0),
           ],
-          Text(widget.outOfStockText ??
-              _config?.getOr<String>('outOfStockText', 'Out of Stock') ??
-              'Out of Stock'),
+          Text(label),
         ],
       );
     }
 
+    // Apply success animation if needed
     if (_showSuccessState) {
       return AnimatedBuilder(
         animation: _checkAnimation,
         builder: (context, child) {
-          return Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Transform.scale(
-                scale: _checkAnimation.value,
-                child: const Icon(Icons.check, size: 16),
-              ),
-              const SizedBox(width: 8),
-              Text(_config?.getOr<String>('successText', 'Added!') ?? 'Added!'),
-            ],
+          return Transform.scale(
+            scale: _checkAnimation.value,
+            child: child,
           );
         },
+        child: content,
       );
     }
 
-    if (widget.isInCart) {
-      return Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          if (widget.showIcon) ...[
-            const Icon(Icons.check_circle, size: 16),
-            const SizedBox(width: 8),
-          ],
-          Text(widget.inCartText ??
-              _config?.getOr<String>('inCartText', 'In Cart') ??
-              'In Cart'),
-        ],
-      );
-    }
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        if ((widget.showIcon ||
-            _config?.getOr<bool>('showIcon', widget.showIcon) == true)) ...[
-          const Icon(Icons.add_shopping_cart, size: 16),
-          const SizedBox(width: 8),
-        ],
-        Text(widget.text ??
-            _config?.getOr<String>('text', 'Add to Cart') ??
-            'Add to Cart'),
-        if ((widget.showQuantitySelector ||
-                _config?.getOr<bool>(
-                        'showQuantitySelector', widget.showQuantitySelector) ==
-                    true) &&
-            _currentQuantity > 1) ...[
-          const SizedBox(width: 4),
-          Text('($_currentQuantity)'),
-        ],
-      ],
-    );
+    return content;
   }
 }

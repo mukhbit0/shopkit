@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../models/wishlist_model.dart';
 import '../../models/product_model.dart';
 import '../product_discovery/product_card.dart';
-import '../../config/flexible_widget_config.dart';
+import '../../theme/theme.dart';
 
 /// Configuration class enabling deep customization of the Wishlist widget.
 ///
@@ -146,7 +146,6 @@ class Wishlist extends StatefulWidget {
     this.padding,
     this.spacing = 16.0,
   this.config,
-  this.flexibleConfig,
   });
 
   /// Wishlist to display
@@ -216,7 +215,7 @@ class Wishlist extends StatefulWidget {
   ///  - wishlist.subtitleTextStyle (TextStyle)
   ///  - wishlist.ratingColor (Color)
   ///  - wishlist.iconColor (Color)
-  final FlexibleWidgetConfig? flexibleConfig;
+  
 
   @override
   State<Wishlist> createState() => _WishlistState();
@@ -231,31 +230,20 @@ class _WishlistState extends State<Wishlist> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    // Helper to read from flexibleConfig with fallbacks to legacy config and then widget props
-    T cfg0<T>(String key, T fallback) {
-      // Try namespaced key first then generic key for convenience
-      if (widget.flexibleConfig != null) {
-        if (widget.flexibleConfig!.has('wishlist.$key')) {
-          try { return widget.flexibleConfig!.get<T>('wishlist.$key', fallback); } catch (_) {}
-        }
-        if (widget.flexibleConfig!.has(key)) {
-          try { return widget.flexibleConfig!.get<T>(key, fallback); } catch (_) {}
-        }
-      }
-      return fallback;
-    }
+  // Read WishlistTheme first, then fall back to widget.config and props
+  final shopTheme = Theme.of(context).extension<ShopKitTheme>();
+  final wishlistTheme = shopTheme?.wishlistTheme;
 
-    // Derived values with override order: flexibleConfig -> legacy config -> explicit widget prop / default
-    final padding = widget.padding ?? widget.config?.padding ?? cfg0<EdgeInsets>('padding', const EdgeInsets.all(16));
-    final bgColor = widget.backgroundColor ?? widget.config?.backgroundColor ?? cfg0<Color>('backgroundColor', colorScheme.surface);
-    final borderRadius = widget.borderRadius ?? widget.config?.borderRadius ?? cfg0<BorderRadius>('borderRadius', BorderRadius.circular(12));
-    final borderColor = widget.config?.borderColor ?? cfg0<Color>('borderColor', colorScheme.outline.withValues(alpha: 0.2));
-    final borderWidth = widget.config?.borderWidth ?? cfg0<double>('borderWidth', 1.0);
-    final spacing = cfg0<double>('spacing', widget.config?.spacing ?? widget.spacing);
-    final showMoveToCart = cfg0<bool>('showMoveToCartButton', widget.config?.showMoveToCartButton ?? widget.showMoveToCartButton);
-    final showShare = cfg0<bool>('showShareButton', widget.config?.showShareButton ?? widget.showShareButton);
-    final showRemove = cfg0<bool>('showRemoveButton', widget.config?.showRemoveButton ?? widget.showRemoveButton);
-    final ratingColor = widget.config?.ratingColor ?? cfg0<Color>('ratingColor', Colors.amber);
+  final padding = widget.padding ?? widget.config?.padding ?? const EdgeInsets.all(16);
+  final bgColor = widget.backgroundColor ?? widget.config?.backgroundColor ?? wishlistTheme?.backgroundColor ?? colorScheme.surface;
+  final borderRadius = widget.borderRadius ?? widget.config?.borderRadius ?? BorderRadius.circular(12);
+  final borderColor = widget.config?.borderColor ?? wishlistTheme?.gridItemBorderColor ?? colorScheme.outline.withValues(alpha: 0.2);
+  final borderWidth = widget.config?.borderWidth ?? 1.0;
+  final spacing = widget.config?.spacing ?? widget.spacing;
+  final showMoveToCart = widget.config?.showMoveToCartButton ?? widget.showMoveToCartButton;
+  final showShare = widget.config?.showShareButton ?? widget.showShareButton;
+  final showRemove = widget.config?.showRemoveButton ?? widget.showRemoveButton;
+  final ratingColor = widget.config?.ratingColor ?? Colors.amber;
 
     // Store derived booleans for reuse down the tree via InheritedWidget pattern (future) or locals now
     final derived = _WishlistDerived(
@@ -318,7 +306,8 @@ class _WishlistState extends State<Wishlist> {
   }
 
   Widget _buildHeader(ThemeData theme, bool showShare) {
-    final cfg = widget.config;
+  final cfg = widget.config;
+  final wishlistTheme = Theme.of(context).extension<ShopKitTheme>()?.wishlistTheme;
     return Row(
       children: [
         Expanded(
@@ -327,14 +316,14 @@ class _WishlistState extends State<Wishlist> {
             children: [
               Text(
                 widget.wishlist.name,
-                style: (cfg?.headerTextStyle ?? theme.textTheme.titleLarge)?.copyWith(
+                style: (cfg?.headerTextStyle ?? wishlistTheme?.titleStyle ?? theme.textTheme.titleLarge)?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
               ),
               const SizedBox(height: 4),
               Text(
                 '${widget.wishlist.itemCount} items • Total value: \$${widget.wishlist.totalValue.toStringAsFixed(2)}',
-                style: (cfg?.subtitleTextStyle ?? theme.textTheme.bodyMedium)?.copyWith(
+                style: (cfg?.subtitleTextStyle ?? wishlistTheme?.itemCounterStyle ?? theme.textTheme.bodyMedium)?.copyWith(
                   color: (cfg?.subtitleTextStyle?.color ?? theme.colorScheme.onSurface).withValues(alpha: 0.6),
                 ),
               ),

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../config/flexible_widget_config.dart';
 import '../../models/product_model.dart';
-import '../../theme/shopkit_theme_styles.dart';
+import '../../theme/theme.dart';
 import 'product_card.dart';
 
 /// A widget for displaying product recommendations
@@ -18,14 +17,7 @@ class ProductRecommendation extends StatelessWidget {
     this.showViewAllButton = true,
     this.onViewAllTap,
     this.itemCount,
-    this.spacing = 16.0,
-    this.padding,
-    this.backgroundColor,
-    this.borderRadius,
-    this.cardAspectRatio = 0.75,
-    this.cardElevation = 2.0,
-    this.themeStyle,
-    this.flexibleConfig,
+    this.spacing,
   });
 
   /// List of recommended products
@@ -58,33 +50,16 @@ class ProductRecommendation extends StatelessWidget {
   /// Number of items to display (null for all)
   final int? itemCount;
 
-  /// Spacing between items
-  final double spacing;
-
-  /// Padding around the widget
-  final EdgeInsets? padding;
-
-  /// Background color
-  final Color? backgroundColor;
-
-  /// Border radius
-  final BorderRadius? borderRadius;
-
-  /// Aspect ratio for product cards
-  final double cardAspectRatio;
-
-  /// Elevation for product cards
-  final double cardElevation;
-
-  /// Theme style for consistent visual styling (material3, neumorphism, glassmorphism, etc.)
-  final String? themeStyle;
-
-  final FlexibleWidgetConfig? flexibleConfig;
+  /// Optional spacing override between cards. If null, uses theme spacing.
+  final double? spacing;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final shopKitTheme = theme.extension<ShopKitTheme>();
+    final recTheme = shopKitTheme?.productRecommendationTheme;
+    final spacingVal = spacing ?? shopKitTheme?.spacing.md ?? 16.0;
+    final cardAspect = recTheme?.cardAspectRatio ?? 0.75;
 
     if (products.isEmpty) {
       return const SizedBox.shrink();
@@ -92,64 +67,32 @@ class ProductRecommendation extends StatelessWidget {
 
     final displayProducts =
         itemCount != null ? products.take(itemCount!).toList() : products;
-
-    // Theme configuration helper
-    ShopKitThemeConfig? themeConfig;
-    if (themeStyle != null) {
-      final style = ShopKitThemeStyleExtension.fromString(themeStyle!);
-      themeConfig = ShopKitThemeConfig.forStyle(style, context);
-    }
-
-    T cfg<T>(String key, T fallback) {
-      final fc = flexibleConfig;
-      if (fc != null) {
-        if (fc.has('recommendation.$key')) { try { return fc.get<T>('recommendation.$key', fallback); } catch (_) {} }
-        if (fc.has(key)) { try { return fc.get<T>(key, fallback); } catch (_) {} }
-      }
-      return fallback;
-    }
-
-    final resolvedPadding = cfg<EdgeInsets>('padding', padding ?? const EdgeInsets.all(16));
-    final bg = cfg<Color>('backgroundColor', backgroundColor ?? themeConfig?.backgroundColor ?? colorScheme.surface);
-    final radius = cfg<BorderRadius>('borderRadius', borderRadius ?? BorderRadius.circular(themeConfig?.borderRadius ?? 12));
-    final spacingVal = cfg<double>('spacing', spacing);
-    final scrollable = cfg<bool>('isScrollable', isScrollable);
-    final showViewAll = cfg<bool>('showViewAllButton', showViewAllButton);
-    final sectionTitle = cfg<String>('title', title);
-    final sectionSubtitle = cfg<String>('subtitle', subtitle ?? '');
-    final cardAspect = cfg<double>('cardAspectRatio', cardAspectRatio);
-    final cardElev = cfg<double>('cardElevation', themeConfig?.elevation ?? cardElevation);
-    final itemCountOverride = cfg<int>('itemCount', itemCount ?? -1);
-    final effectiveProducts = itemCountOverride > -1
-        ? displayProducts.take(itemCountOverride).toList()
-        : displayProducts;
+    final resolvedPadding = EdgeInsets.all(shopKitTheme?.spacing.md ?? 16);
+    final bg = recTheme?.backgroundColor ?? theme.colorScheme.surface;
+    final radius = recTheme?.borderRadius ?? BorderRadius.circular(shopKitTheme?.radii.lg ?? 12);
+    final sectionTitle = title;
+    final sectionSubtitle = subtitle ?? '';
+    final effectiveProducts = displayProducts;
 
     return Container(
       padding: resolvedPadding,
       decoration: BoxDecoration(
         color: bg,
         borderRadius: radius,
-        boxShadow: themeConfig?.enableShadows == true ? [
-          BoxShadow(
-            color: themeConfig?.shadowColor ?? Colors.black12,
-            blurRadius: themeConfig?.elevation ?? 2,
-            offset: Offset(0, themeConfig?.elevation ?? 2),
-          ),
-        ] : null,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header
-          _buildHeader(theme, sectionTitle, sectionSubtitle, showViewAll),
+          _buildHeader(theme, sectionTitle, sectionSubtitle, showViewAllButton),
 
           const SizedBox(height: 16),
 
           // Products
-      if (scrollable)
-    _buildScrollableProducts(effectiveProducts, theme, spacingVal, cardAspect, cardElev)
+          if (isScrollable)
+            _buildScrollableProducts(effectiveProducts, theme, spacingVal, cardAspect)
           else
-    _buildGridProducts(effectiveProducts, theme, context, spacingVal, cardAspect, cardElev),
+            _buildGridProducts(effectiveProducts, theme, context, spacingVal, cardAspect),
         ],
       ),
     );
@@ -190,7 +133,7 @@ class ProductRecommendation extends StatelessWidget {
     );
   }
 
-  Widget _buildScrollableProducts(List<ProductModel> products, ThemeData theme, double spacing, double aspect, double elevation) {
+  Widget _buildScrollableProducts(List<ProductModel> products, ThemeData theme, double spacing, double aspect) {
     return SizedBox(
   height: 280,
       child: ListView.separated(
@@ -201,14 +144,14 @@ class ProductRecommendation extends StatelessWidget {
           final product = products[index];
           return SizedBox(
     width: 200,
-    child: _buildProductCard(product, theme, aspect, elevation),
+    child: _buildProductCard(product, theme, aspect),
           );
         },
       ),
     );
   }
 
-  Widget _buildGridProducts(List<ProductModel> products, ThemeData theme, BuildContext context, double spacing, double aspect, double elevation) {
+  Widget _buildGridProducts(List<ProductModel> products, ThemeData theme, BuildContext context, double spacing, double aspect) {
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -223,15 +166,14 @@ class ProductRecommendation extends StatelessWidget {
       itemCount: products.length,
       itemBuilder: (context, index) {
         final product = products[index];
-    return _buildProductCard(product, theme, aspect, elevation);
+    return _buildProductCard(product, theme, aspect);
       },
     );
   }
 
-  Widget _buildProductCard(ProductModel product, ThemeData theme, double aspect, double elevation) {
+  Widget _buildProductCard(ProductModel product, ThemeData theme, double aspect) {
     return ProductCard(
       product: product,
-      themeStyle: themeStyle, // Pass themeStyle to child components
       onTap: () => onProductTap?.call(product),
       onAddToCart:
           onAddToCart != null ? (cartItem) => onAddToCart?.call(product) : null,

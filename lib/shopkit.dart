@@ -98,20 +98,16 @@ export 'src/controllers/cart_controller.dart';
 export 'src/controllers/product_controller.dart';
 export 'src/controllers/wishlist_controller.dart';
 
-// Export new architecture - Core Configuration & Theming
-export 'src/config/flexible_widget_config.dart';
-export 'src/theme/shopkit_theme.dart';
-
-// Export advanced theming system
-export 'src/theme/base_theme.dart';
-export 'src/theme/material3_theme.dart';
-export 'src/theme/neumorphism_theme.dart';
-export 'src/theme/glassmorphism_theme.dart';
-export 'src/theme/theme_manager.dart' hide ShopKitThemeProvider;
-export 'src/theme/widget_theme_config.dart';
+// Export the new ThemeExtension-based ShopKit theme and theme style helpers
+export 'src/theme/theme.dart';
+export 'src/theme/shopkit_theme_styles.dart';
 
 // Export internationalization
 export 'src/utils/internationalization.dart';
+
+// Export deprecated shims for examples/tests. These are kept for
+// backward compatibility and are marked deprecated. Prefer ShopKitTheme.
+export 'src/legacy/flexible_widget_config.dart';
 
 // Export legacy theme for backward compatibility (DEPRECATED - Use ShopKitTheme instead)
 // export 'src/theme/ecommerce_theme.dart';

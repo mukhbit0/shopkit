@@ -50,13 +50,11 @@ class CartController extends ChangeNotifier {
         await updateQuantity(existingItem.id, existingItem.quantity + quantity);
       } else {
         // Add new item
-        final newItem = CartItemModel(
-          id: '${product.id}_${variant?.id ?? 'default'}_${DateTime.now().millisecondsSinceEpoch}',
+        final newItem = CartItemModel.createSafe(
           product: product,
           variant: variant,
           quantity: quantity,
-          pricePerItem:
-              product.discountedPrice + (variant?.additionalPrice ?? 0),
+          pricePerItem: product.discountedPrice + (variant?.additionalPrice ?? 0),
           addedAt: DateTime.now(),
           notes: notes,
         );

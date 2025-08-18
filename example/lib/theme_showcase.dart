@@ -400,8 +400,8 @@ class ThemeShowcaseScreen extends StatelessWidget {
   List<CartItemModel> _sampleCartItems() {
     final product = _getSampleProduct();
     return [
-      CartItemModel(id: 'c1', product: product, quantity: 1, pricePerItem: product.price),
-      CartItemModel(id: 'c2', product: product.copyWith(id: 'p2', name: 'Another Product'), quantity: 2, pricePerItem: product.price),
+  CartItemModel.createSafe(product: product, quantity: 1, pricePerItem: product.price),
+  CartItemModel.createSafe(product: product.copyWith(id: 'p2', name: 'Another Product'), quantity: 2, pricePerItem: product.price),
     ];
   }
 

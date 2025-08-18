@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../config/flexible_widget_config.dart';
-import '../../theme/shopkit_theme.dart';
-import '../../theme/shopkit_theme_styles.dart';
+import '../../theme/theme.dart';
 import '../../models/variant_model.dart';
 
 /// A comprehensive variant picker widget with unlimited customization options
@@ -13,10 +11,9 @@ class VariantPicker extends StatefulWidget {
     required this.variants,
     this.selectedVariant,
     this.onVariantSelected,
-    this.config,
-    this.customBuilder,
-    this.customVariantBuilder,
-    this.customGroupBuilder,
+  this.customBuilder,
+  this.customVariantBuilder,
+  this.customGroupBuilder,
     this.layout = VariantPickerLayout.grid,
     this.enableAnimations = true,
     this.enableHaptics = true,
@@ -25,8 +22,7 @@ class VariantPicker extends StatefulWidget {
     this.showLabels = true,
     this.showPrices = true,
     this.showAvailability = true,
-    this.maxSelections,
-    this.themeStyle,
+  this.maxSelections,
   });
 
   /// List of variants to display
@@ -38,8 +34,7 @@ class VariantPicker extends StatefulWidget {
   /// Callback when variant is selected
   final void Function(VariantModel)? onVariantSelected;
 
-  /// Configuration for unlimited customization
-  final FlexibleWidgetConfig? config;
+  // Legacy FlexibleWidgetConfig removed in new theming refactor.
 
   /// Custom builder for complete control
   final Widget Function(BuildContext, List<VariantModel>, VariantPickerState)? customBuilder;
@@ -77,8 +72,7 @@ class VariantPicker extends StatefulWidget {
   /// Maximum number of selections (for multi-select)
   final int? maxSelections;
 
-  /// Built-in theme style support - pass theme name as string
-  final String? themeStyle;
+  // themeStyle removed; use Theme.of(context).extension<ShopKitTheme>().variantPickerTheme
 
   @override
   State<VariantPicker> createState() => VariantPickerState();
@@ -94,17 +88,15 @@ class VariantPickerState extends State<VariantPicker>
 
   final Set<VariantModel> _selectedVariants = {};
   final Map<String, List<VariantModel>> _groupedVariants = {};
-  FlexibleWidgetConfig? _config;
+  // Placeholder for removed legacy FlexibleWidgetConfig (kept null so legacy accessors no-op).
+  final dynamic _config = null;
 
-  // Configuration helpers
-  T _getConfig<T>(String key, T defaultValue) {
-    return _config?.get<T>(key, defaultValue) ?? defaultValue;
-  }
+  // Legacy config accessor stub – always returns provided default.
+  T _getConfig<T>(String key, T defaultValue) => defaultValue;
 
   @override
   void initState() {
     super.initState();
-    _config = widget.config ?? FlexibleWidgetConfig.forWidget('variant_picker', context: context);
     _setupAnimations();
     _setupInitialSelection();
     _groupVariants();
@@ -112,34 +104,34 @@ class VariantPickerState extends State<VariantPicker>
 
   void _setupAnimations() {
     _animationController = AnimationController(
-      duration: Duration(milliseconds: _getConfig('containerAnimationDuration', 400)),
+  duration: const Duration(milliseconds: 400),
       vsync: this,
     );
 
     _selectionController = AnimationController(
-      duration: Duration(milliseconds: _getConfig('selectionAnimationDuration', 200)),
+  duration: const Duration(milliseconds: 200),
       vsync: this,
     );
 
     _fadeAnimation = CurvedAnimation(
       parent: _animationController,
-      curve: _config?.getCurve('fadeAnimationCurve', Curves.easeInOut) ?? Curves.easeInOut,
+  curve: Curves.easeInOut,
     );
 
     _slideAnimation = Tween<Offset>(
-      begin: Offset(0, _getConfig('slideAnimationOffset', 0.1)),
+  begin: const Offset(0, 0.1),
       end: Offset.zero,
     ).animate(CurvedAnimation(
       parent: _animationController,
-      curve: _config?.getCurve('slideAnimationCurve', Curves.easeOutCubic) ?? Curves.easeOutCubic,
+  curve: Curves.easeOutCubic,
     ));
 
     _scaleAnimation = Tween<double>(
-      begin: _getConfig('scaleAnimationStart', 0.95),
+  begin: 0.95,
       end: 1.0,
     ).animate(CurvedAnimation(
       parent: _selectionController,
-      curve: _config?.getCurve('scaleAnimationCurve', Curves.elasticOut) ?? Curves.elasticOut,
+  curve: Curves.elasticOut,
     ));
 
     if (widget.enableAnimations) {
@@ -207,8 +199,6 @@ class VariantPickerState extends State<VariantPicker>
     super.didUpdateWidget(oldWidget);
     
     // Update config
-    _config = widget.config ?? FlexibleWidgetConfig.forWidget('variant_picker', context: context);
-    
     // Update selection if selectedVariant changed
     if (widget.selectedVariant != oldWidget.selectedVariant) {
       _selectedVariants.clear();
@@ -236,236 +226,12 @@ class VariantPickerState extends State<VariantPicker>
       return widget.customBuilder!(context, widget.variants, this);
     }
 
-    final useNewTheme = widget.themeStyle != null;
-    ShopKitThemeConfig? cfg;
-    if (useNewTheme) {
-      final style = ShopKitThemeStyleExtension.fromString(widget.themeStyle!);
-      cfg = ShopKitThemeConfig.forStyle(style, context);
-    }
-
-    final theme = ShopKitThemeProvider.of(context); // legacy fallback
-
+  final theme = Theme.of(context).extension<ShopKitTheme>()!;
     return FadeTransition(
       opacity: _fadeAnimation,
       child: SlideTransition(
         position: _slideAnimation,
-        child: useNewTheme
-          ? _buildThemedVariantPicker(context, cfg!)
-          : _buildVariantPicker(context, theme),
-      ),
-    );
-  }
-
-  Widget _buildThemedVariantPicker(BuildContext context, ShopKitThemeConfig cfg) {
-    if (widget.variants.isEmpty) {
-      return _buildThemedEmptyState(context, cfg);
-    }
-    final bg = cfg.backgroundColor ?? Theme.of(context).colorScheme.surface;
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: bg.withValues(alpha: cfg.enableBlur ? 0.9 : 1.0),
-        borderRadius: BorderRadius.circular(cfg.borderRadius),
-        boxShadow: cfg.enableShadows ? [
-          BoxShadow(
-            color: (cfg.shadowColor ?? Colors.black).withValues(alpha: 0.08),
-            blurRadius: 18,
-            offset: const Offset(0,8),
-          ),
-        ] : null,
-        border: cfg.enableGradients ? Border.all(color: (cfg.primaryColor ?? Colors.blue).withValues(alpha: 0.2)) : null,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (_getConfig('showTitle', true))
-            Text(
-              _getConfig('title', 'Select Variant'),
-              style: TextStyle(
-                color: (cfg.onPrimaryColor ?? Colors.black),
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          if (_getConfig('showTitle', true)) const SizedBox(height: 12),
-          if (widget.groupByType && _groupedVariants.isNotEmpty)
-            _buildThemedGroupedVariants(context, cfg)
-          else
-            _buildThemedVariantsList(context, cfg),
-          if (_getConfig('showSelectedInfo', true) && _selectedVariants.isNotEmpty)
-            _buildThemedSelectedInfo(context, cfg),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildThemedVariantsList(BuildContext context, ShopKitThemeConfig cfg) {
-    switch (widget.layout) {
-      case VariantPickerLayout.grid:
-        final crossAxisCount = _getConfig('gridCrossAxisCount', 3);
-        return GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: widget.variants.length,
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: crossAxisCount,
-            mainAxisSpacing: 8,
-            crossAxisSpacing: 8,
-            childAspectRatio: 1.6,
-          ),
-          itemBuilder: (context, index) => _buildThemedVariantItem(context, cfg, widget.variants[index], index),
-        );
-      case VariantPickerLayout.chips:
-        return Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [for (int i = 0; i < widget.variants.length; i++) _buildThemedVariantItem(context, cfg, widget.variants[i], i)],
-        );
-      case VariantPickerLayout.list:
-        return Column(
-          children: [for (int i = 0; i < widget.variants.length; i++) Padding(padding: const EdgeInsets.only(bottom: 8), child: _buildThemedVariantItem(context, cfg, widget.variants[i], i))],
-        );
-      case VariantPickerLayout.dropdown:
-      case VariantPickerLayout.carousel:
-      case VariantPickerLayout.buttons:
-        return Column(
-          children: [for (int i = 0; i < widget.variants.length; i++) Padding(padding: const EdgeInsets.only(bottom: 8), child: _buildThemedVariantItem(context, cfg, widget.variants[i], i))],
-        );
-    }
-  }
-
-  Widget _buildThemedVariantItem(BuildContext context, ShopKitThemeConfig cfg, VariantModel variant, int index) {
-    final isSelected = _selectedVariants.contains(variant);
-    final selectedColor = (cfg.primaryColor ?? Theme.of(context).colorScheme.primary);
-    return GestureDetector(
-      onTap: () => _handleVariantSelection(variant),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(
-          color: isSelected ? selectedColor : (cfg.backgroundColor ?? Colors.white).withValues(alpha: 0.6),
-          borderRadius: BorderRadius.circular(cfg.borderRadius * 0.5),
-          border: Border.all(color: isSelected ? selectedColor : selectedColor.withValues(alpha: 0.3)),
-          boxShadow: isSelected && cfg.enableShadows ? [
-            BoxShadow(
-              color: selectedColor.withValues(alpha: 0.4),
-              blurRadius: 12,
-              offset: const Offset(0,4),
-            ),
-          ] : null,
-        ),
-        child: _buildThemedVariantContent(context, cfg, variant, isSelected),
-      ),
-    );
-  }
-
-  Widget _buildThemedVariantContent(BuildContext context, ShopKitThemeConfig cfg, VariantModel variant, bool isSelected) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (widget.showLabels)
-                Text(
-                  variant.name,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: isSelected ? (cfg.onPrimaryColor ?? Colors.white) : Colors.black87,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              if (widget.showPrices && variant.hasAdditionalCost)
-                Padding(
-                  padding: const EdgeInsets.only(top: 4),
-                  child: Text(
-                    variant.getFormattedAdditionalPrice(_getConfig('currency', 'USD')),
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: isSelected ? (cfg.onPrimaryColor ?? Colors.white).withValues(alpha: 0.85) : Colors.black54,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ),
-    if (widget.showAvailability)
-          Container(
-            width: 10,
-            height: 10,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-      color: variant.isInStock ? Colors.green : Colors.red,
-            ),
-          ),
-      ],
-    );
-  }
-
-  Widget _buildThemedGroupedVariants(BuildContext context, ShopKitThemeConfig cfg) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: _groupedVariants.entries.map((entry) {
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(entry.key, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [for (int i = 0; i < entry.value.length; i++) _buildThemedVariantItem(context, cfg, entry.value[i], i)],
-              ),
-            ],
-          ),
-        );
-      }).toList(),
-    );
-  }
-
-  Widget _buildThemedSelectedInfo(BuildContext context, ShopKitThemeConfig cfg) {
-    final primary = (cfg.primaryColor ?? Theme.of(context).colorScheme.primary);
-    return Container(
-      margin: const EdgeInsets.only(top: 12),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: primary.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(cfg.borderRadius * 0.5),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.check_circle, size: 18, color: primary),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              _selectedVariants.length == 1
-                ? _selectedVariants.first.name
-                : '${_selectedVariants.length} selected',
-              style: const TextStyle(fontSize: 13),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildThemedEmptyState(BuildContext context, ShopKitThemeConfig cfg) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(cfg.borderRadius),
-        border: Border.all(color: (cfg.primaryColor ?? Colors.blue).withValues(alpha: 0.2)),
-      ),
-      child: Text(
-        _getConfig('emptyStateText', 'No variants available'),
-        style: TextStyle(fontSize: 14, color: (cfg.onPrimaryColor ?? Colors.black54)),
-        textAlign: TextAlign.center,
+        child: _buildVariantPicker(context, theme),
       ),
     );
   }
@@ -476,36 +242,23 @@ class VariantPickerState extends State<VariantPicker>
     }
 
     return Container(
-      padding: _config?.getEdgeInsets('containerPadding', const EdgeInsets.all(16)) ?? const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: _config?.getColor('backgroundColor', theme.surfaceColor) ?? theme.surfaceColor,
-        borderRadius: _config?.getBorderRadius('borderRadius', BorderRadius.circular(12)) ?? BorderRadius.circular(12),
-        boxShadow: _getConfig('enableShadow', false)
-          ? [
-              BoxShadow(
-                color: theme.onSurfaceColor.withValues(alpha: _getConfig('shadowOpacity', 0.1)),
-                blurRadius: _getConfig('shadowBlurRadius', 8.0),
-                offset: Offset(0, _getConfig('shadowOffsetY', 2.0)),
-              ),
-            ]
-          : null,
+        color: theme.colors.surface,
+        borderRadius: BorderRadius.circular(theme.radii.md.toDouble()),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (_getConfig('showTitle', true))
-            _buildTitle(context, theme),
-          
-          if (_getConfig('showTitle', true))
-            SizedBox(height: _getConfig('titleSpacing', 16.0)),
+          _buildTitle(context, theme),
+          const SizedBox(height: 16),
           
           if (widget.groupByType && _groupedVariants.isNotEmpty)
             _buildGroupedVariants(context, theme)
           else
             _buildVariantsList(context, theme),
           
-          if (_getConfig('showSelectedInfo', true) && _selectedVariants.isNotEmpty)
-            _buildSelectedInfo(context, theme),
+          if (_selectedVariants.isNotEmpty) _buildSelectedInfo(context, theme),
         ],
       ),
     );
@@ -513,7 +266,7 @@ class VariantPickerState extends State<VariantPicker>
 
   Widget _buildTitle(BuildContext context, ShopKitTheme theme) {
     return Text(
-      _getConfig('title', 'Select Variant'),
+  'Select Variant',
       style: TextStyle(
         color: _config?.getColor('titleColor', theme.onSurfaceColor) ?? theme.onSurfaceColor,
         fontSize: _getConfig('titleFontSize', 18.0),
@@ -525,17 +278,17 @@ class VariantPickerState extends State<VariantPicker>
 
   Widget _buildEmptyState(BuildContext context, ShopKitTheme theme) {
     return Container(
-      padding: _config?.getEdgeInsets('emptyStatePadding', const EdgeInsets.all(32)) ?? const EdgeInsets.all(32),
+  padding: const EdgeInsets.all(32),
       child: Column(
         children: [
           Icon(
             Icons.inventory_2_outlined,
-            size: _getConfig('emptyStateIconSize', 48.0),
+            size: 48,
             color: _config?.getColor('emptyStateIconColor', theme.onSurfaceColor.withValues(alpha: 0.5)) ?? theme.onSurfaceColor.withValues(alpha: 0.5),
           ),
-          SizedBox(height: _getConfig('emptyStateSpacing', 16.0)),
+          const SizedBox(height: 16),
           Text(
-            _getConfig('emptyStateTitle', 'No Variants Available'),
+            'No Variants Available',
             style: TextStyle(
               color: _config?.getColor('emptyStateTitleColor', theme.onSurfaceColor) ?? theme.onSurfaceColor,
               fontSize: _getConfig('emptyStateTitleFontSize', 16.0),
@@ -543,9 +296,9 @@ class VariantPickerState extends State<VariantPicker>
             ),
           ),
           if (_getConfig('showEmptyStateSubtitle', true)) ...[
-            SizedBox(height: _getConfig('emptyStateSubtitleSpacing', 8.0)),
+            const SizedBox(height: 8),
             Text(
-              _getConfig('emptyStateSubtitle', 'This product has no variants to choose from.'),
+              'This product has no variants to choose from.',
               style: TextStyle(
                 color: _config?.getColor('emptyStateSubtitleColor', theme.onSurfaceColor.withValues(alpha: 0.7)) ?? theme.onSurfaceColor.withValues(alpha: 0.7),
                 fontSize: _getConfig('emptyStateSubtitleFontSize', 14.0),
@@ -1146,51 +899,38 @@ class VariantPickerState extends State<VariantPicker>
 
   Widget _buildSelectedInfo(BuildContext context, ShopKitTheme theme) {
     return Container(
-      margin: EdgeInsets.only(top: _getConfig('selectedInfoTopSpacing', 16.0)),
-      padding: _config?.getEdgeInsets('selectedInfoPadding', const EdgeInsets.all(12)) ?? const EdgeInsets.all(12),
+      margin: const EdgeInsets.only(top: 16),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: _config?.getColor('selectedInfoBackgroundColor', theme.primaryColor.withValues(alpha: 0.1)) ?? theme.primaryColor.withValues(alpha: 0.1),
-        borderRadius: _config?.getBorderRadius('selectedInfoBorderRadius', BorderRadius.circular(8)) ?? BorderRadius.circular(8),
-        border: Border.all(
-          color: _config?.getColor('selectedInfoBorderColor', theme.primaryColor.withValues(alpha: 0.3)) ?? theme.primaryColor.withValues(alpha: 0.3),
-        ),
+        color: theme.colors.primary.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            widget.enableMultiSelect
-              ? 'Selected Variants (${_selectedVariants.length})'
-              : 'Selected Variant',
+            widget.enableMultiSelect ? 'Selected Variants (${_selectedVariants.length})' : 'Selected Variant',
             style: TextStyle(
               color: _config?.getColor('selectedInfoTitleColor', theme.onSurfaceColor) ?? theme.onSurfaceColor,
               fontSize: _getConfig('selectedInfoTitleFontSize', 14.0),
               fontWeight: FontWeight.w600,
             ),
           ),
-          SizedBox(height: _getConfig('selectedInfoContentSpacing', 8.0)),
+          const SizedBox(height: 8),
           Wrap(
-            spacing: _getConfig('selectedInfoChipSpacing', 8.0),
-            runSpacing: _getConfig('selectedInfoChipRunSpacing', 4.0),
+            spacing: 8,
+            runSpacing: 4,
             children: _selectedVariants.map((variant) {
               return Chip(
                 label: Text(
                   variant.name,
                   style: TextStyle(
-                    fontSize: _getConfig('selectedInfoChipFontSize', 12.0),
+                    fontSize: 12,
                   ),
                 ),
-                backgroundColor: _config?.getColor('selectedInfoChipColor', theme.primaryColor) ?? theme.primaryColor,
-                labelStyle: TextStyle(
-                  color: _config?.getColor('selectedInfoChipTextColor', theme.onPrimaryColor) ?? theme.onPrimaryColor,
-                ),
-                deleteIcon: widget.enableMultiSelect
-                  ? Icon(
-                      Icons.close,
-                      size: _getConfig('selectedInfoChipDeleteIconSize', 16.0),
-                      color: _config?.getColor('selectedInfoChipDeleteIconColor', theme.onPrimaryColor) ?? theme.onPrimaryColor,
-                    )
-                  : null,
+                backgroundColor: theme.colors.primary,
+                labelStyle: TextStyle(color: theme.colors.onPrimary),
+                deleteIcon: widget.enableMultiSelect ? Icon(Icons.close, size: 16, color: theme.colors.onPrimary) : null,
                 onDeleted: widget.enableMultiSelect
                   ? () => _handleVariantSelection(variant)
                   : null,

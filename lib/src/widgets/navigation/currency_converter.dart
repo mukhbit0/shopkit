@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/currency_model.dart';
-import '../../config/flexible_widget_config.dart';
+import '../../theme/theme.dart';
+// Theme tokens are available via ShopKitTheme extension
 
 /// A widget for currency conversion and display
 class CurrencyConverter extends StatefulWidget {
@@ -20,7 +21,6 @@ class CurrencyConverter extends StatefulWidget {
     this.borderRadius,
     this.padding,
     this.compact = false,
-  this.flexibleConfig,
   });
 
   /// Amount to convert
@@ -68,7 +68,6 @@ class CurrencyConverter extends StatefulWidget {
   /// Flexible configuration (currencyConverter.*) keys: backgroundColor, borderRadius,
   /// padding, compact, showDropdown, showSymbol, showCode, decimalPlaces, headerText,
   /// fromLabel, toLabel, iconColor, amountStyle, convertedAmountStyle
-  final FlexibleWidgetConfig? flexibleConfig;
 
   @override
   State<CurrencyConverter> createState() => _CurrencyConverterState();
@@ -94,31 +93,28 @@ class _CurrencyConverterState extends State<CurrencyConverter> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final currencyTheme = Theme.of(context).extension<ShopKitTheme>()?.currencyConverterTheme;
     final convertedAmount = _convertAmount();
-
-    T cfg<T>(String key, T fallback) {
-      final fc = widget.flexibleConfig;
-      if (fc != null) {
-        if (fc.has('currencyConverter.$key')) { try { return fc.get<T>('currencyConverter.$key', fallback); } catch (_) {} }
-        if (fc.has(key)) { try { return fc.get<T>(key, fallback); } catch (_) {} }
-      }
+    T pick<T>(T? themeVal, T? widgetVal, T fallback) {
+      if (themeVal != null) return themeVal;
+      if (widgetVal != null) return widgetVal;
       return fallback;
     }
 
-    final compact = cfg<bool>('compact', widget.compact);
-    final showDropdown = cfg<bool>('showDropdown', widget.showDropdown);
-    final showSymbol = cfg<bool>('showSymbol', widget.showSymbol);
-    final showCode = cfg<bool>('showCode', widget.showCode);
-    final decimalPlaces = cfg<int>('decimalPlaces', widget.decimalPlaces);
-    final padding = widget.padding ?? cfg<EdgeInsets>('padding', const EdgeInsets.all(12));
-    final bgColor = widget.backgroundColor ?? cfg<Color>('backgroundColor', theme.colorScheme.surface);
-    final borderRadius = widget.borderRadius ?? cfg<BorderRadius>('borderRadius', BorderRadius.circular(8));
-    final headerText = cfg<String>('headerText', 'Currency Converter');
-    final fromLabel = cfg<String>('fromLabel', 'From');
-    final toLabel = cfg<String>('toLabel', 'To');
-    final iconColor = cfg<Color>('iconColor', theme.colorScheme.primary);
-    final amountStyle = widget.style ?? cfg<TextStyle>('amountStyle', theme.textTheme.bodyMedium ?? const TextStyle());
-    final convertedStyle = cfg<TextStyle>('convertedAmountStyle', amountStyle.copyWith(fontWeight: FontWeight.bold, color: theme.colorScheme.primary));
+    final compact = pick<bool>(currencyTheme?.compact, widget.compact, widget.compact);
+    final showDropdown = pick<bool>(currencyTheme?.showDropdown, widget.showDropdown, widget.showDropdown);
+    final showSymbol = pick<bool>(currencyTheme?.showSymbol, widget.showSymbol, widget.showSymbol);
+    final showCode = pick<bool>(currencyTheme?.showCode, widget.showCode, widget.showCode);
+    final decimalPlaces = pick<int>(currencyTheme?.decimalPlaces, widget.decimalPlaces, widget.decimalPlaces);
+    final padding = widget.padding ?? currencyTheme?.padding ?? const EdgeInsets.all(12);
+    final bgColor = widget.backgroundColor ?? currencyTheme?.backgroundColor ?? theme.colorScheme.surface;
+    final borderRadius = widget.borderRadius ?? currencyTheme?.borderRadius ?? BorderRadius.circular(8);
+    final headerText = currencyTheme?.headerText ?? 'Currency Converter';
+    final fromLabel = currencyTheme?.fromLabel ?? 'From';
+    final toLabel = currencyTheme?.toLabel ?? 'To';
+    final iconColor = currencyTheme?.iconColor ?? theme.colorScheme.primary;
+    final amountStyle = widget.style ?? currencyTheme?.amountStyle ?? theme.textTheme.bodyMedium ?? const TextStyle();
+    final convertedStyle = currencyTheme?.convertedAmountStyle ?? amountStyle.copyWith(fontWeight: FontWeight.bold, color: theme.colorScheme.primary);
 
     _currentDecimalPlaces = decimalPlaces; // override for this build
 

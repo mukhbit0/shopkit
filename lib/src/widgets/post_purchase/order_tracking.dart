@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../config/flexible_widget_config.dart';
 import '../../models/order_model.dart';
+import '../../theme/theme.dart';
 
 /// A widget for displaying order tracking information
 class OrderTracking extends StatefulWidget {
@@ -15,8 +15,7 @@ class OrderTracking extends StatefulWidget {
     this.showOrderSummary = true,
     this.backgroundColor,
     this.borderRadius,
-    this.padding,
-  this.flexibleConfig,
+  this.padding,
   });
 
   /// Order to track
@@ -48,8 +47,7 @@ class OrderTracking extends StatefulWidget {
 
   /// Internal padding
   final EdgeInsets? padding;
-  /// Flexible configuration (orderTracking.* keys)
-  final FlexibleWidgetConfig? flexibleConfig;
+  /// Flexible configuration (orderTracking.* keys) - removed in favor of typed `OrderTrackingTheme`.
 
   @override
   State<OrderTracking> createState() => _OrderTrackingState();
@@ -58,25 +56,17 @@ class OrderTracking extends StatefulWidget {
 class _OrderTrackingState extends State<OrderTracking> {
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+  final theme = Theme.of(context);
+  final colorScheme = theme.colorScheme;
+  final orderTheme = Theme.of(context).extension<ShopKitTheme>()?.orderTrackingTheme;
 
-    T cfg<T>(String key, T fallback) {
-      final fc = widget.flexibleConfig;
-      if (fc != null) {
-        if (fc.has('orderTracking.$key')) { try { return fc.get<T>('orderTracking.$key', fallback); } catch (_) {} }
-        if (fc.has(key)) { try { return fc.get<T>(key, fallback); } catch (_) {} }
-      }
-      return fallback;
-    }
-
-    final showTracking = cfg<bool>('showTrackingNumber', widget.showTrackingNumber);
-    final showEta = cfg<bool>('showEstimatedDelivery', widget.showEstimatedDelivery);
-    final showTimeline = cfg<bool>('showTrackingUpdates', widget.showTrackingUpdates);
-    final showSummary = cfg<bool>('showOrderSummary', widget.showOrderSummary);
-    final resolvedPadding = cfg<EdgeInsets>('padding', widget.padding ?? const EdgeInsets.all(16));
-    final bgColor = cfg<Color>('backgroundColor', widget.backgroundColor ?? colorScheme.surface);
-    final radius = cfg<BorderRadius>('borderRadius', widget.borderRadius ?? BorderRadius.circular(12));
+  final showTracking = orderTheme?.headerText != null ? widget.showTrackingNumber : widget.showTrackingNumber;
+  final showEta = widget.showEstimatedDelivery;
+  final showTimeline = widget.showTrackingUpdates;
+  final showSummary = widget.showOrderSummary;
+  final resolvedPadding = widget.padding ?? orderTheme?.padding ?? const EdgeInsets.all(16);
+  final bgColor = widget.backgroundColor ?? orderTheme?.backgroundColor ?? colorScheme.surface;
+  final radius = widget.borderRadius ?? orderTheme?.borderRadius ?? BorderRadius.circular(12);
 
     return Container(
       padding: resolvedPadding,

@@ -104,17 +104,17 @@ class _ProductDiscoveryScreenState extends State<ProductDiscoveryScreen>
           
           // Style 1: Default Material 3
           _buildStyleSubheader('Default Material 3'),
-          _buildProductCardExample(_products[0].copyWith(id: '${_products[0].id}_default'), _getThemeConfig('default')),
+          _buildProductCardExample(_products[0].copyWith(id: '${_products[0].id}_default')),
           const SizedBox(height: 24),
           
           // Style 2: Elevated Card
           _buildStyleSubheader('Elevated Card'),
-          _buildProductCardExample(_products[1].copyWith(id: '${_products[1].id}_elevated'), _getThemeConfig('elevated')),
+          _buildProductCardExample(_products[1].copyWith(id: '${_products[1].id}_elevated')),
           const SizedBox(height: 24),
           
           // Style 3: Outlined Card
           _buildStyleSubheader('Outlined Card'),
-          _buildProductCardExample(_products[0].copyWith(id: '${_products[0].id}_outlined'), _getThemeConfig('outlined')),
+          _buildProductCardExample(_products[0].copyWith(id: '${_products[0].id}_outlined')),
         ],
       ),
     );
@@ -202,17 +202,19 @@ class _ProductDiscoveryScreenState extends State<ProductDiscoveryScreen>
     );
   }
 
-  Widget _buildProductCardExample(ProductModel product, FlexibleWidgetConfig config) {
+  // LEGACY: `config` was previously passed in by examples. Prefer
+  // `ShopKitTheme` and component ThemeExtensions in production.
+  Widget _buildProductCardExample(ProductModel product) {
     try {
       return ThemeAnimatedCard(
         themeStyle: widget.themeStyle,
         margin: EdgeInsets.zero,
-        child: ProductCard(
-          product: product,
-          onAddToCart: (item) => _showSnackBar('Added ${item.product.name} to cart'),
-          onTap: () => _showSnackBar('Product tapped'),
-          flexibleConfig: config,
-        ),
+            child: ProductCard(
+              product: product,
+              onAddToCart: (item) => _showSnackBar('Added ${item.product.name} to cart'),
+              onTap: () => _showSnackBar('Product tapped'),
+              // Legacy prop removed from modern ProductCard; ignore in examples.
+            ),
       );
     } catch (e) {
       return ThemeAnimatedCard(
@@ -390,7 +392,6 @@ class _ProductDiscoveryScreenState extends State<ProductDiscoveryScreen>
       return ProductGrid(
         products: uniqueProducts,
         onProductTap: (product, index) => _showSnackBar('Tapped ${product.name}'),
-        config: const FlexibleWidgetConfig(),
       );
     } catch (e) {
       return GridView.builder(
@@ -403,7 +404,6 @@ class _ProductDiscoveryScreenState extends State<ProductDiscoveryScreen>
         itemCount: _products.length,
         itemBuilder: (context, index) => _buildProductCardExample(
           _products[index].copyWith(id: '${_products[index].id}_fallback_grid_${columns}col_$index'),
-          _getThemeConfig('default'),
         ),
       );
     }
@@ -413,7 +413,6 @@ class _ProductDiscoveryScreenState extends State<ProductDiscoveryScreen>
     try {
       return ProductSearchBarAdvanced(
         onSearch: (query) => _showSnackBar('Searching: $query'),
-        config: const FlexibleWidgetConfig(),
       );
     } catch (e) {
       return TextField(
@@ -434,15 +433,6 @@ class _ProductDiscoveryScreenState extends State<ProductDiscoveryScreen>
       return AddToCartButton(
         product: _products[0],
         onAddToCart: (cartItem) => _showSnackBar('Added ${cartItem.product.name} (x${cartItem.quantity}) to cart'),
-        config: const FlexibleWidgetConfig(
-          config: {
-            'width': 200.0,
-            'height': 48.0,
-            'borderRadius': 8.0,
-            'enableAnimations': true,
-            'animationDuration': 300,
-          },
-        ),
       );
     } catch (e) {
       return ElevatedButton.icon(
@@ -459,6 +449,7 @@ class _ProductDiscoveryScreenState extends State<ProductDiscoveryScreen>
     }
   }
 
+  @deprecated
   FlexibleWidgetConfig _getThemeConfig(String style) {
     final baseConfig = <String, dynamic>{
       'borderRadius': widget.themeStyle == 'neumorphism' ? 16.0 : 8.0,
@@ -481,7 +472,12 @@ class _ProductDiscoveryScreenState extends State<ProductDiscoveryScreen>
         break;
     }
 
-    return FlexibleWidgetConfig(config: baseConfig);
+  // LEGACY: returns a FlexibleWidgetConfig used by examples. Replace with
+  // ShopKitTheme-driven configuration in production code.
+  @deprecated
+  FlexibleWidgetConfig legacy() => FlexibleWidgetConfig(config: baseConfig);
+
+  return legacy();
   }
 
   Widget _buildSectionHeader(String title) {

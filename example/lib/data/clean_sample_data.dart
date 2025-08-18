@@ -131,8 +131,7 @@ class SampleData {
   static CartModel get sampleCartItem => CartModel(
     id: 'cart1',
     items: [
-      CartItemModel(
-        id: 'item1', 
+      CartItemModel.createSafe(
         product: products[0],
         quantity: 2,
         pricePerItem: products[0].price,
@@ -152,29 +151,36 @@ class SampleData {
   );
 
   // Widget Configuration Presets
+  // Widget Configuration Presets (LEGACY)
+  // These presets use the legacy `FlexibleWidgetConfig` for the example
+  // playground. Prefer `ShopKitTheme` and component ThemeExtensions in
+  // production code. The presets are kept here for demonstration only.
+  @deprecated
   static FlexibleWidgetConfig get materialConfig => const FlexibleWidgetConfig(
-    config: {
-      'borderRadius': 8.0,
-      'elevation': 2.0,
-      'padding': 16.0,
-    },
-  );
+        config: {
+          'borderRadius': 8.0,
+          'elevation': 2.0,
+          'padding': 16.0,
+        },
+      );
 
+  @deprecated
   static FlexibleWidgetConfig get neumorphicConfig => FlexibleWidgetConfig(
-    config: {
-      'borderRadius': 16.0,
-      'elevation': 0.0,
-      'shadowColor': Colors.grey.shade300,
-      'padding': 20.0,
-    },
-  );
+        config: {
+          'borderRadius': 16.0,
+          'elevation': 0.0,
+          'shadowColor': Colors.grey.shade300,
+          'padding': 20.0,
+        },
+      );
 
+  @deprecated
   static FlexibleWidgetConfig get glassmorphicConfig => FlexibleWidgetConfig(
-    config: {
-      'borderRadius': 20.0,
-      'elevation': 0.0,
-      'backgroundColor': Colors.white.withValues(alpha: 0.1),
-      'padding': 24.0,
-    },
-  );
+        config: {
+          'borderRadius': 20.0,
+          'elevation': 0.0,
+          'backgroundColor': Colors.white.withValues(alpha: 0.1),
+          'padding': 24.0,
+        },
+      );
 }

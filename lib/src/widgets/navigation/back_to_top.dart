@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../config/flexible_widget_config.dart';
+import '../../theme/theme.dart';
+import '../../theme/components/back_to_top_theme.dart';
 
 /// A widget that shows a "back to top" button when scrolling
 class BackToTop extends StatefulWidget {
@@ -20,8 +21,7 @@ class BackToTop extends StatefulWidget {
     this.onPressed,
     this.showProgressIndicator = false,
     this.curve = Curves.easeOut,
-    this.child,
-    this.config,
+  this.child,
     this.buttonBuilder,
   });
 
@@ -41,7 +41,7 @@ class BackToTop extends StatefulWidget {
   final bool showProgressIndicator;
   final Curve curve;
   final Widget? child;
-  final FlexibleWidgetConfig? config;
+  // No legacy FlexibleWidgetConfig - prefer themed values in `ShopKitTheme`.
   final Widget Function(BuildContext, VoidCallback, double, bool)? buttonBuilder;
 
   @override
@@ -55,7 +55,7 @@ class _BackToTopState extends State<BackToTop> with TickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
   late Animation<double> _fadeAnimation;
-  late FlexibleWidgetConfig _config;
+  BackToTopTheme? _theme;
 
   @override
   void initState() {
@@ -63,12 +63,7 @@ class _BackToTopState extends State<BackToTop> with TickerProviderStateMixin {
     _animationController = AnimationController(duration: widget.animationDuration, vsync: this);
     _scaleAnimation = Tween(begin: 0.0, end: 1.0).animate(CurvedAnimation(parent: _animationController, curve: widget.curve));
     _fadeAnimation = Tween(begin: 0.0, end: 1.0).animate(CurvedAnimation(parent: _animationController, curve: widget.curve));
-    _config = widget.config ?? FlexibleWidgetConfig.forWidget('back_to_top', context: context, overrides: {
-      'showAfterOffset': widget.showAfterOffset,
-      'buttonSize': widget.buttonSize,
-      'iconSize': widget.iconSize,
-      'tooltip': widget.tooltip,
-    });
+  _theme = Theme.of(context).extension<ShopKitTheme>()?.backToTopTheme;
     WidgetsBinding.instance.addPostFrameCallback((_) => _attachScrollController());
   }
 
@@ -101,7 +96,7 @@ class _BackToTopState extends State<BackToTop> with TickerProviderStateMixin {
     final offset = _scrollController!.offset;
     final max = _scrollController!.position.maxScrollExtent;
     final progress = max > 0 ? (offset / max).clamp(0.0, 1.0) : 0.0;
-    final threshold = _config.get<double>('showAfterOffset', widget.showAfterOffset);
+  final threshold = _theme?.showAfterOffset ?? widget.showAfterOffset;
     final shouldShow = offset > threshold;
     setState(() {
       _scrollProgress = progress;
@@ -147,14 +142,14 @@ class _BackToTopState extends State<BackToTop> with TickerProviderStateMixin {
         child: Opacity(
           opacity: _fadeAnimation.value,
           child: FloatingActionButton(
-            onPressed: _scrollToTop,
-            backgroundColor: widget.backgroundColor ?? _config.getColor('backgroundColor', theme.colorScheme.primary),
-            foregroundColor: widget.foregroundColor ?? _config.getColor('foregroundColor', theme.colorScheme.onPrimary),
-            tooltip: _config.get<String>('tooltip', widget.tooltip),
-            mini: _config.get<double>('buttonSize', widget.buttonSize) < 56,
-            child: widget.showProgressIndicator
-                ? _buildProgressIndicator(theme)
-                : Icon(widget.icon, size: _config.get<double>('iconSize', widget.iconSize)),
+      onPressed: _scrollToTop,
+      backgroundColor: _theme?.backgroundColor ?? widget.backgroundColor ?? theme.colorScheme.primary,
+      foregroundColor: _theme?.foregroundColor ?? widget.foregroundColor ?? theme.colorScheme.onPrimary,
+      tooltip: _theme?.tooltip ?? widget.tooltip,
+      mini: (_theme?.buttonSize ?? widget.buttonSize) < 56,
+      child: widget.showProgressIndicator
+        ? _buildProgressIndicator(theme)
+        : Icon(widget.icon, size: _theme?.iconSize ?? widget.iconSize),
           ),
         ),
       ),
@@ -165,16 +160,16 @@ class _BackToTopState extends State<BackToTop> with TickerProviderStateMixin {
         alignment: Alignment.center,
         children: [
           SizedBox(
-            width: _config.get<double>('iconSize', widget.iconSize) + 8,
-            height: _config.get<double>('iconSize', widget.iconSize) + 8,
+            width: (_theme?.iconSize ?? widget.iconSize) + 8,
+            height: (_theme?.iconSize ?? widget.iconSize) + 8,
             child: CircularProgressIndicator(
               value: _scrollProgress,
               strokeWidth: 2,
-              backgroundColor: (widget.foregroundColor ?? theme.colorScheme.onPrimary).withValues(alpha: 0.3),
-              valueColor: AlwaysStoppedAnimation<Color>(widget.foregroundColor ?? theme.colorScheme.onPrimary),
+              backgroundColor: (_theme?.foregroundColor ?? widget.foregroundColor ?? theme.colorScheme.onPrimary).withValues(alpha: 0.3),
+              valueColor: AlwaysStoppedAnimation<Color>(_theme?.foregroundColor ?? widget.foregroundColor ?? theme.colorScheme.onPrimary),
             ),
           ),
-          Icon(widget.icon, size: _config.get<double>('iconSize', widget.iconSize) * 0.7),
+          Icon(widget.icon, size: (_theme?.iconSize ?? widget.iconSize) * 0.7),
         ],
       );
 
@@ -248,8 +243,7 @@ class AdvancedBackToTop extends StatefulWidget {
     this.vibrationEnabled = false,
     this.customBuilder,
     this.onPressed,
-    this.child,
-    this.config,
+  this.child,
   });
 
   /// Scroll controller to monitor
@@ -295,7 +289,7 @@ class AdvancedBackToTop extends StatefulWidget {
 
   /// Child widget to wrap
   final Widget? child;
-  final FlexibleWidgetConfig? config;
+  // Legacy FlexibleWidgetConfig removed; prefer ShopKitTheme for styling
 
   @override
   State<AdvancedBackToTop> createState() => _AdvancedBackToTopState();
@@ -311,7 +305,7 @@ class _AdvancedBackToTopState extends State<AdvancedBackToTop> with TickerProvid
   late Animation<double> _slideAnimation;
   late Animation<double> _pulseAnimation;
 
-  late FlexibleWidgetConfig _config;
+  BackToTopTheme? _theme;
 
   @override
   void initState() {
@@ -343,12 +337,7 @@ class _AdvancedBackToTopState extends State<AdvancedBackToTop> with TickerProvid
       curve: Curves.easeInOut,
     ));
 
-    _config = widget.config ?? FlexibleWidgetConfig.forWidget('advanced_back_to_top', context: context, overrides: {
-      'showAfterOffset': widget.showAfterOffset,
-      'showLabel': widget.showLabel,
-      'label': widget.label,
-      'showProgress': widget.showProgress,
-    });
+  _theme = Theme.of(context).extension<ShopKitTheme>()?.backToTopTheme;
     WidgetsBinding.instance.addPostFrameCallback((_) => _attachScrollController());
   }
 
@@ -381,7 +370,7 @@ class _AdvancedBackToTopState extends State<AdvancedBackToTop> with TickerProvid
     final maxScroll = _scrollController!.position.maxScrollExtent;
 
     final progress = maxScroll > 0 ? (offset / maxScroll).clamp(0.0, 1.0) : 0.0;
-  final threshold = _config.get<double>('showAfterOffset', widget.showAfterOffset);
+  final threshold = _theme?.showAfterOffset ?? widget.showAfterOffset;
   final shouldShow = offset > threshold;
 
     setState(() {
@@ -489,31 +478,31 @@ class _AdvancedBackToTopState extends State<AdvancedBackToTop> with TickerProvid
           onPressed: _scrollToTop,
           icon: Icon(
             Icons.keyboard_arrow_up,
-            color: _config.getColor('iconColor', theme.colorScheme.onPrimary),
+            color: _theme?.iconColor ?? theme.colorScheme.onPrimary,
           ),
-          label: _config.get<bool>('showLabel', widget.showLabel) ? Text(_config.get<String>('label', widget.label)) : const SizedBox.shrink(),
-          backgroundColor: _config.getColor('backgroundColor', theme.colorScheme.primary),
+          label: (_theme?.showLabel ?? widget.showLabel) ? Text(_theme?.label ?? widget.label) : const SizedBox.shrink(),
+          backgroundColor: _theme?.backgroundColor ?? theme.colorScheme.primary,
         );
 
       case BackToTopStyle.minimal:
         return Container(
           decoration: BoxDecoration(
-            color: _config.getColor('minimalBackgroundColor', theme.colorScheme.surface.withValues(alpha: 0.9)),
+            color: _theme?.minimalBackgroundColor ?? theme.colorScheme.surface.withValues(alpha: 0.9),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
               color: theme.colorScheme.outline.withValues(alpha: 0.2),
             ),
           ),
-          child: IconButton(
+            child: IconButton(
             onPressed: _scrollToTop,
-            icon: const Icon(Icons.keyboard_arrow_up),
-            tooltip: 'Back to top',
+            icon: Icon(Icons.keyboard_arrow_up, color: _theme?.iconColor),
+            tooltip: _theme?.tooltip ?? 'Back to top',
           ),
         );
 
       case BackToTopStyle.pill:
         return Material(
-          color: _config.getColor('pillBackgroundColor', theme.colorScheme.primary),
+          color: _theme?.pillBackgroundColor ?? theme.colorScheme.primary,
           borderRadius: BorderRadius.circular(25),
           elevation: 4,
           child: InkWell(
@@ -524,10 +513,10 @@ class _AdvancedBackToTopState extends State<AdvancedBackToTop> with TickerProvid
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.keyboard_arrow_up, color: _config.getColor('pillIconColor', theme.colorScheme.onPrimary)),
-                  if (_config.get<bool>('showLabel', widget.showLabel)) ...[
+                  Icon(Icons.keyboard_arrow_up, color: _theme?.pillIconColor ?? theme.colorScheme.onPrimary),
+                  if (_theme?.showLabel ?? widget.showLabel) ...[
                     const SizedBox(width: 8),
-                    Text(_config.get<String>('label', widget.label), style: TextStyle(color: _config.getColor('pillLabelColor', theme.colorScheme.onPrimary), fontWeight: FontWeight.w500)),
+                    Text(_theme?.label ?? widget.label, style: TextStyle(color: _theme?.pillLabelColor ?? theme.colorScheme.onPrimary, fontWeight: FontWeight.w500)),
                   ],
                 ],
               ),

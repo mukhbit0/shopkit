@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/popup_model.dart';
-import '../../config/flexible_widget_config.dart';
+import '../../theme/theme.dart';
 
 /// A widget that displays an exit intent popup when user attempts to leave
 class ExitIntentPopup extends StatefulWidget {
@@ -14,7 +14,6 @@ class ExitIntentPopup extends StatefulWidget {
     this.blurBackground = true,
     this.animationDuration = const Duration(milliseconds: 300),
     this.child,
-  this.flexibleConfig,
   });
 
   /// Popup configuration
@@ -40,13 +39,6 @@ class ExitIntentPopup extends StatefulWidget {
 
   /// Child widget to wrap (typically the main app content)
   final Widget? child;
-
-  /// Universal flexible configuration (exitPopup.*) keys:
-  ///  overlayColor (Color), backgroundColor (Color), borderRadius (double/BorderRadius),
-  ///  padding (EdgeInsets), maxWidth (double), showCloseButton (bool),
-  ///  primaryButtonLabel, secondaryButtonLabel, autoCloseMs (int), enableScale (bool),
-  ///  enableFade (bool), enableSlide (bool), elevation (double)
-  final FlexibleWidgetConfig? flexibleConfig;
 
   @override
   State<ExitIntentPopup> createState() => _ExitIntentPopupState();
@@ -126,21 +118,15 @@ class _ExitIntentPopupState extends State<ExitIntentPopup>
 
   @override
   Widget build(BuildContext context) {
-    T cfg<T>(String key, T fallback) {
-      final fc = widget.flexibleConfig;
-      if (fc != null) {
-        if (fc.has('exitPopup.$key')) { try { return fc.get<T>('exitPopup.$key', fallback); } catch (_) {} }
-        if (fc.has(key)) { try { return fc.get<T>(key, fallback); } catch (_) {} }
-      }
-      return fallback;
-    }
-
-    final overlayColor = cfg<Color>('overlayColor', Colors.black.withValues(alpha: 0.5));
-    final showClose = cfg<bool>('showCloseButton', true);
-    final enableScale = cfg<bool>('enableScale', true);
-    final enableFade = cfg<bool>('enableFade', true);
-    final enableSlide = cfg<bool>('enableSlide', true);
-    final autoCloseMs = cfg<int>('autoCloseMs', widget.autoCloseAfter?.inMilliseconds ?? -1);
+    final theme = Theme.of(context);
+  final shopKitTheme = theme.extension<ShopKitTheme>();
+  final popupTheme = shopKitTheme?.exitIntentPopupTheme;
+  // Theme-driven fallbacks for popup visuals. Prefer ExitIntentPopupTheme when present.
+  final overlayColor = popupTheme?.overlayColor ?? Colors.black.withValues(alpha: 0.5);
+  final showClose = popupTheme?.showCloseButton ?? true;
+  final enableScale = popupTheme?.enableScale ?? true;
+  final enableSlide = popupTheme?.enableSlide ?? true;
+  final autoCloseMs = widget.autoCloseAfter?.inMilliseconds ?? -1;
     if (autoCloseMs > 0) {
       Future.delayed(Duration(milliseconds: autoCloseMs), () { if (mounted && _isVisible) _hidePopup(); });
     }
@@ -159,17 +145,13 @@ class _ExitIntentPopupState extends State<ExitIntentPopup>
                     child: Builder(
                       builder: (context) {
                         Widget content = _buildPopupContent(showClose: showClose);
-                        if (enableSlide) {
-                          content = SlideTransition(position: _slideAnimation, child: content);
-                        }
-                        if (enableScale) {
-                          content = Transform.scale(scale: _scaleAnimation.value, child: content);
-                        }
+                        if (enableSlide) content = SlideTransition(position: _slideAnimation, child: content);
+                        if (enableScale) content = Transform.scale(scale: _scaleAnimation.value, child: content);
                         return content;
                       },
                     ),
                   );
-                  return enableFade ? Opacity(opacity: _fadeAnimation.value, child: Container(color: overlayColor, child: core)) : Container(color: overlayColor, child: core);
+                  return Opacity(opacity: _fadeAnimation.value, child: Container(color: overlayColor, child: core));
                 },
               ),
             ),
@@ -180,22 +162,15 @@ class _ExitIntentPopupState extends State<ExitIntentPopup>
 
   Widget _buildPopupContent({bool showClose = true}) {
     final theme = Theme.of(context);
-    T cfg<T>(String key, T fallback) {
-      final fc = widget.flexibleConfig;
-      if (fc != null) {
-        if (fc.has('exitPopup.$key')) { try { return fc.get<T>('exitPopup.$key', fallback); } catch (_) {} }
-        if (fc.has(key)) { try { return fc.get<T>(key, fallback); } catch (_) {} }
-      }
-      return fallback;
-    }
-
-    final backgroundColor = cfg<Color>('backgroundColor', _parseColor(widget.popup.backgroundColor) ?? theme.colorScheme.surface);
-    final borderRadius = cfg<BorderRadius>('borderRadius', BorderRadius.circular(16));
-    final padding = cfg<EdgeInsets>('padding', const EdgeInsets.all(24));
-    final maxWidth = cfg<double>('maxWidth', 500);
-    final elevation = cfg<double>('elevation', 20);
-    final primaryLabel = cfg<String>('primaryButtonLabel', widget.popup.buttonText ?? 'Claim Offer');
-    final secondaryLabel = cfg<String>('secondaryButtonLabel', widget.popup.secondaryButtonText ?? '');
+    final shopKitTheme = theme.extension<ShopKitTheme>();
+    final popupTheme = shopKitTheme?.exitIntentPopupTheme;
+    final backgroundColor = _parseColor(widget.popup.backgroundColor) ?? popupTheme?.backgroundColor ?? theme.colorScheme.surface;
+    final borderRadius = popupTheme?.borderRadius ?? BorderRadius.circular(16);
+    final padding = popupTheme?.padding ?? const EdgeInsets.all(24);
+    final maxWidth = popupTheme?.maxWidth ?? 500.0;
+    final elevation = popupTheme?.elevation ?? 20.0;
+    final primaryLabel = widget.popup.buttonText ?? 'Claim Offer';
+    final secondaryLabel = widget.popup.secondaryButtonText ?? '';
 
     return Container(
       margin: const EdgeInsets.all(20),

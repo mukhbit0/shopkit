@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../models/address_model.dart';
 import '../../models/cart_model.dart';
-import '../../config/flexible_widget_config.dart';
+import '../../theme/theme.dart';
 
 /// A widget for calculating shipping costs
 class ShippingCalculator extends StatefulWidget {
@@ -17,7 +17,6 @@ class ShippingCalculator extends StatefulWidget {
     this.backgroundColor,
     this.borderRadius,
     this.padding,
-  this.flexibleConfig,
   });
 
   /// Callback when shipping is calculated
@@ -51,7 +50,7 @@ class ShippingCalculator extends StatefulWidget {
   ///  backgroundColor, borderRadius, padding, showAddressForm, showShippingMethods,
   ///  calculateButtonLabel, headerText, addressHeaderText, methodsHeaderText,
   ///  showEstimatedDelivery, loadingIndicatorSize (double), enableAnimations
-  final FlexibleWidgetConfig? flexibleConfig;
+  // Legacy flexible configuration removed. Use ShopKitTheme.shippingCalculatorTheme instead.
 
   @override
   State<ShippingCalculator> createState() => _ShippingCalculatorState();
@@ -96,25 +95,19 @@ class _ShippingCalculatorState extends State<ShippingCalculator> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    T cfg<T>(String key, T fallback) {
-      final fc = widget.flexibleConfig;
-      if (fc != null) {
-        if (fc.has('shippingCalc.$key')) { try { return fc.get<T>('shippingCalc.$key', fallback); } catch (_) {} }
-        if (fc.has(key)) { try { return fc.get<T>(key, fallback); } catch (_) {} }
-      }
-      return fallback;
-    }
+  final shopKitTheme = Theme.of(context).extension<ShopKitTheme>();
+  final calcTheme = shopKitTheme?.shippingCalculatorTheme;
 
-    final padding = widget.padding ?? cfg<EdgeInsets>('padding', const EdgeInsets.all(16));
-    final bgColor = widget.backgroundColor ?? cfg<Color>('backgroundColor', colorScheme.surface);
-    final borderRadius = widget.borderRadius ?? cfg<BorderRadius>('borderRadius', BorderRadius.circular(12));
-    final showAddressForm = cfg<bool>('showAddressForm', widget.showAddressForm);
-    final showShippingMethods = cfg<bool>('showShippingMethods', widget.showShippingMethods);
-    final calcLabel = cfg<String>('calculateButtonLabel', 'Calculate Shipping');
-    final headerText = cfg<String>('headerText', 'Shipping Calculator');
-    final addressHeaderText = cfg<String>('addressHeaderText', 'Shipping Address');
-    final methodsHeaderText = cfg<String>('methodsHeaderText', 'Shipping Methods');
-    final loadingSize = cfg<double>('loadingIndicatorSize', 20);
+  final padding = widget.padding ?? calcTheme?.padding ?? const EdgeInsets.all(16);
+  final bgColor = widget.backgroundColor ?? calcTheme?.backgroundColor ?? colorScheme.surface;
+  final borderRadius = widget.borderRadius ?? calcTheme?.borderRadius ?? BorderRadius.circular(12);
+  final showAddressForm = widget.showAddressForm; // Per-instance control preserved
+  final showShippingMethods = widget.showShippingMethods;
+  final calcLabel = 'Calculate Shipping';
+  final headerText = calcTheme?.headerTextStyle != null ? 'Shipping Calculator' : 'Shipping Calculator';
+  final addressHeaderText = calcTheme?.addressHeaderTextStyle != null ? 'Shipping Address' : 'Shipping Address';
+  final methodsHeaderText = calcTheme?.methodsHeaderTextStyle != null ? 'Shipping Methods' : 'Shipping Methods';
+  final loadingSize = calcTheme?.loadingIndicatorSize ?? 20.0;
 
     return Container(
       padding: padding,
@@ -129,18 +122,21 @@ class _ShippingCalculatorState extends State<ShippingCalculator> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header
-            Text(
-              headerText,
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
+            if (calcTheme?.headerTextStyle != null)
+              Text('Shipping Calculator', style: calcTheme!.headerTextStyle)
+            else
+              Text(
+                headerText,
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ),
 
             const SizedBox(height: 16),
 
             // Address form
             if (showAddressForm) ...[
-              _buildAddressForm(theme, addressHeaderText),
+              _buildAddressForm(theme, calcTheme?.addressHeaderTextStyle != null ? 'Shipping Address' : addressHeaderText),
               const SizedBox(height: 16),
             ],
 
@@ -148,6 +144,7 @@ class _ShippingCalculatorState extends State<ShippingCalculator> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
+                style: calcTheme?.calculateButtonStyle,
                 onPressed: _isCalculating ? null : _calculateShipping,
                 child: _isCalculating
                     ? SizedBox(
@@ -192,7 +189,7 @@ class _ShippingCalculatorState extends State<ShippingCalculator> {
             // Shipping methods
             if (showShippingMethods && _availableMethods.isNotEmpty) ...[
               const SizedBox(height: 16),
-              _buildShippingMethods(theme, methodsHeaderText),
+              _buildShippingMethods(theme, calcTheme?.methodsHeaderTextStyle != null ? 'Shipping Methods' : methodsHeaderText),
             ],
           ],
         ),
@@ -333,9 +330,10 @@ class _ShippingCalculatorState extends State<ShippingCalculator> {
 
   Widget _buildShippingMethodItem(ShippingMethod method, ThemeData theme) {
     final isSelected = _selectedMethod?.id == method.id;
+  final calcTheme = Theme.of(context).extension<ShopKitTheme>()?.shippingCalculatorTheme;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: calcTheme?.methodItemPadding ?? const EdgeInsets.only(bottom: 8),
       child: InkWell(
         onTap: () {
           setState(() {
@@ -343,19 +341,19 @@ class _ShippingCalculatorState extends State<ShippingCalculator> {
           });
           _onShippingMethodSelected(method);
         },
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: calcTheme?.methodItemBorderRadius ?? BorderRadius.circular(8),
         child: Container(
-          padding: const EdgeInsets.all(12),
+          padding: calcTheme?.methodItemPadding ?? const EdgeInsets.all(12),
           decoration: BoxDecoration(
             border: Border.all(
               color: isSelected
-                  ? theme.colorScheme.primary
+                  ? (calcTheme?.methodSelectedBorderColor ?? theme.colorScheme.primary)
                   : theme.colorScheme.outline.withValues(alpha: 0.3),
               width: isSelected ? 2 : 1,
             ),
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: calcTheme?.methodItemBorderRadius ?? BorderRadius.circular(8),
             color: isSelected
-                ? theme.colorScheme.primary.withValues(alpha: 0.1)
+                ? (calcTheme?.methodSelectedBackgroundColor ?? theme.colorScheme.primary.withValues(alpha: 0.1))
                 : null,
           ),
           child: Row(

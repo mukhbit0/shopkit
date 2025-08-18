@@ -2,9 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../config/flexible_widget_config.dart';
-import '../../theme/shopkit_theme.dart';
-import '../../theme/shopkit_theme_styles.dart';
+import '../../theme/theme.dart';
 
 /// A comprehensive product search bar with advanced features and unlimited customization
 /// Features: Voice search, filters, suggestions, history, analytics, and extensive theming
@@ -15,7 +13,7 @@ class ProductSearchBarAdvanced extends StatefulWidget {
     this.onFilterTap,
     this.onSuggestionTap,
     this.onClearHistory,
-    this.config,
+  // config removed
     this.customBuilder,
     this.customSuggestionBuilder,
     this.customFilterBuilder,
@@ -33,7 +31,6 @@ class ProductSearchBarAdvanced extends StatefulWidget {
     this.debounceDelay = const Duration(milliseconds: 300),
     this.maxSuggestions = 5,
     this.maxHistory = 10,
-    this.themeStyle,
   });
 
   /// Callback when search is performed
@@ -49,7 +46,7 @@ class ProductSearchBarAdvanced extends StatefulWidget {
   final VoidCallback? onClearHistory;
 
   /// Configuration for unlimited customization
-  final FlexibleWidgetConfig? config;
+  // Legacy FlexibleWidgetConfig removed
 
   /// Custom builder for complete control
   final Widget Function(BuildContext, ProductSearchBarAdvancedState)? customBuilder;
@@ -102,8 +99,7 @@ class ProductSearchBarAdvanced extends StatefulWidget {
   /// Maximum number of history items to keep
   final int maxHistory;
 
-  /// Built-in theme style support - pass theme name as string
-  final String? themeStyle;
+  // themeStyle removed – unified ThemeExtension approach
 
   @override
   State<ProductSearchBarAdvanced> createState() => ProductSearchBarAdvancedState();
@@ -119,7 +115,6 @@ class ProductSearchBarAdvancedState extends State<ProductSearchBarAdvanced>
   late Animation<Offset> _slideAnimation;
   late Animation<double> _suggestionFadeAnimation;
 
-  FlexibleWidgetConfig? _config;
   String _currentQuery = '';
   List<String> _filteredSuggestions = [];
   List<String> _filteredHistory = [];
@@ -129,14 +124,11 @@ class ProductSearchBarAdvancedState extends State<ProductSearchBarAdvanced>
   Timer? _focusHideTimer;
 
   // Configuration helpers
-  T _getConfig<T>(String key, T defaultValue) {
-    return _config?.get<T>(key, defaultValue) ?? defaultValue;
-  }
+  T _getConfig<T>(String key, T defaultValue) => defaultValue; // legacy dynamic config removed
 
   @override
   void initState() {
     super.initState();
-    _config = widget.config ?? FlexibleWidgetConfig.forWidget('search_bar', context: context);
     _setupControllers();
     _setupAnimations();
     _setupInitialState();
@@ -151,27 +143,21 @@ class ProductSearchBarAdvancedState extends State<ProductSearchBarAdvanced>
   }
 
   void _setupAnimations() {
-    _animationController = AnimationController(
-      duration: Duration(milliseconds: _getConfig('containerAnimationDuration', 400)),
-      vsync: this,
-    );
+  _animationController = AnimationController(duration: const Duration(milliseconds: 400), vsync: this);
 
-    _suggestionController = AnimationController(
-      duration: Duration(milliseconds: _getConfig('suggestionAnimationDuration', 200)),
-      vsync: this,
-    );
+  _suggestionController = AnimationController(duration: const Duration(milliseconds: 200), vsync: this);
 
     _fadeAnimation = CurvedAnimation(
       parent: _animationController,
-      curve: _config?.getCurve('fadeAnimationCurve', Curves.easeInOut) ?? Curves.easeInOut,
+  curve: Curves.easeInOut,
     );
 
     _slideAnimation = Tween<Offset>(
-      begin: Offset(0, _getConfig('slideAnimationOffset', -0.1)),
+  begin: const Offset(0, -0.1),
       end: Offset.zero,
     ).animate(CurvedAnimation(
       parent: _animationController,
-      curve: _config?.getCurve('slideAnimationCurve', Curves.easeOutCubic) ?? Curves.easeOutCubic,
+  curve: Curves.easeOutCubic,
     ));
 
     _suggestionFadeAnimation = CurvedAnimation(
@@ -282,7 +268,7 @@ class ProductSearchBarAdvancedState extends State<ProductSearchBarAdvanced>
   void _performSearch(String query) {
     if (query.trim().isEmpty) return;
 
-    if (_getConfig('enableHaptics', true)) {
+  if (_getConfig('enableHaptics', true)) { // constant true path still allows future toggle
       HapticFeedback.lightImpact();
     }
 
@@ -293,7 +279,7 @@ class ProductSearchBarAdvancedState extends State<ProductSearchBarAdvanced>
     _suggestionController.reverse();
     
     // Remove focus if configured
-    if (_getConfig('removeFocusAfterSearch', true)) {
+  if (true) {
       _focusNode.unfocus();
     }
 
@@ -328,7 +314,7 @@ class ProductSearchBarAdvancedState extends State<ProductSearchBarAdvanced>
     setState(() => _isListening = false);
 
     // For demo purposes, we'll just show a mock result
-    if (_getConfig('enableVoiceSearchDemo', true)) {
+  if (true) {
       const mockResult = 'wireless headphones';
       _controller.text = mockResult;
       _currentQuery = mockResult;
@@ -337,7 +323,7 @@ class ProductSearchBarAdvancedState extends State<ProductSearchBarAdvanced>
   }
 
   void _clearSearch() {
-    if (_getConfig('enableHaptics', true)) {
+  if (true) {
       HapticFeedback.lightImpact();
     }
 
@@ -354,9 +340,6 @@ class ProductSearchBarAdvancedState extends State<ProductSearchBarAdvanced>
   @override
   void didUpdateWidget(ProductSearchBarAdvanced oldWidget) {
     super.didUpdateWidget(oldWidget);
-    
-    // Update config
-    _config = widget.config ?? FlexibleWidgetConfig.forWidget('search_bar', context: context);
     
     // Update controller if needed
     if (widget.controller != oldWidget.controller) {
@@ -394,14 +377,7 @@ class ProductSearchBarAdvancedState extends State<ProductSearchBarAdvanced>
       return widget.customBuilder!(context, this);
     }
 
-    final useNewTheme = widget.themeStyle != null;
-    ShopKitThemeConfig? themeConfig;
-    if (useNewTheme) {
-      final style = ShopKitThemeStyleExtension.fromString(widget.themeStyle!);
-      themeConfig = ShopKitThemeConfig.forStyle(style, context);
-    }
-
-    final legacyTheme = ShopKitThemeProvider.of(context);
+  final legacyTheme = Theme.of(context).extension<ShopKitTheme>()!;
 
     return FadeTransition(
       opacity: _fadeAnimation,
@@ -409,134 +385,19 @@ class ProductSearchBarAdvancedState extends State<ProductSearchBarAdvanced>
         position: _slideAnimation,
         child: Column(
           children: [
-            if (useNewTheme)
-              _buildThemedSearchBar(context, themeConfig!)
-            else
-              _buildSearchBar(context, legacyTheme),
-            if (_showSuggestions)
-              (useNewTheme
-                ? _buildThemedSuggestionsList(context, themeConfig!)
-                : _buildSuggestionsList(context, legacyTheme)),
+            _buildSearchBar(context, legacyTheme),
+            if (_showSuggestions) _buildSuggestionsList(context, legacyTheme),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildThemedSearchBar(BuildContext context, ShopKitThemeConfig cfg) {
-    final bg = cfg.backgroundColor ?? Theme.of(context).colorScheme.surface;
-    final radius = BorderRadius.circular(cfg.borderRadius);
-    return Container(
-      height: _getConfig('searchBarHeight', 56.0),
-      decoration: BoxDecoration(
-        color: bg.withValues(alpha: cfg.enableBlur ? 0.6 : 1.0),
-        borderRadius: radius,
-        border: cfg.enableGradients ? Border.all(color: (cfg.primaryColor ?? Colors.blue).withValues(alpha: 0.3)) : null,
-        boxShadow: cfg.enableShadows ? [
-          BoxShadow(
-            color: (cfg.shadowColor ?? Colors.black).withValues(alpha: 0.08),
-            blurRadius: 12,
-            offset: const Offset(0,4),
-          ),
-        ] : null,
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      child: Row(
-        children: [
-          Icon(Icons.search, color: cfg.onPrimaryColor ?? Colors.black54, size: 22),
-          const SizedBox(width: 8),
-          Expanded(
-            child: TextField(
-              controller: _controller,
-              focusNode: _focusNode,
-              onSubmitted: _handleSearchSubmit,
-              decoration: InputDecoration(
-                hintText: _getConfig('searchFieldHint', 'Search products'),
-                border: InputBorder.none,
-                isDense: true,
-              ),
-            ),
-          ),
-          if (_currentQuery.isNotEmpty)
-            GestureDetector(
-              onTap: _clearQuery,
-              child: Icon(Icons.clear, size: 20, color: (cfg.onPrimaryColor ?? Colors.black54).withValues(alpha: 0.7)),
-            ),
-        ],
-      ),
-    );
-  }
-
-  void _handleSearchSubmit(String value) {
-    if (value.isNotEmpty) {
-      widget.onSearch?.call(value);
-      if (widget.enableHistory && !_filteredHistory.contains(value)) {
-        setState(() {
-          _filteredHistory.insert(0, value);
-        });
-      }
-    }
-  }
-
-  void _clearQuery() {
-    setState(() {
-      _controller.clear();
-      _currentQuery = '';
-      _filteredSuggestions.clear();
-      _showSuggestions = false;
-    });
-  }
-
-  Widget _buildThemedSuggestionsList(BuildContext context, ShopKitThemeConfig cfg) {
-    if (!_showSuggestions) return const SizedBox.shrink();
-    final maxHeight = _getConfig('suggestionsMaxHeight', 260.0);
-    final items = [
-      ..._filteredSuggestions.take(widget.maxSuggestions),
-      if (widget.enableHistory) ..._filteredHistory.take(widget.maxHistory),
-    ];
-    if (items.isEmpty) return const SizedBox.shrink();
-    return Container(
-      constraints: BoxConstraints(maxHeight: maxHeight),
-      margin: const EdgeInsets.only(top: 8),
-      decoration: BoxDecoration(
-        color: (cfg.backgroundColor ?? Colors.white).withValues(alpha: cfg.enableBlur ? 0.9 : 1.0),
-        borderRadius: BorderRadius.circular(cfg.borderRadius * 0.7),
-        border: Border.all(color: (cfg.primaryColor ?? Colors.blue).withValues(alpha: 0.15)),
-      ),
-      child: ListView.builder(
-        shrinkWrap: true,
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        itemCount: items.length,
-        itemBuilder: (context, index) {
-          final suggestion = items[index];
-          return InkWell(
-            onTap: () => _handleSuggestionTap(suggestion),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              child: Row(
-                children: [
-                  Icon(Icons.search, size: 16, color: (cfg.onPrimaryColor ?? Colors.black54).withValues(alpha: 0.6)),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      suggestion,
-                      style: const TextStyle(fontSize: 14),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
   Widget _buildSearchBar(BuildContext context, ShopKitTheme theme) {
-    final searchBarStyle = _getConfig('searchBarStyle', 'elevated');
-    
+    const searchBarStyle = 'elevated';
+
     return Container(
-      height: _getConfig('searchBarHeight', 56.0),
+      height: 56.0,
       decoration: _buildSearchBarDecoration(theme, searchBarStyle),
       child: Row(
         children: [
@@ -546,8 +407,7 @@ class ProductSearchBarAdvancedState extends State<ProductSearchBarAdvanced>
             child: _buildSearchField(context, theme),
           ),
           
-          if (_currentQuery.isNotEmpty)
-            _buildClearButton(context, theme),
+          if (_currentQuery.isNotEmpty) _buildClearButton(context, theme),
           
           if (widget.enableVoiceSearch)
             _buildVoiceButton(context, theme),
@@ -563,27 +423,27 @@ class ProductSearchBarAdvancedState extends State<ProductSearchBarAdvanced>
     switch (style) {
       case 'outlined':
         return BoxDecoration(
-          color: _config?.getColor('searchBarBackgroundColor', theme.surfaceColor) ?? theme.surfaceColor,
-          borderRadius: _config?.getBorderRadius('searchBarBorderRadius', BorderRadius.circular(28)) ?? BorderRadius.circular(28),
+          color: theme.surfaceColor,
+          borderRadius: BorderRadius.circular(28),
           border: Border.all(
-            color: _config?.getColor('searchBarBorderColor', theme.onSurfaceColor.withValues(alpha: 0.2)) ?? theme.onSurfaceColor.withValues(alpha: 0.2),
-            width: _getConfig('searchBarBorderWidth', 1.0),
+            color: theme.onSurfaceColor.withValues(alpha: 0.2),
+            width: 1.0,
           ),
         );
       
       case 'filled':
         return BoxDecoration(
-          color: _config?.getColor('searchBarBackgroundColor', theme.onSurfaceColor.withValues(alpha: 0.1)) ?? theme.onSurfaceColor.withValues(alpha: 0.1),
-          borderRadius: _config?.getBorderRadius('searchBarBorderRadius', BorderRadius.circular(28)) ?? BorderRadius.circular(28),
+          color: theme.onSurfaceColor.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(28),
         );
       
       case 'underlined':
         return BoxDecoration(
-          color: _config?.getColor('searchBarBackgroundColor', Colors.transparent) ?? Colors.transparent,
+          color: Colors.transparent,
           border: Border(
             bottom: BorderSide(
-              color: _config?.getColor('searchBarBorderColor', theme.onSurfaceColor.withValues(alpha: 0.2)) ?? theme.onSurfaceColor.withValues(alpha: 0.2),
-              width: _getConfig('searchBarBorderWidth', 1.0),
+              color: theme.onSurfaceColor.withValues(alpha: 0.2),
+              width: 1.0,
             ),
           ),
         );
@@ -591,13 +451,13 @@ class ProductSearchBarAdvancedState extends State<ProductSearchBarAdvanced>
       case 'elevated':
       default:
         return BoxDecoration(
-          color: _config?.getColor('searchBarBackgroundColor', theme.surfaceColor) ?? theme.surfaceColor,
-          borderRadius: _config?.getBorderRadius('searchBarBorderRadius', BorderRadius.circular(28)) ?? BorderRadius.circular(28),
+          color: theme.surfaceColor,
+          borderRadius: BorderRadius.circular(28),
           boxShadow: [
             BoxShadow(
-              color: theme.onSurfaceColor.withValues(alpha: _getConfig('searchBarShadowOpacity', 0.1)),
-              blurRadius: _getConfig('searchBarShadowBlur', 8.0),
-              offset: Offset(0, _getConfig('searchBarShadowOffsetY', 2.0)),
+              color: theme.onSurfaceColor.withValues(alpha: 0.1),
+              blurRadius: 8.0,
+              offset: const Offset(0, 2.0),
             ),
           ],
         );
@@ -606,33 +466,32 @@ class ProductSearchBarAdvancedState extends State<ProductSearchBarAdvanced>
 
   Widget _buildLeadingIcon(BuildContext context, ShopKitTheme theme) {
     return Container(
-      padding: EdgeInsets.only(left: _getConfig('leadingIconPadding', 16.0)),
+      padding: const EdgeInsets.only(left: 16.0),
       child: Icon(
         Icons.search,
-        color: _config?.getColor('searchIconColor', theme.onSurfaceColor.withValues(alpha: 0.6)) ?? theme.onSurfaceColor.withValues(alpha: 0.6),
-        size: _getConfig('searchIconSize', 24.0),
+        color: theme.onSurfaceColor.withValues(alpha: 0.6),
+        size: 24.0,
       ),
     );
   }
 
   Widget _buildSearchField(BuildContext context, ShopKitTheme theme) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: _getConfig('searchFieldPadding', 16.0)),
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: TextField(
         controller: _controller,
         focusNode: _focusNode,
         style: TextStyle(
-          color: _config?.getColor('searchTextColor', theme.onSurfaceColor) ?? theme.onSurfaceColor,
-          fontSize: _getConfig('searchTextFontSize', 16.0),
-          fontWeight: _config?.getFontWeight('searchTextFontWeight', FontWeight.w400) ?? FontWeight.w400,
-          fontFamily: _getConfig('fontFamily', null),
+          color: theme.onSurfaceColor,
+          fontSize: 16.0,
+          fontWeight: FontWeight.w400,
         ),
         decoration: InputDecoration(
-          hintText: _getConfig('hintText', 'Search products...'),
+          hintText: 'Search products...',
           hintStyle: TextStyle(
-            color: _config?.getColor('hintTextColor', theme.onSurfaceColor.withValues(alpha: 0.5)) ?? theme.onSurfaceColor.withValues(alpha: 0.5),
-            fontSize: _getConfig('hintTextFontSize', 16.0),
-            fontWeight: _config?.getFontWeight('hintTextFontWeight', FontWeight.w400) ?? FontWeight.w400,
+            color: theme.onSurfaceColor.withValues(alpha: 0.5),
+            fontSize: 16.0,
+            fontWeight: FontWeight.w400,
           ),
           border: InputBorder.none,
           enabledBorder: InputBorder.none,
@@ -641,7 +500,7 @@ class ProductSearchBarAdvancedState extends State<ProductSearchBarAdvanced>
         ),
         textInputAction: TextInputAction.search,
         onSubmitted: _performSearch,
-        autocorrect: _getConfig('enableAutocorrect', true),
+        autocorrect: true,
         enableSuggestions: widget.enableAutoComplete,
       ),
     );
@@ -649,19 +508,19 @@ class ProductSearchBarAdvancedState extends State<ProductSearchBarAdvanced>
 
   Widget _buildClearButton(BuildContext context, ShopKitTheme theme) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: _getConfig('clearButtonPadding', 8.0)),
+      padding: const EdgeInsets.symmetric(horizontal: 8.0),
           child: GestureDetector(
             onTap: _clearSearch,
         child: Container(
-          padding: EdgeInsets.all(_getConfig('clearButtonInnerPadding', 4.0)),
+          padding: const EdgeInsets.all(4.0),
           decoration: BoxDecoration(
-            color: _config?.getColor('clearButtonBackgroundColor', theme.onSurfaceColor.withValues(alpha: 0.1)) ?? theme.onSurfaceColor.withValues(alpha: 0.1),
+            color: theme.onSurfaceColor.withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
           child: Icon(
             Icons.close,
-            color: _config?.getColor('clearButtonIconColor', theme.onSurfaceColor.withValues(alpha: 0.6)) ?? theme.onSurfaceColor.withValues(alpha: 0.6),
-            size: _getConfig('clearButtonIconSize', 18.0),
+            color: theme.onSurfaceColor.withValues(alpha: 0.6),
+            size: 18.0,
           ),
         ),
       ),
@@ -670,24 +529,24 @@ class ProductSearchBarAdvancedState extends State<ProductSearchBarAdvanced>
 
   Widget _buildVoiceButton(BuildContext context, ShopKitTheme theme) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: _getConfig('voiceButtonPadding', 8.0)),
+      padding: const EdgeInsets.symmetric(horizontal: 8.0),
           child: GestureDetector(
             onTap: _handleVoiceSearch,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
-          padding: EdgeInsets.all(_getConfig('voiceButtonInnerPadding', 8.0)),
+          padding: const EdgeInsets.all(8.0),
           decoration: BoxDecoration(
             color: _isListening
-              ? (_config?.getColor('voiceButtonActiveColor', theme.primaryColor) ?? theme.primaryColor)
-              : (_config?.getColor('voiceButtonInactiveColor', Colors.transparent) ?? Colors.transparent),
-            borderRadius: BorderRadius.circular(_getConfig('voiceButtonBorderRadius', 20.0)),
+              ? theme.primaryColor
+              : Colors.transparent,
+            borderRadius: BorderRadius.circular(20.0),
           ),
           child: Icon(
             _isListening ? Icons.mic : Icons.mic_none,
             color: _isListening
-              ? (_config?.getColor('voiceButtonActiveIconColor', theme.onPrimaryColor) ?? theme.onPrimaryColor)
-              : (_config?.getColor('voiceButtonInactiveIconColor', theme.onSurfaceColor.withValues(alpha: 0.6)) ?? theme.onSurfaceColor.withValues(alpha: 0.6)),
-            size: _getConfig('voiceButtonIconSize', 20.0),
+              ? theme.onPrimaryColor
+              : theme.onSurfaceColor.withValues(alpha: 0.6),
+            size: 20.0,
           ),
         ),
       ),
@@ -700,23 +559,23 @@ class ProductSearchBarAdvancedState extends State<ProductSearchBarAdvanced>
     }
 
     return Container(
-      padding: EdgeInsets.only(right: _getConfig('filterButtonPadding', 16.0)),
+      padding: const EdgeInsets.only(right: 16.0),
           child: GestureDetector(
             onTap: widget.onFilterTap,
         child: Container(
-          padding: EdgeInsets.all(_getConfig('filterButtonInnerPadding', 8.0)),
+          padding: const EdgeInsets.all(8.0),
           decoration: BoxDecoration(
-            color: _config?.getColor('filterButtonBackgroundColor', Colors.transparent) ?? Colors.transparent,
-            borderRadius: BorderRadius.circular(_getConfig('filterButtonBorderRadius', 20.0)),
+            color: Colors.transparent,
+            borderRadius: BorderRadius.circular(20.0),
             border: Border.all(
-              color: _config?.getColor('filterButtonBorderColor', theme.onSurfaceColor.withValues(alpha: 0.2)) ?? theme.onSurfaceColor.withValues(alpha: 0.2),
-              width: _getConfig('filterButtonBorderWidth', 1.0),
+              color: theme.onSurfaceColor.withValues(alpha: 0.2),
+              width: 1.0,
             ),
           ),
           child: Icon(
             Icons.tune,
-            color: _config?.getColor('filterButtonIconColor', theme.onSurfaceColor.withValues(alpha: 0.6)) ?? theme.onSurfaceColor.withValues(alpha: 0.6),
-            size: _getConfig('filterButtonIconSize', 20.0),
+            color: theme.onSurfaceColor.withValues(alpha: 0.6),
+            size: 20.0,
           ),
         ),
       ),
@@ -727,24 +586,24 @@ class ProductSearchBarAdvancedState extends State<ProductSearchBarAdvanced>
     return FadeTransition(
       opacity: _suggestionFadeAnimation,
       child: Container(
-        margin: EdgeInsets.only(top: _getConfig('suggestionsTopMargin', 8.0)),
+        margin: const EdgeInsets.only(top: 8.0),
         constraints: BoxConstraints(
-          maxHeight: _getConfig('suggestionsMaxHeight', 300.0),
+          maxHeight: 300.0,
         ),
         decoration: BoxDecoration(
-          color: _config?.getColor('suggestionsBackgroundColor', theme.surfaceColor) ?? theme.surfaceColor,
-          borderRadius: _config?.getBorderRadius('suggestionsBorderRadius', BorderRadius.circular(12)) ?? BorderRadius.circular(12),
+          color: theme.surfaceColor,
+          borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: theme.onSurfaceColor.withValues(alpha: _getConfig('suggestionsShadowOpacity', 0.1)),
-              blurRadius: _getConfig('suggestionsShadowBlur', 8.0),
-              offset: Offset(0, _getConfig('suggestionsShadowOffsetY', 2.0)),
+              color: theme.onSurfaceColor.withValues(alpha: 0.1),
+              blurRadius: 8.0,
+              offset: const Offset(0, 2.0),
             ),
           ],
         ),
         child: ListView(
           shrinkWrap: true,
-          padding: EdgeInsets.symmetric(vertical: _getConfig('suggestionsPadding', 8.0)),
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
           children: [
             ..._buildHistoryItems(context, theme),
             ..._buildSuggestionItems(context, theme),
@@ -760,7 +619,7 @@ class ProductSearchBarAdvancedState extends State<ProductSearchBarAdvanced>
     if (!widget.enableHistory || _filteredHistory.isEmpty) return [];
 
     return [
-      if (_getConfig('showHistoryHeader', true))
+  if (true)
         _buildSectionHeader(context, theme, 'Recent Searches', Icons.history),
       
       ..._filteredHistory.asMap().entries.map((entry) {
@@ -781,7 +640,7 @@ class ProductSearchBarAdvancedState extends State<ProductSearchBarAdvanced>
     if (!widget.enableSuggestions || _filteredSuggestions.isEmpty) return [];
 
     return [
-      if (_getConfig('showSuggestionsHeader', true))
+  if (true)
         _buildSectionHeader(context, theme, 'Suggestions', Icons.lightbulb_outline),
       
       ..._filteredSuggestions.asMap().entries.map((entry) {
@@ -802,23 +661,23 @@ class ProductSearchBarAdvancedState extends State<ProductSearchBarAdvanced>
   Widget _buildSectionHeader(BuildContext context, ShopKitTheme theme, String title, IconData icon) {
     return Container(
       padding: EdgeInsets.symmetric(
-        horizontal: _getConfig('sectionHeaderPadding', 16.0),
-        vertical: _getConfig('sectionHeaderVerticalPadding', 8.0),
+  horizontal: 16.0,
+  vertical: 8.0,
       ),
       child: Row(
         children: [
           Icon(
             icon,
-            size: _getConfig('sectionHeaderIconSize', 16.0),
-            color: _config?.getColor('sectionHeaderIconColor', theme.onSurfaceColor.withValues(alpha: 0.6)) ?? theme.onSurfaceColor.withValues(alpha: 0.6),
+            size: 16.0,
+            color: theme.onSurfaceColor.withValues(alpha: 0.6),
           ),
-          SizedBox(width: _getConfig('sectionHeaderIconSpacing', 8.0)),
+          const SizedBox(width: 8.0),
           Text(
             title,
             style: TextStyle(
-              color: _config?.getColor('sectionHeaderTextColor', theme.onSurfaceColor.withValues(alpha: 0.6)) ?? theme.onSurfaceColor.withValues(alpha: 0.6),
-              fontSize: _getConfig('sectionHeaderFontSize', 12.0),
-              fontWeight: _config?.getFontWeight('sectionHeaderFontWeight', FontWeight.w500) ?? FontWeight.w500,
+              color: theme.onSurfaceColor.withValues(alpha: 0.6),
+              fontSize: 12.0,
+              fontWeight: FontWeight.w500,
             ),
           ),
         ],
@@ -840,34 +699,34 @@ class ProductSearchBarAdvancedState extends State<ProductSearchBarAdvanced>
         onTap: onTap,
         child: Container(
           padding: EdgeInsets.symmetric(
-            horizontal: _getConfig('suggestionItemPadding', 16.0),
-            vertical: _getConfig('suggestionItemVerticalPadding', 12.0),
+      horizontal: 16.0,
+      vertical: 12.0,
           ),
           child: Row(
             children: [
               Icon(
                 icon,
-                size: _getConfig('suggestionItemIconSize', 20.0),
-                color: isHistory
-                  ? (_config?.getColor('historyItemIconColor', theme.onSurfaceColor.withValues(alpha: 0.4)) ?? theme.onSurfaceColor.withValues(alpha: 0.4))
-                  : (_config?.getColor('suggestionItemIconColor', theme.onSurfaceColor.withValues(alpha: 0.6)) ?? theme.onSurfaceColor.withValues(alpha: 0.6)),
+        size: 20.0,
+        color: isHistory
+          ? theme.onSurfaceColor.withValues(alpha: 0.4)
+          : theme.onSurfaceColor.withValues(alpha: 0.6),
               ),
-              SizedBox(width: _getConfig('suggestionItemIconSpacing', 16.0)),
+        const SizedBox(width: 16.0),
               Expanded(
                 child: Text(
                   text,
                   style: TextStyle(
-                    color: _config?.getColor('suggestionItemTextColor', theme.onSurfaceColor) ?? theme.onSurfaceColor,
-                    fontSize: _getConfig('suggestionItemFontSize', 16.0),
-                    fontWeight: _config?.getFontWeight('suggestionItemFontWeight', FontWeight.w400) ?? FontWeight.w400,
+          color: theme.onSurfaceColor,
+          fontSize: 16.0,
+          fontWeight: FontWeight.w400,
                   ),
                 ),
               ),
-              if (_getConfig('showSuggestionArrows', true))
+        if (true)
                 Icon(
                   Icons.north_west,
-                  size: _getConfig('suggestionArrowSize', 16.0),
-                  color: _config?.getColor('suggestionArrowColor', theme.onSurfaceColor.withValues(alpha: 0.4)) ?? theme.onSurfaceColor.withValues(alpha: 0.4),
+          size: 16.0,
+          color: theme.onSurfaceColor.withValues(alpha: 0.4),
                 ),
             ],
           ),
@@ -878,27 +737,27 @@ class ProductSearchBarAdvancedState extends State<ProductSearchBarAdvanced>
 
   Widget _buildClearHistoryButton(BuildContext context, ShopKitTheme theme) {
     return Container(
-      margin: EdgeInsets.only(top: _getConfig('clearHistoryButtonTopMargin', 8.0)),
-      padding: EdgeInsets.symmetric(horizontal: _getConfig('clearHistoryButtonPadding', 16.0)),
+      margin: const EdgeInsets.only(top: 8.0),
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: TextButton(
         onPressed: widget.onClearHistory,
         style: TextButton.styleFrom(
-          foregroundColor: _config?.getColor('clearHistoryButtonTextColor', theme.primaryColor) ?? theme.primaryColor,
-          padding: EdgeInsets.symmetric(vertical: _getConfig('clearHistoryButtonVerticalPadding', 8.0)),
+          foregroundColor: theme.primaryColor,
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
               Icons.clear_all,
-              size: _getConfig('clearHistoryButtonIconSize', 16.0),
+              size: 16.0,
             ),
-            SizedBox(width: _getConfig('clearHistoryButtonIconSpacing', 8.0)),
+            const SizedBox(width: 8.0),
             Text(
-              _getConfig('clearHistoryButtonText', 'Clear Search History'),
+              'Clear Search History',
               style: TextStyle(
-                fontSize: _getConfig('clearHistoryButtonFontSize', 14.0),
-                fontWeight: _config?.getFontWeight('clearHistoryButtonFontWeight', FontWeight.w500) ?? FontWeight.w500,
+                fontSize: 14.0,
+                fontWeight: FontWeight.w500,
               ),
             ),
           ],

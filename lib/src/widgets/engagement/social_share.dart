@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../models/share_model.dart';
-import '../../config/flexible_widget_config.dart';
+import '../../theme/theme.dart';
 
 /// A widget for sharing content on social media platforms
 class SocialShare extends StatefulWidget {
@@ -19,7 +19,7 @@ class SocialShare extends StatefulWidget {
     this.padding,
     this.enabledPlatforms,
     this.customPlatforms = const [],
-  this.config,
+  
   });
 
   /// Share model containing content and URLs
@@ -58,8 +58,8 @@ class SocialShare extends StatefulWidget {
   /// Custom platform configurations
   final List<SocialPlatform> customPlatforms;
 
-  /// Flexible widget configuration
-  final FlexibleWidgetConfig? config;
+  
+  
 
   @override
   State<SocialShare> createState() => _SocialShareState();
@@ -97,21 +97,16 @@ class _SocialShareState extends State<SocialShare>
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final cfg = widget.config ?? FlexibleWidgetConfig.forWidget(
-      'social_share',
-      context: context,
-      overrides: {
-        'iconSize': widget.iconSize,
-        'spacing': widget.spacing,
-      },
-    );
-    final padding = widget.padding ?? EdgeInsets.all(cfg.get<double>('padding', 16).toDouble());
-    final spacing = cfg.get<double>('spacing', widget.spacing).toDouble();
-    final iconSize = cfg.get<double>('iconSize', widget.iconSize).toDouble();
-    final bgColor = widget.backgroundColor ?? (cfg.has('backgroundColor') ? (cfg.get<dynamic>('backgroundColor') as Color?) : theme.colorScheme.surface);
-    final radius = widget.borderRadius ?? BorderRadius.circular(cfg.get<double>('borderRadius', 12).toDouble());
-    final showLabels = cfg.get<bool>('showLabels', widget.showLabels);
+  final theme = Theme.of(context);
+  final shopTheme = theme.extension<ShopKitTheme>();
+  final socialTheme = shopTheme?.socialShareTheme;
+
+  final padding = widget.padding ?? socialTheme?.padding ?? EdgeInsets.all(16);
+  final spacing = socialTheme?.spacing ?? widget.spacing;
+  final iconSize = socialTheme?.iconSize ?? widget.iconSize;
+  final bgColor = widget.backgroundColor ?? socialTheme?.backgroundColor ?? theme.colorScheme.surface;
+  final radius = widget.borderRadius ?? socialTheme?.borderRadius ?? BorderRadius.circular(12);
+  final showLabels = widget.showLabels;
 
     return Container(
       padding: padding,
@@ -171,12 +166,12 @@ class _SocialShareState extends State<SocialShare>
                                 vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                color: theme.colorScheme.inverseSurface,
+                                color: socialTheme?.copyToastBackground ?? theme.colorScheme.inverseSurface,
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: Text(
                                 'Copied!',
-                                style: theme.textTheme.bodySmall?.copyWith(
+                                style: socialTheme?.copyToastTextStyle ?? theme.textTheme.bodySmall?.copyWith(
                                   color: theme.colorScheme.onInverseSurface,
                                 ),
                               ),
@@ -229,14 +224,15 @@ class _SocialShareState extends State<SocialShare>
     required double iconSize,
     required bool showLabels,
   }) {
+  final socialTheme = Theme.of(context).extension<ShopKitTheme>()?.socialShareTheme;
     return InkWell(
       onTap: () => _shareToPlatform(platform),
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: socialTheme?.iconBorderRadius ?? BorderRadius.circular(8),
       child: Container(
         padding: EdgeInsets.all(isVertical ? 12 : 8),
         decoration: BoxDecoration(
           color: platform.color?.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: socialTheme?.borderRadius ?? BorderRadius.circular(8),
           border: Border.all(
             color: platform.color?.withValues(alpha: 0.3) ??
                 theme.colorScheme.outline.withValues(alpha: 0.3),
@@ -279,17 +275,18 @@ class _SocialShareState extends State<SocialShare>
     );
   }
   Widget _buildPlatformIcon(SocialPlatform platform, ThemeData theme, double iconSize) {
-    final effectiveSize = iconSize * 0.6;
-    if (platform.icon != null) {
+  final effectiveSize = iconSize * 0.6;
+  final socialTheme = Theme.of(context).extension<ShopKitTheme>()?.socialShareTheme;
+  if (platform.icon != null) {
       return Icon(
-        platform.icon,
-        size: effectiveSize,
-        color: platform.color ?? theme.colorScheme.primary,
+    platform.icon,
+    size: effectiveSize,
+    color: platform.color ?? theme.colorScheme.primary,
       );
     }
     if (platform.imageUrl != null) {
       return ClipRRect(
-        borderRadius: BorderRadius.circular(4),
+    borderRadius: socialTheme?.iconBorderRadius ?? BorderRadius.circular(4),
         child: Image.network(
           platform.imageUrl!,
           width: effectiveSize,
@@ -308,7 +305,7 @@ class _SocialShareState extends State<SocialShare>
       height: effectiveSize,
       decoration: BoxDecoration(
         color: platform.color ?? theme.colorScheme.primary,
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: socialTheme?.iconBorderRadius ?? BorderRadius.circular(4),
       ),
       child: Center(
         child: Text(

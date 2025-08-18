@@ -14,6 +14,37 @@ class CartItemModel extends Equatable {
     this.notes,
   }) : addedAt = addedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
 
+  /// Create a CartItemModel with defensive normalization.
+  /// Ensures id is non-empty, quantity >= 1, and pricePerItem >= 0.
+  factory CartItemModel.createSafe({
+    String? id,
+    required ProductModel product,
+    VariantModel? variant,
+    int quantity = 1,
+    double? pricePerItem,
+    DateTime? addedAt,
+    String? notes,
+  }) {
+    final resolvedVariant = variant;
+    final resolvedQuantity = (quantity <= 0) ? 1 : quantity;
+    final resolvedPrice = (pricePerItem == null || pricePerItem.isNaN || pricePerItem < 0)
+        ? (product.discountedPrice + (resolvedVariant?.additionalPrice ?? 0))
+        : pricePerItem;
+    final resolvedId = (id == null || id.isEmpty)
+        ? '${product.id}_${resolvedVariant?.id ?? 'default'}_${DateTime.now().millisecondsSinceEpoch}'
+        : id;
+
+    return CartItemModel(
+      id: resolvedId,
+      product: product,
+      variant: resolvedVariant,
+      quantity: resolvedQuantity,
+      pricePerItem: resolvedPrice,
+      addedAt: addedAt,
+      notes: notes,
+    );
+  }
+
   /// Create CartItemModel from JSON
   factory CartItemModel.fromJson(Map<String, dynamic> json) => CartItemModel(
         id: json['id'] as String,

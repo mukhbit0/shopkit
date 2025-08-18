@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/payment_model.dart';
-import '../../config/flexible_widget_config.dart';
+// Legacy FlexibleWidgetConfig removed; prefer ShopKitTheme for styling
+import '../../theme/theme.dart';
 
 /// A widget for selecting payment methods
 class PaymentMethodSelector extends StatefulWidget {
@@ -16,7 +17,7 @@ class PaymentMethodSelector extends StatefulWidget {
     this.borderRadius,
     this.padding,
     this.itemSpacing = 12.0,
-  this.flexibleConfig,
+  // legacy flexibleConfig removed in favor of ShopKitTheme
   });
 
   /// List of available payment methods
@@ -49,11 +50,7 @@ class PaymentMethodSelector extends StatefulWidget {
   /// Spacing between payment method items
   final double itemSpacing;
 
-  /// Flexible configuration (namespaced paymentMethods.) keys:
-  ///  backgroundColor, borderRadius, padding, itemSpacing, showAddButton,
-  ///  allowMultipleSelection, headerText, addButtonLabel, emptyStateTitle,
-  ///  emptyStateSubtitle, enableAnimations
-  final FlexibleWidgetConfig? flexibleConfig;
+  // Legacy FlexibleWidgetConfig removed; use `ShopKitTheme.paymentMethodSelectorTheme` instead.
 
   @override
   State<PaymentMethodSelector> createState() => _PaymentMethodSelectorState();
@@ -79,34 +76,26 @@ class _PaymentMethodSelectorState extends State<PaymentMethodSelector> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+  final theme = Theme.of(context);
+  final shopKitTheme = theme.extension<ShopKitTheme>();
+  final selectorTheme = shopKitTheme?.paymentMethodSelectorTheme;
 
-    T cfg<T>(String key, T fallback) {
-      final fc = widget.flexibleConfig;
-      if (fc != null) {
-        if (fc.has('paymentMethods.$key')) { try { return fc.get<T>('paymentMethods.$key', fallback); } catch (_) {} }
-        if (fc.has(key)) { try { return fc.get<T>(key, fallback); } catch (_) {} }
-      }
-      return fallback;
-    }
-
-    final padding = widget.padding ?? cfg<EdgeInsets>('padding', const EdgeInsets.all(16));
-    final bgColor = widget.backgroundColor ?? cfg<Color>('backgroundColor', colorScheme.surface);
-    final borderRadius = widget.borderRadius ?? cfg<BorderRadius>('borderRadius', BorderRadius.circular(12));
-    final itemSpacing = cfg<double>('itemSpacing', widget.itemSpacing);
-    final showAdd = cfg<bool>('showAddButton', widget.showAddPaymentMethod);
-    final headerText = cfg<String>('headerText', 'Payment Method');
-    final addLabel = cfg<String>('addButtonLabel', 'Add');
-    final emptyTitle = cfg<String>('emptyStateTitle', 'No Payment Methods');
-    final emptySubtitle = cfg<String>('emptyStateSubtitle', 'Add a payment method to continue');
+  final padding = widget.padding ?? selectorTheme?.padding ?? EdgeInsets.all(16);
+  final bgColor = widget.backgroundColor ?? selectorTheme?.backgroundColor ?? theme.colorScheme.surface;
+  final borderRadius = widget.borderRadius ?? selectorTheme?.borderRadius ?? BorderRadius.circular(12);
+  final itemSpacing = widget.itemSpacing; // theme provides default spacing via selectorTheme.itemSpacing if needed
+  final showAdd = widget.showAddPaymentMethod;
+  final headerText = 'Payment Method';
+  final addLabel = 'Add';
+  final emptyTitle = 'No Payment Methods';
+  final emptySubtitle = 'Add a payment method to continue';
 
     return Container(
       padding: padding,
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: borderRadius,
-        border: Border.all(color: colorScheme.outline.withValues(alpha: 0.2)),
+        border: Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -115,18 +104,19 @@ class _PaymentMethodSelectorState extends State<PaymentMethodSelector> {
           Row(
             children: [
               Expanded(
-                child: Text(
-                  headerText,
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                child: selectorTheme?.headerTextStyle != null
+                    ? Text('Payment Method', style: selectorTheme!.headerTextStyle)
+                    : Text(
+                        headerText,
+                        style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                      ),
               ),
               if (showAdd && widget.onAddPaymentMethod != null)
                 TextButton.icon(
                   onPressed: widget.onAddPaymentMethod,
                   icon: const Icon(Icons.add, size: 18),
                   label: Text(addLabel),
+                  style: selectorTheme?.addButtonStyle,
                 ),
             ],
           ),

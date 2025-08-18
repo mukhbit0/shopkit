@@ -105,9 +105,7 @@ class _CartManagementScreenState extends State<CartManagementScreen> {
     try {
       // Create sample cart items based on current count
       final cartItems = List.generate(_cartItemCount, (index) => 
-        CartItemModel(
-          id: 'item_$index',
-          product: ProductModel(
+          CartItemModel.createSafe(product: ProductModel(
             id: 'product_$index',
             name: 'Sample Product $index',
             price: 29.99,
@@ -117,10 +115,7 @@ class _CartManagementScreenState extends State<CartManagementScreen> {
             isInStock: true,
             rating: 4.5,
             reviewCount: 100,
-          ),
-          quantity: 1,
-          pricePerItem: 29.99,
-        )
+          ), quantity: 1, pricePerItem: 29.99),
       );
 
       return _buildThemedCartBubble(cartItems, style);
@@ -153,12 +148,7 @@ class _CartManagementScreenState extends State<CartManagementScreen> {
           child: CartBubbleAdvanced(
             cartItems: cartItems,
             onTap: () => _showSnackBar('Cart tapped - Neumorphic style'),
-            config: FlexibleWidgetConfig(config: {
-              'backgroundColor': Theme.of(context).colorScheme.surface,
-              'borderRadius': 20.0,
-              'padding': 8.0,
-              'enableAnimations': true,
-            }),
+            // LEGACY: Previously configurable via FlexibleWidgetConfig. Use ShopKitTheme instead.
           ),
         );
       case 'glassmorphic':
@@ -177,12 +167,7 @@ class _CartManagementScreenState extends State<CartManagementScreen> {
               child: CartBubbleAdvanced(
                 cartItems: cartItems,
                 onTap: () => _showSnackBar('Cart tapped - Glassmorphic style'),
-                config: FlexibleWidgetConfig(config: {
-                  'backgroundColor': Colors.white.withValues(alpha: 0.15),
-                  'borderRadius': 24.0,
-                  'padding': 8.0,
-                  'enableAnimations': true,
-                }),
+                // LEGACY: Previously configurable via FlexibleWidgetConfig. Use ShopKitTheme instead.
               ),
             ),
           ),
@@ -191,12 +176,7 @@ class _CartManagementScreenState extends State<CartManagementScreen> {
         return CartBubbleAdvanced(
           cartItems: cartItems,
           onTap: () => _showSnackBar('Cart tapped - Material 3 style'),
-          config: FlexibleWidgetConfig(config: {
-            'backgroundColor': Theme.of(context).colorScheme.primary,
-            'borderRadius': 12.0,
-            'padding': 8.0,
-            'enableAnimations': true,
-          }),
+          // LEGACY: Previously configurable via FlexibleWidgetConfig. Use ShopKitTheme instead.
         );
     }
   }

@@ -1,11 +1,10 @@
 // Updated ProductCard with layout fixes
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'dart:ui';
 import '../../models/product_model.dart';
 import '../../models/cart_model.dart';
-import '../../theme/shopkit_theme_styles.dart';
-import '../../config/flexible_widget_config.dart';
+import '../../theme/theme.dart';
+import '../../theme/components/product_card_theme.dart';
 
 /// Configuration class for ProductCard widget customization
 class FlexibleProductCardConfig {
@@ -151,9 +150,7 @@ class ProductCard extends StatefulWidget {
     this.imageHeight,
     this.width,
     this.height,
-    this.config,
-    this.flexibleConfig,
-    this.themeStyle, // NEW: Built-in theme styling support
+  this.config,
   });
 
   final ProductModel product;
@@ -171,21 +168,6 @@ class ProductCard extends StatefulWidget {
   final double? width;
   final double? height;
   final FlexibleProductCardConfig? config;
-  
-  /// Built-in theme styling support - just pass a string!
-  /// Supported values: 'material3', 'materialYou', 'neumorphism', 'glassmorphism', 'cupertino', 'minimal', 'retro', 'neon'
-  final String? themeStyle;
-  /// New flexible configuration (supersedes [FlexibleProductCardConfig] gradually)
-  /// Supported keys (namespaced productCard.):
-  ///  - productCard.padding / margin / borderRadius / elevation
-  ///  - productCard.backgroundColor / shadowColor
-  ///  - productCard.imageHeight / imageAspectRatio
-  ///  - productCard.showBrand / showRating / showDiscount / showQuickActions
-  ///  - productCard.hoverScale (double) / animationDuration (int ms)
-  ///  - productCard.badgeBackgroundColor / badgeTextStyle
-  ///  - productCard.wishlistIconSize / cartIconSize
-  ///  - productCard.titleStyle / priceStyle / originalPriceStyle
-  final FlexibleWidgetConfig? flexibleConfig;
 
   @override
   State<ProductCard> createState() => ProductCardState();
@@ -224,17 +206,12 @@ class ProductCardState extends State<ProductCard>
       return widget.customBuilder!(context, widget.product, this);
     }
 
-    // Use new theme system if themeStyle is provided
-    if (widget.themeStyle != null) {
-      return _buildThemedCard(context, widget.themeStyle!);
+    final shopKitTheme = Theme.of(context).extension<ShopKitTheme>();
+    final compTheme = shopKitTheme?.productCardTheme;
+    if (compTheme != null) {
+      return _buildThemeExtensionCard(context, compTheme);
     }
-    
-    // Fallback to basic card design
-    return SizedBox(
-      width: widget.width,
-      height: widget.height,
-      child: _buildBasicCard(context),
-    );
+    return _buildBasicCard(context);
   }
 
   /// Fallback card design when no theme is specified
@@ -311,8 +288,7 @@ class ProductCardState extends State<ProductCard>
                 height: 32,
                 child: ElevatedButton(
                   onPressed: () {
-                    final cartItem = CartItemModel(
-                      id: 'cart_${widget.product.id}_${DateTime.now().millisecondsSinceEpoch}',
+                    final cartItem = CartItemModel.createSafe(
                       product: widget.product,
                       quantity: 1,
                       pricePerItem: widget.product.price,
@@ -335,358 +311,96 @@ class ProductCardState extends State<ProductCard>
     );
   }
 
-  /// Built-in theme styling - automatically styles the card based on theme
-  Widget _buildThemedCard(BuildContext context, String themeStyleString) {
-    final themeStyle = ShopKitThemeStyleExtension.fromString(themeStyleString);
-    final themeConfig = ShopKitThemeConfig.forStyle(themeStyle, context);
+  Widget _buildThemeExtensionCard(BuildContext context, ProductCardTheme compTheme) {
     final product = widget.product;
-
-    Widget cardContent = _buildCardContent(context, themeConfig, product);
-
-    // Apply theme-specific styling and animations
-    switch (themeStyle) {
-      case ShopKitThemeStyle.material3:
-        return _buildMaterial3Card(context, themeConfig, cardContent);
-      case ShopKitThemeStyle.materialYou:
-        return _buildMaterialYouCard(context, themeConfig, cardContent);
-      case ShopKitThemeStyle.neumorphism:
-        return _buildNeumorphicCard(context, themeConfig, cardContent);
-      case ShopKitThemeStyle.glassmorphism:
-        return _buildGlassmorphicCard(context, themeConfig, cardContent);
-      case ShopKitThemeStyle.cupertino:
-        return _buildCupertinoCard(context, themeConfig, cardContent);
-      case ShopKitThemeStyle.minimal:
-        return _buildMinimalCard(context, themeConfig, cardContent);
-      case ShopKitThemeStyle.retro:
-        return _buildRetroCard(context, themeConfig, cardContent);
-      case ShopKitThemeStyle.neon:
-        return _buildNeonCard(context, themeConfig, cardContent);
-    }
-  }
-
-  Widget _buildCardContent(BuildContext context, ShopKitThemeConfig themeConfig, ProductModel product) {
-    return Padding(
-      padding: const EdgeInsets.all(12),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildThemedImage(context, themeConfig, product),
-          const SizedBox(height: 8),
-          Flexible(
-            child: _buildThemedTitle(context, themeConfig, product),
-          ),
-          const SizedBox(height: 6),
-          _buildThemedPrice(context, themeConfig, product),
-          const SizedBox(height: 8),
-          _buildThemedButton(context, themeConfig, product),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMaterial3Card(BuildContext context, ShopKitThemeConfig themeConfig, Widget content) {
+    final background = compTheme.backgroundColor ?? Theme.of(context).colorScheme.surface;
+    final radius = compTheme.borderRadius ?? BorderRadius.circular(12);
+    final elevation = compTheme.elevation ?? 0;
     return Material(
-      elevation: themeConfig.elevation,
-      borderRadius: BorderRadius.circular(themeConfig.borderRadius),
-      color: themeConfig.backgroundColor,
+      elevation: elevation,
+      borderRadius: radius,
+      color: background,
       child: InkWell(
         onTap: widget.onTap,
-        borderRadius: BorderRadius.circular(themeConfig.borderRadius),
-        child: content,
-      ),
-    ).animate()
-      .scale(duration: themeConfig.animationDuration, curve: themeConfig.animationCurve)
-      .fadeIn(duration: themeConfig.animationDuration);
-  }
-
-  Widget _buildMaterialYouCard(BuildContext context, ShopKitThemeConfig themeConfig, Widget content) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(themeConfig.borderRadius),
-        gradient: LinearGradient(
-          colors: [
-            Theme.of(context).colorScheme.surfaceContainer,
-            Theme.of(context).colorScheme.surfaceContainerHigh,
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: themeConfig.shadowColor!.withValues(alpha: 0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
+        borderRadius: radius,
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildImage(context, radius),
+              const SizedBox(height: 8),
+              _buildTitle(context, compTheme),
+              const SizedBox(height: 6),
+              _buildPrice(context, compTheme),
+              const SizedBox(height: 8),
+              _buildAddToCart(context, product, radius),
+            ],
           ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: widget.onTap,
-          borderRadius: BorderRadius.circular(themeConfig.borderRadius),
-          child: content,
-        ),
-      ),
-    ).animate()
-      .scale(duration: themeConfig.animationDuration, curve: themeConfig.animationCurve)
-      .shimmer(duration: 1000.ms, color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3));
-  }
-
-  Widget _buildNeumorphicCard(BuildContext context, ShopKitThemeConfig themeConfig, Widget content) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      decoration: BoxDecoration(
-        color: themeConfig.backgroundColor,
-        borderRadius: BorderRadius.circular(themeConfig.borderRadius),
-        boxShadow: [
-          // Light shadow (top-left)
-          BoxShadow(
-            color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.white,
-            offset: const Offset(-8, -8),
-            blurRadius: 16,
-            spreadRadius: 0,
-          ),
-          // Dark shadow (bottom-right)
-          BoxShadow(
-            color: isDark ? Colors.black.withValues(alpha: 0.3) : Colors.grey.shade400,
-            offset: const Offset(8, 8),
-            blurRadius: 16,
-            spreadRadius: 0,
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: widget.onTap,
-          borderRadius: BorderRadius.circular(themeConfig.borderRadius),
-          child: content,
-        ),
-      ),
-    ).animate()
-      .scale(duration: themeConfig.animationDuration, curve: themeConfig.animationCurve)
-      .then()
-      .shake(duration: 200.ms, hz: 2);
-  }
-
-  Widget _buildGlassmorphicCard(BuildContext context, ShopKitThemeConfig themeConfig, Widget content) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(themeConfig.borderRadius),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-        child: Container(
-          decoration: BoxDecoration(
-            color: themeConfig.backgroundColor,
-            borderRadius: BorderRadius.circular(themeConfig.borderRadius),
-            border: Border.all(
-              color: Colors.white.withValues(alpha: 0.2),
-              width: 1,
-            ),
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Colors.white.withValues(alpha: 0.15),
-                Colors.white.withValues(alpha: 0.05),
-              ],
-            ),
-          ),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: widget.onTap,
-              borderRadius: BorderRadius.circular(themeConfig.borderRadius),
-              child: content,
-            ),
-          ),
-        ),
-      ),
-    ).animate()
-      .scale(duration: themeConfig.animationDuration, curve: themeConfig.animationCurve)
-      .fadeIn(duration: themeConfig.animationDuration)
-      .then()
-      .shimmer(duration: 2000.ms, color: Colors.white.withValues(alpha: 0.3));
-  }
-
-  Widget _buildCupertinoCard(BuildContext context, ShopKitThemeConfig themeConfig, Widget content) {
-    return Container(
-      decoration: BoxDecoration(
-        color: themeConfig.backgroundColor,
-        borderRadius: BorderRadius.circular(themeConfig.borderRadius),
-        border: Border.all(
-          color: Theme.of(context).dividerColor,
-          width: 0.5,
-        ),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: widget.onTap,
-          borderRadius: BorderRadius.circular(themeConfig.borderRadius),
-          child: content,
-        ),
-      ),
-    ).animate()
-      .fadeIn(duration: themeConfig.animationDuration)
-      .slideY(begin: 0.1, duration: themeConfig.animationDuration);
-  }
-
-  Widget _buildMinimalCard(BuildContext context, ShopKitThemeConfig themeConfig, Widget content) {
-    return Container(
-      decoration: BoxDecoration(
-        color: themeConfig.backgroundColor,
-        borderRadius: BorderRadius.circular(themeConfig.borderRadius),
-        border: Border.all(
-          color: Theme.of(context).dividerColor.withValues(alpha: 0.5),
-          width: 1,
-        ),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: widget.onTap,
-          borderRadius: BorderRadius.circular(themeConfig.borderRadius),
-          child: content,
         ),
       ),
     );
   }
 
-  Widget _buildRetroCard(BuildContext context, ShopKitThemeConfig themeConfig, Widget content) {
+  Widget _buildImage(BuildContext context, BorderRadius radius) {
     return Container(
-      decoration: BoxDecoration(
-        color: themeConfig.backgroundColor,
-        borderRadius: BorderRadius.circular(themeConfig.borderRadius),
-        boxShadow: [
-          BoxShadow(
-            color: themeConfig.shadowColor!,
-            offset: const Offset(6, 6),
-            blurRadius: 0, // Sharp shadow for retro look
-          ),
-          BoxShadow(
-            color: Colors.amber.withValues(alpha: 0.3),
-            offset: const Offset(-2, -2),
-            blurRadius: 0,
-          ),
-        ],
-        border: Border.all(color: Colors.black87, width: 2),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: widget.onTap,
-          borderRadius: BorderRadius.circular(themeConfig.borderRadius),
-          child: content,
-        ),
-      ),
-    ).animate()
-      .scale(duration: themeConfig.animationDuration, curve: themeConfig.animationCurve)
-      .then()
-      .shake(duration: 300.ms, hz: 5);
-  }
-
-  Widget _buildNeonCard(BuildContext context, ShopKitThemeConfig themeConfig, Widget content) {
-    return Container(
-      decoration: BoxDecoration(
-        color: themeConfig.backgroundColor,
-        borderRadius: BorderRadius.circular(themeConfig.borderRadius),
-        border: Border.all(
-          color: Colors.cyan,
-          width: 2,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.cyan.withValues(alpha: 0.5),
-            blurRadius: 20,
-            spreadRadius: 0,
-          ),
-          BoxShadow(
-            color: Colors.purple.withValues(alpha: 0.3),
-            blurRadius: 40,
-            spreadRadius: 5,
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: widget.onTap,
-          borderRadius: BorderRadius.circular(themeConfig.borderRadius),
-          child: content,
-        ),
-      ),
-    ).animate()
-      .scale(duration: themeConfig.animationDuration, curve: themeConfig.animationCurve)
-      .then()
-      .shimmer(duration: 1500.ms, color: Colors.cyan.withValues(alpha: 0.8));
-  }
-
-  Widget _buildThemedImage(BuildContext context, ShopKitThemeConfig themeConfig, ProductModel product) {
-    final imageWidget = Container(
-      height: 120, // Responsive height
+      height: 120,
       width: double.infinity,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular((themeConfig.borderRadius * 0.8)),
+        borderRadius: BorderRadius.circular(radius.topLeft.x * 0.8),
         color: Theme.of(context).colorScheme.surfaceContainer,
       ),
-      child: product.imageUrl != null
-        ? ClipRRect(
-            borderRadius: BorderRadius.circular((themeConfig.borderRadius * 0.8)),
-            child: Image.network(
-              product.imageUrl!,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => Icon(
-                Icons.image,
-                size: 32,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
+      child: widget.product.imageUrl != null
+          ? ClipRRect(
+              borderRadius: BorderRadius.circular(radius.topLeft.x * 0.8),
+              child: Image.network(
+                widget.product.imageUrl!,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stack) => Icon(
+                  Icons.image,
+                  size: 32,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               ),
+            )
+          : Icon(
+              Icons.image,
+              size: 32,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
-          )
-        : Icon(
-            Icons.image,
-            size: 32,
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
+    );
+  }
+
+  Widget _buildTitle(BuildContext context, ProductCardTheme compTheme) {
+    return Flexible(
+      child: Text(
+        widget.product.name,
+        style: compTheme.titleStyle ?? Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold, fontSize: 12),
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+      ),
+    );
+  }
+
+  Widget _buildPrice(BuildContext context, ProductCardTheme compTheme) {
+    return Text(
+  '\$${widget.product.price.toStringAsFixed(2)}',
+      style: compTheme.priceStyle ?? Theme.of(context).textTheme.titleMedium?.copyWith(
+            color: Theme.of(context).colorScheme.primary,
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
           ),
     );
-
-    return Hero(
-      tag: widget.heroTag ?? 'product-${product.id}',
-      child: imageWidget,
-    );
   }
 
-  Widget _buildThemedTitle(BuildContext context, ShopKitThemeConfig themeConfig, ProductModel product) {
-    return Text(
-      product.name,
-      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-        fontWeight: FontWeight.bold,
-        fontSize: 12,
-      ),
-      maxLines: 2,
-      overflow: TextOverflow.ellipsis,
-    );
-  }
-
-  Widget _buildThemedPrice(BuildContext context, ShopKitThemeConfig themeConfig, ProductModel product) {
-    return Text(
-      '\$${product.price.toStringAsFixed(2)}',
-      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-        color: Theme.of(context).colorScheme.primary,
-        fontWeight: FontWeight.bold,
-        fontSize: 14,
-      ),
-    );
-  }
-
-  Widget _buildThemedButton(BuildContext context, ShopKitThemeConfig themeConfig, ProductModel product) {
+  Widget _buildAddToCart(BuildContext context, ProductModel product, BorderRadius radius) {
     return SizedBox(
       width: double.infinity,
-      height: 32, // Fixed compact height
+      height: 32,
       child: ElevatedButton(
         onPressed: () {
-          final cartItem = CartItemModel(
-            id: 'cart_${product.id}_${DateTime.now().millisecondsSinceEpoch}',
+          final cartItem = CartItemModel.createSafe(
             product: product,
             quantity: 1,
             pricePerItem: product.price,
@@ -694,20 +408,14 @@ class ProductCardState extends State<ProductCard>
           widget.onAddToCart?.call(cartItem);
         },
         style: ElevatedButton.styleFrom(
-          backgroundColor: Theme.of(context).colorScheme.primary,
-          foregroundColor: Theme.of(context).colorScheme.onPrimary,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular((themeConfig.borderRadius * 0.6)),
-          ),
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radius.topLeft.x * 0.6)),
         ),
-        child: const Text(
-          'Add to Cart',
-          style: TextStyle(fontSize: 10),
-        ),
+        child: const Text('Add to Cart', style: TextStyle(fontSize: 10)),
       ),
     );
   }
+
 
 }
 

@@ -1,8 +1,36 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../config/flexible_widget_config.dart';
-import '../../theme/shopkit_theme.dart';
+import '../../theme/theme.dart';
 import '../../theme/shopkit_theme_styles.dart';
+import '../../theme/components/checkout_step_theme.dart';
+
+// Minimal shim used during incremental migration. Will be removed.
+class _ConfigShim {
+  final CheckoutStepTheme? _theme;
+  _ConfigShim(this._theme);
+
+  Color? getColor(String key, Color? defaultColor) {
+    switch (key) {
+      case 'activeStepColor':
+      case 'activeColor':
+        return _theme?.activeColor ?? defaultColor;
+      case 'inactiveStepColor':
+        return _theme?.inactiveColor ?? defaultColor;
+      case 'completedStepColor':
+        return _theme?.completedColor ?? defaultColor;
+      default:
+        return defaultColor;
+    }
+  }
+
+  FontWeight? getFontWeight(String key, FontWeight? defaultWeight) {
+    return defaultWeight;
+  }
+
+  Curve? getCurve(String key, Curve defaultCurve) {
+    return defaultCurve;
+  }
+}
 
 /// A comprehensive checkout step widget with advanced features and unlimited customization
 /// Features: Multiple layouts, animations, validation, progress tracking, and extensive theming
@@ -10,7 +38,6 @@ class CheckoutStepNew extends StatefulWidget {
   const CheckoutStepNew({
     super.key,
     required this.steps,
-    this.config,
     this.customBuilder,
     this.customStepBuilder,
     this.customProgressBuilder,
@@ -30,14 +57,11 @@ class CheckoutStepNew extends StatefulWidget {
     this.style = CheckoutStepStyle.vertical,
     this.progressStyle = CheckoutProgressStyle.linear,
     this.validationMode = CheckoutValidationMode.onNext,
-    this.themeStyle, // NEW: Built-in theme styling support
+    this.themeStyle,
   });
 
-  /// List of checkout steps
+  /// Steps data for the checkout flow
   final List<CheckoutStepData> steps;
-
-  /// Configuration for unlimited customization
-  final FlexibleWidgetConfig? config;
 
   /// Custom builder for complete control
   final Widget Function(BuildContext, List<CheckoutStepData>, CheckoutStepNewState)? customBuilder;
@@ -51,16 +75,16 @@ class CheckoutStepNew extends StatefulWidget {
   /// Custom navigation builder
   final Widget Function(BuildContext, int, int, VoidCallback?, VoidCallback?)? customNavigationBuilder;
 
-  /// Callback when step is tapped
+  /// Callback when a step is tapped
   final Function(int)? onStepTapped;
 
   /// Callback when step is validated
   final Function(int, bool)? onStepValidated;
 
-  /// Callback when step is completed
+  /// Callback when a step is marked completed
   final Function(int)? onStepCompleted;
 
-  /// Callback when checkout is completed
+  /// Callback when checkout completes
   final VoidCallback? onCheckoutCompleted;
 
   /// Current active step
@@ -95,9 +119,8 @@ class CheckoutStepNew extends StatefulWidget {
 
   /// Validation mode
   final CheckoutValidationMode validationMode;
-  
+
   /// Built-in theme styling support - just pass a string!
-  /// Supported values: 'material3', 'materialYou', 'neumorphism', 'glassmorphism', 'cupertino', 'minimal', 'retro', 'neon'
   final String? themeStyle;
 
   @override
@@ -112,21 +135,60 @@ class CheckoutStepNewState extends State<CheckoutStepNew>
   late Animation<double> _progressAnimation;
   late Animation<Offset> _slideAnimation;
 
-  FlexibleWidgetConfig? _config;
+  // FlexibleWidgetConfig removed; theme extensions used instead
   int _currentStep = 0;
   List<bool> _stepValidations = [];
   List<bool> _stepCompletions = [];
   PageController? _pageController;
 
-  // Configuration helpers
+  // Theme helper: prefer CheckoutStepTheme values when present
+  CheckoutStepTheme? get _checkoutTheme => Theme.of(context).extension<ShopKitTheme>()?.checkoutStepTheme;
+  CheckoutStepTheme? get checkoutTheme => _checkoutTheme;
+
+  // Small helper to pick a themed value or fallback
+  T _pick<T>(T? themeValue, T fallback) => themeValue ?? fallback;
+
+  // Lightweight compatibility helpers: these bridge existing _getConfig/_config calls
+  // to the typed CheckoutStepTheme where possible. They'll be removed as we finish
+  // the migration, but keep the file compiling during incremental edits.
+
+  // Mimic a minimal config accessor for common types
   T _getConfig<T>(String key, T defaultValue) {
-    return _config?.get<T>(key, defaultValue) ?? defaultValue;
+    // Map known keys to theme tokens where feasible
+    switch (key) {
+      case 'activeColor':
+      case 'activeStepColor':
+        if (_checkoutTheme?.activeColor != null && defaultValue is Color) {
+          return _checkoutTheme!.activeColor as T;
+        }
+        break;
+      case 'inactiveStepColor':
+        if (_checkoutTheme?.inactiveColor != null && defaultValue is Color) {
+          return _checkoutTheme!.inactiveColor as T;
+        }
+        break;
+      case 'completedStepColor':
+        if (_checkoutTheme?.completedColor != null && defaultValue is Color) {
+          return _checkoutTheme!.completedColor as T;
+        }
+        break;
+      case 'stepIndicatorIconSize':
+      case 'stepNumberFontSize':
+        // numeric sizes
+        break;
+      default:
+        break;
+    }
+
+    return defaultValue;
   }
+
+  // Minimal _config placeholder to support old lookup patterns (.getColor, .getFontWeight, etc.)
+  _ConfigShim? get _config => _ConfigShim(_checkoutTheme);
 
   @override
   void initState() {
     super.initState();
-    _config = widget.config ?? FlexibleWidgetConfig.forWidget('checkout_step', context: context);
     _currentStep = widget.currentStep.clamp(0, widget.steps.length - 1);
     
     _setupAnimations();
@@ -139,23 +201,23 @@ class CheckoutStepNewState extends State<CheckoutStepNew>
 
   void _setupAnimations() {
     _stepController = AnimationController(
-      duration: Duration(milliseconds: _getConfig('stepAnimationDuration', 300)),
+  duration: const Duration(milliseconds: 300),
       vsync: this,
     );
 
     _progressController = AnimationController(
-      duration: Duration(milliseconds: _getConfig('progressAnimationDuration', 500)),
+  duration: const Duration(milliseconds: 500),
       vsync: this,
     );
 
     _slideController = AnimationController(
-      duration: Duration(milliseconds: _getConfig('slideAnimationDuration', 400)),
+  duration: const Duration(milliseconds: 400),
       vsync: this,
     );
 
     _progressAnimation = CurvedAnimation(
       parent: _progressController,
-      curve: _config?.getCurve('progressAnimationCurve', Curves.easeOut) ?? Curves.easeOut,
+  curve: Curves.easeOut,
     );
 
     _slideAnimation = Tween<Offset>(
@@ -163,7 +225,7 @@ class CheckoutStepNewState extends State<CheckoutStepNew>
       end: Offset.zero,
     ).animate(CurvedAnimation(
       parent: _slideController,
-      curve: _config?.getCurve('slideAnimationCurve', Curves.easeOutCubic) ?? Curves.easeOutCubic,
+  curve: Curves.easeOutCubic,
     ));
 
     if (widget.enableAnimations) {
@@ -205,7 +267,7 @@ class CheckoutStepNewState extends State<CheckoutStepNew>
       }
     }
     
-    if (widget.enableHaptics && _getConfig('enableStepTapHaptics', true)) {
+  if (widget.enableHaptics) {
       HapticFeedback.lightImpact();
     }
     
@@ -272,7 +334,7 @@ class CheckoutStepNewState extends State<CheckoutStepNew>
     
     widget.onStepCompleted?.call(_currentStep);
     
-    if (widget.enableHaptics && _getConfig('enableNextStepHaptics', true)) {
+  if (widget.enableHaptics) {
       HapticFeedback.lightImpact();
     }
     
@@ -282,7 +344,7 @@ class CheckoutStepNewState extends State<CheckoutStepNew>
   void _previousStep() {
     if (_currentStep <= 0) return;
     
-    if (widget.enableHaptics && _getConfig('enablePreviousStepHaptics', true)) {
+  if (widget.enableHaptics) {
       HapticFeedback.lightImpact();
     }
     
@@ -310,7 +372,7 @@ class CheckoutStepNewState extends State<CheckoutStepNew>
       }
     });
     
-    if (widget.enableHaptics && _getConfig('enableCheckoutCompleteHaptics', true)) {
+  if (widget.enableHaptics) {
       HapticFeedback.heavyImpact();
     }
     
@@ -321,7 +383,7 @@ class CheckoutStepNewState extends State<CheckoutStepNew>
   void didUpdateWidget(CheckoutStepNew oldWidget) {
     super.didUpdateWidget(oldWidget);
     
-    _config = widget.config ?? FlexibleWidgetConfig.forWidget('checkout_step', context: context);
+  // legacy runtime config removed
     
     if (widget.currentStep != oldWidget.currentStep) {
       _currentStep = widget.currentStep.clamp(0, widget.steps.length - 1);
@@ -355,7 +417,7 @@ class CheckoutStepNewState extends State<CheckoutStepNew>
       return widget.customBuilder!(context, widget.steps, this);
     }
 
-    final theme = ShopKitThemeProvider.of(context);
+  final theme = Theme.of(context).extension<ShopKitTheme>()!;
 
     // Apply theme-specific styling if themeStyle is provided
     Widget content;
@@ -396,7 +458,7 @@ class CheckoutStepNewState extends State<CheckoutStepNew>
         
         Expanded(
           child: ListView.builder(
-            padding: EdgeInsets.all(_getConfig('verticalStepsPadding', 16.0)),
+            padding: const EdgeInsets.all(16.0),
             itemCount: widget.steps.length,
             itemBuilder: (context, index) {
               return _buildVerticalStepItem(context, theme, index);
@@ -438,12 +500,12 @@ class CheckoutStepNewState extends State<CheckoutStepNew>
 
   Widget _buildCompactSteps(BuildContext context, ShopKitTheme theme) {
     return Container(
-      padding: EdgeInsets.all(_getConfig('compactStepsPadding', 12.0)),
+      padding: const EdgeInsets.all(12.0),
       child: Column(
         children: [
           if (widget.showProgress) _buildCompactProgressIndicator(context, theme),
           
-          SizedBox(height: _getConfig('compactProgressSpacing', 16.0)),
+          const SizedBox(height: 16.0),
           
           Expanded(
             child: _buildStepContent(context, theme, _currentStep),
@@ -457,12 +519,12 @@ class CheckoutStepNewState extends State<CheckoutStepNew>
 
   Widget _buildCardSteps(BuildContext context, ShopKitTheme theme) {
     return Container(
-      margin: EdgeInsets.all(_getConfig('cardStepsMargin', 16.0)),
+      margin: const EdgeInsets.all(16.0),
       child: Card(
-        elevation: _getConfig('cardElevation', 4.0),
-        color: _config?.getColor('cardBackgroundColor', theme.surfaceColor) ?? theme.surfaceColor,
-        shape: RoundedRectangleBorder(
-          borderRadius: _config?.getBorderRadius('cardBorderRadius', BorderRadius.circular(12)) ?? BorderRadius.circular(12),
+        elevation: 4.0,
+        color: theme.surfaceColor,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(12)),
         ),
         child: Column(
           children: [
@@ -502,19 +564,19 @@ class CheckoutStepNewState extends State<CheckoutStepNew>
             child: GestureDetector(
               onTap: () => _handleStepTap(stepIndex),
               child: AnimatedContainer(
-                duration: Duration(milliseconds: _getConfig('stepContentAnimationDuration', 200)),
-                padding: EdgeInsets.all(_getConfig('verticalStepContentPadding', 16.0)),
-                decoration: BoxDecoration(
-                  color: isActive
-                    ? _config?.getColor('activeStepBackgroundColor', theme.primaryColor.withValues(alpha: 0.1)) ?? theme.primaryColor.withValues(alpha: 0.1)
-                    : _config?.getColor('inactiveStepBackgroundColor', Colors.transparent) ?? Colors.transparent,
-                  borderRadius: BorderRadius.circular(_getConfig('stepContentBorderRadius', 8.0)),
-                  border: isActive
-                    ? Border.all(
-                        color: _config?.getColor('activeStepBorderColor', theme.primaryColor) ?? theme.primaryColor,
-                        width: _getConfig('activeStepBorderWidth', 1.0),
-                      )
-                    : null,
+                duration: const Duration(milliseconds: 200),
+                      padding: const EdgeInsets.all(16.0),
+                      decoration: BoxDecoration(
+                        color: isActive
+                          ? (_pick(_checkoutTheme?.activeColor, theme.primaryColor)).withOpacity(0.1)
+                          : Colors.transparent,
+                        borderRadius: BorderRadius.circular(8.0),
+                        border: isActive
+                          ? Border.all(
+                              color: _pick(_checkoutTheme?.activeColor, theme.primaryColor),
+                              width: 1.0,
+                            )
+                          : null,
                 ),
                 child: isActive
                   ? _buildStepContent(context, theme, stepIndex)
@@ -538,9 +600,9 @@ class CheckoutStepNewState extends State<CheckoutStepNew>
     return GestureDetector(
       onTap: () => _handleStepTap(stepIndex),
       child: AnimatedContainer(
-        duration: Duration(milliseconds: _getConfig('stepIndicatorAnimationDuration', 200)),
-        width: _getConfig('stepIndicatorSize', 40.0),
-        height: _getConfig('stepIndicatorSize', 40.0),
+  duration: const Duration(milliseconds: 200),
+  width: 40.0,
+  height: 40.0,
         decoration: BoxDecoration(
           color: isCompleted
             ? _config?.getColor('completedStepColor', theme.successColor) ?? theme.successColor
@@ -552,13 +614,13 @@ class CheckoutStepNewState extends State<CheckoutStepNew>
             color: isActive
               ? _config?.getColor('activeStepBorderColor', theme.primaryColor) ?? theme.primaryColor
               : Colors.transparent,
-            width: _getConfig('stepIndicatorBorderWidth', 2.0),
+            width: 2.0,
           ),
-          boxShadow: isActive && _getConfig('enableActiveStepShadow', true)
+          boxShadow: isActive
             ? [
                 BoxShadow(
-                  color: theme.primaryColor.withValues(alpha: _getConfig('activeStepShadowOpacity', 0.3)),
-                  blurRadius: _getConfig('activeStepShadowBlurRadius', 8.0),
+                  color: _pick(_checkoutTheme?.activeColor, theme.primaryColor).withOpacity(0.3),
+                  blurRadius: 8.0,
                   offset: const Offset(0, 2),
                 ),
               ]
@@ -595,7 +657,7 @@ class CheckoutStepNewState extends State<CheckoutStepNew>
   }
 
   Widget _buildStepContent(BuildContext context, ShopKitTheme theme, int stepIndex) {
-    if (widget.customStepBuilder != null) {
+  if (widget.customStepBuilder != null) {
       return widget.customStepBuilder!(context, widget.steps[stepIndex], stepIndex, stepIndex == _currentStep);
     }
 
@@ -606,10 +668,10 @@ class CheckoutStepNewState extends State<CheckoutStepNew>
       children: [
         Text(
           step.title,
-          style: TextStyle(
-            color: _config?.getColor('stepTitleColor', theme.onSurfaceColor) ?? theme.onSurfaceColor,
-            fontSize: _getConfig('stepTitleFontSize', 20.0),
-            fontWeight: _config?.getFontWeight('stepTitleFontWeight', FontWeight.bold) ?? FontWeight.bold,
+          style: checkoutTheme?.activeTitleStyle ?? TextStyle(
+            color: theme.onSurfaceColor,
+            fontSize: 20.0,
+            fontWeight: FontWeight.bold,
           ),
         ),
         
@@ -618,9 +680,9 @@ class CheckoutStepNewState extends State<CheckoutStepNew>
           Text(
             step.description,
             style: TextStyle(
-              color: _config?.getColor('stepDescriptionColor', theme.onSurfaceColor.withValues(alpha: 0.7)) ?? theme.onSurfaceColor.withValues(alpha: 0.7),
-              fontSize: _getConfig('stepDescriptionFontSize', 14.0),
-              height: _getConfig('stepDescriptionLineHeight', 1.5),
+              color: theme.onSurfaceColor.withOpacity(0.7),
+              fontSize: 14.0,
+              height: 1.5,
             ),
           ),
         ],

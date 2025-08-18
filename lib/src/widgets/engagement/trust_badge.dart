@@ -1,6 +1,19 @@
 import 'package:flutter/material.dart';
-import '../../config/flexible_widget_config.dart';
+import '../../theme/theme.dart';
 import '../../models/badge_model.dart';
+
+/// Convert hex string to Color (file-level helper used by widgets)
+Color? _parseColorString(String? colorString) {
+  if (colorString == null) return null;
+  try {
+    if (colorString.startsWith('#')) {
+      return Color(int.parse(colorString.substring(1), radix: 16) + 0xFF000000);
+    }
+    return Color(int.parse(colorString, radix: 16) + 0xFF000000);
+  } catch (e) {
+    return null;
+  }
+}
 
 /// A widget for displaying trust badges and security seals
 class TrustBadge extends StatelessWidget {
@@ -13,7 +26,7 @@ class TrustBadge extends StatelessWidget {
     this.borderRadius,
     this.elevation = 2.0,
     this.customSize,
-  this.flexibleConfig,
+    
   });
 
   /// Badge configuration
@@ -36,31 +49,24 @@ class TrustBadge extends StatelessWidget {
 
   /// Custom size override
   final Size? customSize;
-  final FlexibleWidgetConfig? flexibleConfig;
+  
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+  final theme = Theme.of(context);
+  final shopTheme = theme.extension<ShopKitTheme>();
+  final badgeTheme = shopTheme?.trustBadgeTheme;
 
-  T cfg<T>(String key, T fallback) {
-      final fc = flexibleConfig;
-      if (fc != null) {
-    if (fc.has('trustBadge.$key')) { try { return fc.get<T>('trustBadge.$key', fallback); } catch (_) {} }
-        if (fc.has(key)) { try { return fc.get<T>(key, fallback); } catch (_) {} }
-      }
-      return fallback;
-    }
-
-  final resolvedElevation = cfg<double>('elevation', elevation);
-  final resolvedBorderRadius = cfg<BorderRadius>('borderRadius', borderRadius ?? BorderRadius.circular(8));
-  final resolvedShowTooltip = cfg<bool>('showTooltip', showTooltip);
-  final resolvedAnimateOnHover = cfg<bool>('animateOnHover', animateOnHover);
-  final resolvedWidth = cfg<double>('width', customSize?.width ?? badge.width ?? 80);
-  final resolvedHeight = cfg<double>('height', customSize?.height ?? badge.height ?? 40);
-  final resolvedBg = cfg<Color>('backgroundColor', _parseColor(badge.backgroundColor) ?? theme.colorScheme.surface);
-  final resolvedBorderColor = cfg<Color?>('borderColor', _parseColor(badge.borderColor));
-  final resolvedTextColor = cfg<Color>('textColor', _parseColor(badge.textColor) ?? theme.colorScheme.onSurface);
-  final resolvedIconScale = cfg<double>('iconScale', 0.4);
+  final resolvedElevation = badgeTheme?.elevation ?? elevation;
+  final resolvedBorderRadius = borderRadius ?? badgeTheme?.borderRadius ?? BorderRadius.circular(8);
+  final resolvedShowTooltip = badgeTheme?.showTooltip ?? showTooltip;
+  final resolvedAnimateOnHover = badgeTheme?.animateOnHover ?? animateOnHover;
+  final resolvedWidth = badgeTheme?.width ?? customSize?.width ?? badge.width ?? 80;
+  final resolvedHeight = badgeTheme?.height ?? customSize?.height ?? badge.height ?? 40;
+  final resolvedBg = badgeTheme?.backgroundColor ?? _parseColorString(badge.backgroundColor) ?? theme.colorScheme.surface;
+  final resolvedBorderColor = badgeTheme?.borderColor ?? _parseColorString(badge.borderColor);
+  final resolvedTextColor = badgeTheme?.textColor ?? _parseColorString(badge.textColor) ?? theme.colorScheme.onSurface;
+  final resolvedIconScale = badgeTheme?.iconScale ?? 0.4;
 
     Widget badgeWidget = Container(
       width: resolvedWidth,
@@ -189,20 +195,9 @@ class TrustBadge extends StatelessWidget {
     }
   }
 
-  /// Convert hex string to Color
-  Color? _parseColor(String? colorString) {
-    if (colorString == null) return null;
-    try {
-      if (colorString.startsWith('#')) {
-        return Color(
-            int.parse(colorString.substring(1), radix: 16) + 0xFF000000);
-      }
-      return Color(int.parse(colorString, radix: 16) + 0xFF000000);
-    } catch (e) {
-      return null;
-    }
   }
-}
+
+  
 
 /// A widget for displaying multiple trust badges in a layout
 class TrustBadgeCollection extends StatelessWidget {
@@ -221,7 +216,7 @@ class TrustBadgeCollection extends StatelessWidget {
     this.borderRadius,
     this.showTitle = false,
     this.title = 'Trusted by',
-  this.flexibleConfig,
+  
   });
 
   /// List of badges to display
@@ -262,32 +257,23 @@ class TrustBadgeCollection extends StatelessWidget {
 
   /// Collection title text
   final String title;
-  final FlexibleWidgetConfig? flexibleConfig;
+  
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    if (badges.isEmpty) return const SizedBox.shrink();
 
-    if (badges.isEmpty) {
-      return const SizedBox.shrink();
-    }
+    final shopTheme = theme.extension<ShopKitTheme>();
+    final collectionTheme = shopTheme?.trustBadgeTheme;
 
-  T cfg<T>(String key, T fallback) {
-      final fc = flexibleConfig;
-      if (fc != null) {
-    if (fc.has('trustBadgeCollection.$key')) { try { return fc.get<T>('trustBadgeCollection.$key', fallback); } catch (_) {} }
-        if (fc.has(key)) { try { return fc.get<T>(key, fallback); } catch (_) {} }
-      }
-      return fallback;
-    }
-
-  final resolvedSpacing = cfg<double>('spacing', spacing);
-  final resolvedRunSpacing = cfg<double>('runSpacing', runSpacing);
-  final resolvedShowTitle = cfg<bool>('showTitle', showTitle);
-  final resolvedTitle = cfg<String>('title', title);
-  final resolvedPadding = cfg<EdgeInsets>('padding', padding ?? const EdgeInsets.all(16));
-  final resolvedBg = cfg<Color>('backgroundColor', backgroundColor ?? Colors.transparent);
-  final resolvedRadius = cfg<BorderRadius>('borderRadius', borderRadius ?? BorderRadius.circular(8));
+    final resolvedSpacing = spacing;
+    final resolvedRunSpacing = runSpacing;
+    final resolvedShowTitle = showTitle;
+    final resolvedTitle = title;
+    final resolvedPadding = padding ?? collectionTheme?.padding ?? const EdgeInsets.all(16);
+    final resolvedBg = backgroundColor ?? collectionTheme?.backgroundColor ?? Colors.transparent;
+    final resolvedRadius = borderRadius ?? collectionTheme?.borderRadius ?? BorderRadius.circular(8);
 
     return Container(
       padding: resolvedPadding,
@@ -345,7 +331,7 @@ class TrustBadgeCollection extends StatelessWidget {
             child: TrustBadge(
               badge: badge,
               onTap: onBadgeTap != null ? () => onBadgeTap!(badge) : null,
-        flexibleConfig: flexibleConfig,
+        
             ),
           );
         }).toList(),
@@ -366,7 +352,7 @@ class TrustBadgeCollection extends StatelessWidget {
           child: TrustBadge(
             badge: badge,
             onTap: onBadgeTap != null ? () => onBadgeTap!(badge) : null,
-      flexibleConfig: flexibleConfig,
+                
           ),
         );
       }).toList(),
@@ -401,7 +387,6 @@ class TrustBadgeCollection extends StatelessWidget {
                   child: TrustBadge(
                     badge: badge,
                     onTap: onBadgeTap != null ? () => onBadgeTap!(badge) : null,
-          flexibleConfig: flexibleConfig,
                   ),
                 ),
               );
@@ -421,25 +406,13 @@ class TrustBadgeCollection extends StatelessWidget {
         return TrustBadge(
           badge: badge,
           onTap: onBadgeTap != null ? () => onBadgeTap!(badge) : null,
-      flexibleConfig: flexibleConfig,
+              
         );
       }).toList(),
     );
   }
 
-  /// Convert hex string to Color
-  Color? parseColor(String? colorString) {
-    if (colorString == null) return null;
-    try {
-      if (colorString.startsWith('#')) {
-        return Color(
-            int.parse(colorString.substring(1), radix: 16) + 0xFF000000);
-      }
-      return Color(int.parse(colorString, radix: 16) + 0xFF000000);
-    } catch (e) {
-      return null;
-    }
-  }
+  
 }
 
 /// Layout options for badge collections

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/announcement_model.dart';
-import '../../config/flexible_widget_config.dart';
-import '../../theme/shopkit_theme_styles.dart';
+import '../../theme/theme.dart';
 
 /// Position options for announcement bar
 enum AnnouncementPosition {
@@ -17,17 +16,15 @@ class AnnouncementBar extends StatefulWidget {
     this.onActionTap,
     this.onDismiss,
     this.position = AnnouncementPosition.top,
-    this.height,
-    this.backgroundColor,
-    this.textColor,
-    this.actionColor,
-    this.closeColor,
-    this.showCloseButton,
-    this.animationDuration,
+  this.height,
+  this.backgroundColor,
+  this.textColor,
+  this.actionColor,
+  this.closeColor,
+  this.showCloseButton,
+  this.animationDuration,
     this.autoHide = false,
     this.autoHideDuration,
-    this.config,
-    this.themeStyle,
     this.textStyle,
     this.maxLines,
     this.addBottomMargin = false,
@@ -72,13 +69,7 @@ class AnnouncementBar extends StatefulWidget {
   /// Duration before auto-hiding
   final Duration? autoHideDuration;
 
-  /// Optional flexible config (overrides individual params when provided)
-  final FlexibleWidgetConfig? config;
-
-  /// Built-in theme style support - pass theme name as string. When provided
-  /// the new ShopKitThemeConfig system styles the bar and overrides legacy
-  /// color fallback logic (unless explicit colors are passed in props).
-  final String? themeStyle;
+  // NOTE: Legacy flexible config & themeStyle removed. Use ShopKitTheme.announcementBarTheme.
 
   /// Custom text style for the announcement message
   final TextStyle? textStyle;
@@ -94,7 +85,7 @@ class AnnouncementBar extends StatefulWidget {
 }
 
 class _AnnouncementBarState extends State<AnnouncementBar>
-    with SingleTickerProviderStateMixin {
+  with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<Offset> _slideAnimation;
   bool _isVisible = true;
@@ -103,17 +94,8 @@ class _AnnouncementBarState extends State<AnnouncementBar>
   void initState() {
     super.initState();
 
-    final cfg = widget.config ?? FlexibleWidgetConfig.forWidget(
-      'announcement_bar',
-      context: context,
-      overrides: {
-        if (widget.animationDuration != null)
-          'animationDuration': widget.animationDuration!.inMilliseconds,
-        if (widget.height != null) 'height': widget.height,
-      },
-    );
-
-    final animMs = cfg.get<int>('animationDuration', 300);
+  final shopKitTheme = Theme.of(context).extension<ShopKitTheme>();
+  final animMs = widget.animationDuration?.inMilliseconds ?? shopKitTheme?.animations.normal.inMilliseconds ?? 300;
 
     _animationController = AnimationController(
       duration: Duration(milliseconds: animMs),
@@ -134,12 +116,11 @@ class _AnnouncementBarState extends State<AnnouncementBar>
     _animationController.forward();
 
     // Auto-hide if enabled
-    if (widget.autoHide || widget.announcement.autoHide) {
-      final cfg = widget.config;
-      final autoHideMs = widget.autoHideDuration?.inMilliseconds ??
-          (widget.announcement.autoHideDuration != null
-              ? widget.announcement.autoHideDuration! * 1000
-              : (cfg?.get<int>('autoHideDuration', 5000) ?? 5000));
+  if (widget.autoHide || widget.announcement.autoHide) {
+    final autoHideMs = widget.autoHideDuration?.inMilliseconds ??
+      (widget.announcement.autoHideDuration != null
+        ? widget.announcement.autoHideDuration! * 1000
+        : 5000);
       Future.delayed(Duration(milliseconds: autoHideMs), _dismiss);
     }
   }
@@ -163,40 +144,14 @@ class _AnnouncementBarState extends State<AnnouncementBar>
 
   @override
   Widget build(BuildContext context) {
-    // Use modern theming when available
-    if (widget.themeStyle != null) {
-      final style = ShopKitThemeStyleExtension.fromString(widget.themeStyle!);
-      final themeConfig = ShopKitThemeConfig.forStyle(style, context);
-      return _buildThemedAnnouncement(context, themeConfig);
-    }
-    
-    // Simple fallback to Flutter theme
-    return _buildSimpleAnnouncement(context);
+    final shopKitTheme = Theme.of(context).extension<ShopKitTheme>();
+    final compTheme = shopKitTheme?.announcementBarTheme;
+    final backgroundColor = widget.backgroundColor ?? compTheme?.backgroundColor ?? Theme.of(context).colorScheme.primary;
+    final textColor = widget.textColor ?? compTheme?.textStyle?.color ?? Theme.of(context).colorScheme.onPrimary;
+    final height = widget.height ?? compTheme?.height ?? 48.0;
+    return _buildAnnouncementContainer(context, backgroundColor, textColor, shopKitTheme?.radii.md.toDouble() ?? 12.0, height: height);
   }
-
-  Widget _buildThemedAnnouncement(BuildContext context, ShopKitThemeConfig themeConfig) {
-    final backgroundColor = widget.backgroundColor ?? 
-        (themeConfig.primaryColor ?? Theme.of(context).colorScheme.primary);
-    final textColor = widget.textColor ?? 
-        (themeConfig.onPrimaryColor ?? Colors.white);
-    
-    return _buildAnnouncementContainer(
-      context, 
-      backgroundColor, 
-      textColor, 
-      themeConfig.borderRadius
-    );
-  }
-
-  Widget _buildSimpleAnnouncement(BuildContext context) {
-    final theme = Theme.of(context);
-    final backgroundColor = widget.backgroundColor ?? theme.colorScheme.primary;
-    final textColor = widget.textColor ?? theme.colorScheme.onPrimary;
-    
-    return _buildAnnouncementContainer(context, backgroundColor, textColor, 8.0);
-  }
-
-  Widget _buildAnnouncementContainer(BuildContext context, Color backgroundColor, Color textColor, double borderRadius) {
+  Widget _buildAnnouncementContainer(BuildContext context, Color backgroundColor, Color textColor, double borderRadius, {required double height}) {
     final showClose = widget.showCloseButton ?? widget.announcement.isDismissible;
 
     if (!widget.announcement.isActive || !_isVisible) {
@@ -207,9 +162,7 @@ class _AnnouncementBarState extends State<AnnouncementBar>
       position: _slideAnimation,
       child: Container(
         width: double.infinity,
-        constraints: BoxConstraints(
-          minHeight: widget.height ?? 48,
-        ),
+  constraints: BoxConstraints(minHeight: height),
         decoration: BoxDecoration(
           color: backgroundColor,
           borderRadius: BorderRadius.circular(borderRadius * 0.6),

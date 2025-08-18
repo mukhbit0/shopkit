@@ -1,227 +1,248 @@
 import 'package:flutter/material.dart';
-import '../../models/menu_item_model.dart';
-import '../../config/flexible_widget_config.dart';
+import 'package:flutter/services.dart';
+import '../../theme/theme.dart'; // Import the new, unified theme system
 
-/// A sticky header widget with navigation and search functionality
+/// A comprehensive sticky header widget, styled via ShopKitTheme.
+///
+/// Features multiple styles, scroll effects like parallax, and smooth animations.
+/// The appearance is now controlled centrally through the `StickyHeaderTheme`.
 class StickyHeader extends StatefulWidget {
+  /// Creates a Sticky Header widget.
+  /// The constructor is now clean, focusing on content and behavior.
   const StickyHeader({
     super.key,
-    this.title,
-    this.logo,
-    this.menuItems = const [],
-    this.onMenuItemTap,
-    this.onSearchTap,
-    this.onCartTap,
-    this.backgroundColor,
-    this.elevation = 4.0,
-    this.height = 60.0,
-    this.showSearch = true,
-    this.showCart = true,
-    this.cartItemCount,
-    this.flexibleConfig,
+    required this.headerChild,
+    required this.contentChild,
+    this.customBuilder,
+    this.customHeaderBuilder,
+    this.onHeaderTap,
+    this.onScrollChanged,
+    this.onVisibilityChanged,
+    this.minHeaderHeight = 60.0,
+    this.maxHeaderHeight = 200.0,
+    this.enableParallax = false,
+    this.enableFadeEffect = false,
+    this.enableScaleEffect = false,
+    this.enableColorTransition = false,
+    this.enableElevationChange = false,
+    this.enableAnimations = true,
+    this.enableHaptics = true,
+    this.showShadow = true,
+    this.behavior = StickyHeaderBehavior.pinned,
   });
-  final FlexibleWidgetConfig? flexibleConfig;
 
-  /// Optional title to display in the header
-  final String? title;
+  /// The widget to display inside the header.
+  final Widget headerChild;
 
-  /// Optional logo widget to display
-  final Widget? logo;
+  /// The main content that scrolls beneath the header.
+  final Widget contentChild;
 
-  /// List of menu items to display
-  final List<MenuItemModel> menuItems;
+  /// A custom builder for rendering the entire widget, offering complete control.
+  final Widget Function(BuildContext, Widget, Widget, StickyHeaderState)? customBuilder;
 
-  /// Callback when a menu item is tapped
-  final void Function(MenuItemModel item)? onMenuItemTap;
+  /// A custom header builder that provides the scroll progress (0.0 to 1.0).
+  final Widget Function(BuildContext, Widget, double)? customHeaderBuilder;
 
-  /// Callback when search is tapped
-  final VoidCallback? onSearchTap;
+  /// A callback triggered when the header is tapped.
+  final VoidCallback? onHeaderTap;
 
-  /// Callback when cart is tapped
-  final VoidCallback? onCartTap;
+  /// A callback that fires as the header collapses or expands.
+  final Function(double progress, double offset)? onScrollChanged;
 
-  /// Background color of the header
-  final Color? backgroundColor;
+  /// A callback that fires when the header's visibility changes.
+  final Function(bool isVisible)? onVisibilityChanged;
 
-  /// Elevation of the header
-  final double elevation;
+  /// The minimum height of the header when fully collapsed.
+  final double minHeaderHeight;
 
-  /// Height of the header
-  final double height;
+  /// The maximum height of the header when fully expanded.
+  final double maxHeaderHeight;
 
-  /// Whether to show search icon
-  final bool showSearch;
+  /// Enables a parallax effect on the header's content as it collapses.
+  final bool enableParallax;
+  final bool enableFadeEffect;
+  final bool enableScaleEffect;
+  final bool enableColorTransition;
+  final bool enableElevationChange;
+  final bool enableAnimations;
+  final bool enableHaptics;
 
-  /// Whether to show cart icon
-  final bool showCart;
+  /// If true, a shadow will appear as the header collapses.
+  final bool showShadow;
 
-  /// Number of items in cart to show badge
-  final int? cartItemCount;
+  /// Defines how the header behaves during scrolling.
+  final StickyHeaderBehavior behavior;
 
   @override
-  State<StickyHeader> createState() => _StickyHeaderState();
+  State<StickyHeader> createState() => StickyHeaderState();
 }
 
-class _StickyHeaderState extends State<StickyHeader> {
+class StickyHeaderState extends State<StickyHeader> with TickerProviderStateMixin {
+  late final ScrollController _scrollController;
+  late final AnimationController _scaleController;
+  late final AnimationController _colorController;
+  late Animation<double> _scaleAnimation;
+  late Animation<Color?> _colorAnimation;
+
+  double _scrollProgress = 0.0;
+  double _headerOpacity = 1.0;
+  double _headerScale = 1.0;
+  double _currentElevation = 0.0;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController()..addListener(_handleScroll);
+    
+    // Animations are configured in the first build frame to access the theme.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _setupAnimations());
+  }
+  
+  void _setupAnimations() {
+    if (!mounted) return;
+    final shopKitTheme = Theme.of(context).extension<ShopKitTheme>();
+    
+    _scaleController = AnimationController(
+      duration: shopKitTheme?.animations.fast ?? const Duration(milliseconds: 200),
+      vsync: this,
+    );
+    _colorController = AnimationController(
+      duration: shopKitTheme?.animations.normal ?? const Duration(milliseconds: 400),
+      vsync: this,
+    );
+
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95)
+        .animate(CurvedAnimation(parent: _scaleController, curve: Curves.easeOut));
+
+    final stickyHeaderTheme = shopKitTheme?.stickyHeaderTheme;
+    final theme = Theme.of(context);
+    _colorAnimation = ColorTween(
+      begin: stickyHeaderTheme?.backgroundColor ?? shopKitTheme?.colors.surface ?? theme.colorScheme.surface,
+      end: shopKitTheme?.colors.primary ?? theme.colorScheme.primary,
+    ).animate(CurvedAnimation(parent: _colorController, curve: Curves.easeInOut));
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_handleScroll);
+    _scrollController.dispose();
+    _scaleController.dispose();
+    _colorController.dispose();
+    super.dispose();
+  }
+
+  void _handleScroll() {
+    final offset = _scrollController.offset;
+    final maxScroll = widget.maxHeaderHeight - widget.minHeaderHeight;
+    if (maxScroll <= 0) return;
+
+    final progress = (offset / maxScroll).clamp(0.0, 1.0);
+
+    if (mounted) {
+      setState(() {
+        _scrollProgress = progress;
+        _updateScrollEffects(progress);
+      });
+    }
+    widget.onScrollChanged?.call(progress, offset);
+  }
+
+  void _updateScrollEffects(double progress) {
+    if (widget.enableFadeEffect) _headerOpacity = (1.0 - progress).clamp(0.0, 1.0);
+    if (widget.enableScaleEffect) _headerScale = (1.0 - progress * 0.1).clamp(0.9, 1.0);
+    if (widget.enableElevationChange) _currentElevation = progress * 4.0;
+    if (widget.enableColorTransition && widget.enableAnimations) _colorController.value = progress;
+  }
+
+  void _handleHeaderTap() {
+    if (widget.enableHaptics) HapticFeedback.lightImpact();
+    if (widget.enableAnimations) {
+      _scaleController.forward().then((_) => _scaleController.reverse());
+    }
+    widget.onHeaderTap?.call();
+  }
+
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    T cfg<T>(String key, T fallback) {
-      final fc = widget.flexibleConfig;
-      if (fc != null) {
-        if (fc.has('stickyHeader.$key')) { try { return fc.get<T>('stickyHeader.$key', fallback); } catch (_) {} }
-        if (fc.has(key)) { try { return fc.get<T>(key, fallback); } catch (_) {} }
-      }
-      return fallback;
+    if (widget.customBuilder != null) {
+      return widget.customBuilder!(context, widget.headerChild, widget.contentChild, this);
     }
 
-    final height = cfg<double>('height', widget.height);
-    final background = cfg<Color>('backgroundColor', widget.backgroundColor ?? colorScheme.surface);
-    final elevation = cfg<double>('elevation', widget.elevation);
-    final showSearch = cfg<bool>('showSearch', widget.showSearch);
-    final showCart = cfg<bool>('showCart', widget.showCart);
-    final showShadow = cfg<bool>('showShadow', true);
-    final padding = cfg<EdgeInsets>('padding', const EdgeInsets.symmetric(horizontal: 16.0));
+    final theme = Theme.of(context);
+    final shopKitTheme = theme.extension<ShopKitTheme>();
+    final stickyHeaderTheme = shopKitTheme?.stickyHeaderTheme;
 
-    return Container(
-      height: height,
-      decoration: BoxDecoration(
-        color: background,
-        boxShadow: showShadow
-            ? [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.1),
-                  blurRadius: elevation,
-                  offset: Offset(0, elevation / 2),
-                ),
-              ]
-            : null,
-      ),
-      child: SafeArea(
-        child: Padding(
-          padding: padding,
-          child: Row(
-            children: [
-              if (widget.logo != null)
-                widget.logo!
-              else if (widget.title != null)
-                Text(
-                  widget.title!,
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: colorScheme.onSurface,
-                  ),
-                ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: widget.menuItems.map((item) => Padding(
-                      padding: const EdgeInsets.only(right: 16.0),
-                      child: _buildMenuItem(item, theme),
-                    )).toList(),
-                  ),
-                ),
-              ),
-              if (showSearch)
-                IconButton(
-                  onPressed: widget.onSearchTap,
-                  icon: Icon(Icons.search, color: colorScheme.onSurface),
-                  tooltip: 'Search',
-                ),
-              if (showCart)
-                Stack(
-                  children: [
-                    IconButton(
-                      onPressed: widget.onCartTap,
-                      icon: Icon(Icons.shopping_cart_outlined, color: colorScheme.onSurface),
-                      tooltip: 'Cart',
-                    ),
-                    if (widget.cartItemCount != null && widget.cartItemCount! > 0)
-                      Positioned(
-                        right: 6,
-                        top: 6,
-                        child: Container(
-                          padding: const EdgeInsets.all(2),
-                          decoration: BoxDecoration(
-                            color: colorScheme.error,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
-                          child: Text(
-                            '${widget.cartItemCount}',
-                            style: TextStyle(
-                              color: colorScheme.onError,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-            ],
+    return NestedScrollView(
+      controller: _scrollController,
+      headerSliverBuilder: (context, innerBoxIsScrolled) {
+        return [
+          SliverAppBar(
+            expandedHeight: widget.maxHeaderHeight,
+            collapsedHeight: widget.minHeaderHeight,
+            pinned: widget.behavior == StickyHeaderBehavior.pinned,
+            floating: widget.behavior == StickyHeaderBehavior.floating,
+            snap: widget.behavior == StickyHeaderBehavior.floating,
+            elevation: widget.showShadow ? (stickyHeaderTheme?.elevation ?? _currentElevation) : 0,
+            backgroundColor: widget.enableColorTransition
+                ? _colorAnimation.value
+                : stickyHeaderTheme?.backgroundColor ?? shopKitTheme?.colors.surface ?? theme.colorScheme.surface,
+            flexibleSpace: _buildFlexibleSpace(context, shopKitTheme),
           ),
-        ),
-      ),
+        ];
+      },
+      body: widget.contentChild,
     );
   }
 
-  Widget _buildMenuItem(MenuItemModel item, ThemeData theme) {
-    return InkWell(
-      onTap: item.isEnabled ? () => widget.onMenuItemTap?.call(item) : null,
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (item.icon != null)
-              item.icon!
-            else if (item.iconUrl != null)
-              Image.network(
-                item.iconUrl!,
-                width: 20,
-                height: 20,
-                errorBuilder: (context, error, stackTrace) =>
-                    const Icon(Icons.image_not_supported, size: 20),
-              ),
-            if (item.icon != null || item.iconUrl != null)
-              const SizedBox(width: 8),
-            Text(
-              item.label,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: item.isEnabled
-                    ? theme.colorScheme.onSurface
-                    : theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            if (item.badgeCount != null && item.badgeCount! > 0) ...[
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.error,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  '${item.badgeCount}',
-                  style: TextStyle(
-                    color: theme.colorScheme.onError,
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
-          ],
-        ),
+  Widget _buildFlexibleSpace(BuildContext context, ShopKitTheme? shopKitTheme) {
+    return FlexibleSpaceBar(
+      background: _buildHeaderContent(context, shopKitTheme),
+      collapseMode: widget.enableParallax ? CollapseMode.parallax : CollapseMode.pin,
+    );
+  }
+
+  Widget _buildHeaderContent(BuildContext context, ShopKitTheme? shopKitTheme) {
+    Widget header = widget.customHeaderBuilder?.call(context, widget.headerChild, _scrollProgress) ?? widget.headerChild;
+
+    if (widget.enableFadeEffect) header = Opacity(opacity: _headerOpacity, child: header);
+    if (widget.enableScaleEffect) header = Transform.scale(scale: _headerScale, child: header);
+    if (widget.enableAnimations) {
+      header = ScaleTransition(scale: _scaleAnimation, child: header);
+    }
+
+    return GestureDetector(
+      onTap: _handleHeaderTap,
+      child: Padding(
+        padding: EdgeInsets.all(shopKitTheme?.spacing.md ?? 16.0),
+        child: header,
       ),
     );
+  }
+  
+  // --- Public API for external control ---
+  void scrollToTop({bool animate = true}) {
+    final shopKitTheme = Theme.of(context).extension<ShopKitTheme>();
+    if (animate) {
+      _scrollController.animateTo(
+        0,
+        duration: shopKitTheme?.animations.normal ?? const Duration(milliseconds: 500),
+        curve: shopKitTheme?.animations.easeOut ?? Curves.easeOut,
+      );
+    } else {
+      _scrollController.jumpTo(0);
+    }
   }
 }
+
+/// Defines how the sticky header behaves during scrolling.
+enum StickyHeaderBehavior {
+  /// The header shrinks as you scroll down and stays pinned at its minimum height.
+  pinned,
+  /// The header scrolls off-screen and reappears when you scroll up.
+  floating,
+  /// The header shrinks as you scroll down but does not stay pinned.
+  expandable,
+}
+
+// Enums for style and scroll effects can be added here if needed,
+// but often it's cleaner to control these effects via boolean flags as done above.

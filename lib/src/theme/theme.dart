@@ -18,6 +18,15 @@ import 'components/sticky_header_theme.dart';
 import 'components/variant_picker_theme.dart';
 import 'components/wishlist_theme.dart';
 import 'components/product_recommendation_theme.dart';
+import 'components/payment_method_selector_theme.dart';
+import 'components/shipping_calculator_theme.dart';
+import 'components/exit_intent_popup_theme.dart';
+import 'components/social_share_theme.dart';
+import 'components/trust_badge_theme.dart';
+import 'components/back_to_top_theme.dart';
+import 'components/currency_converter_theme.dart';
+import 'components/order_tracking_theme.dart';
+import 'components/product_detail_view_theme.dart';
 
 /// The master ShopKit theme extension.
 ///
@@ -47,10 +56,80 @@ class ShopKitTheme extends ThemeExtension<ShopKitTheme> {
   final CategoryTabsTheme? categoryTabsTheme;
   final CartBubbleTheme? cartBubbleTheme;
   final CheckoutStepTheme? checkoutStepTheme;
+  final ShippingCalculatorTheme? shippingCalculatorTheme;
+  final ExitIntentPopupTheme? exitIntentPopupTheme;
   final ProductFilterTheme? productFilterTheme;
   final ReviewWidgetTheme? reviewWidgetTheme;
   final StickyHeaderTheme? stickyHeaderTheme;
   final ProductRecommendationTheme? productRecommendationTheme;
+  final PaymentMethodSelectorTheme? paymentMethodSelectorTheme;
+  final SocialShareTheme? socialShareTheme;
+  final TrustBadgeTheme? trustBadgeTheme;
+  final BackToTopTheme? backToTopTheme;
+  final CurrencyConverterTheme? currencyConverterTheme;
+  final OrderTrackingTheme? orderTrackingTheme;
+  final ProductDetailViewTheme? productDetailViewTheme;
+
+  // --- Legacy compatibility getters ---
+  // These map old ShopKitTheme property names to the new token-based structure
+  // so existing widgets can migrate incrementally.
+  Color get primaryColor => colors.primary;
+  Color get onPrimaryColor => colors.onPrimary;
+  Color get secondaryColor => colors.secondary;
+  Color get onSecondaryColor => colors.onSecondary;
+  Color get surfaceColor => colors.surface;
+  Color get onSurfaceColor => colors.onSurface;
+  Color get backgroundColor => colors.background;
+  Color get onBackgroundColor => colors.onBackground;
+  Color get errorColor => colors.error;
+  Color get onErrorColor => colors.onError;
+  Color get successColor => colors.success;
+  Color get warningColor => colors.warning;
+  Color get infoColor => colors.info;
+
+  // Legacy text theme compatibility
+  TextTheme get textTheme => TextTheme(
+        bodyMedium: typography.body1,
+        bodySmall: typography.body2,
+        titleLarge: typography.headline2,
+        titleMedium: typography.body1,
+        titleSmall: typography.caption,
+      );
+
+  String? get fontFamily => typography.headline1.fontFamily;
+
+  // Legacy layout fields
+  double get cardElevation => 1.0;
+  EdgeInsets get defaultPadding => EdgeInsets.all(spacing.md);
+  EdgeInsets get defaultMargin => EdgeInsets.all(spacing.sm);
+  // Legacy convenience getter
+  double get borderRadius => radii.md;
+
+  // Animation convenience getters
+  Duration get fastAnimation => animations.fast;
+  Duration get normalAnimation => animations.normal;
+  Duration get slowAnimation => animations.slow;
+  Duration get veryFastAnimation => animations.veryFast;
+  Duration get verySlowAnimation => animations.verySlow;
+  Duration get fadeInDuration => animations.fadeIn;
+  Duration get fadeOutDuration => animations.fadeOut;
+  Duration get slideInDuration => animations.slideIn;
+  Duration get slideOutDuration => animations.slideOut;
+  Duration get bounceDuration => animations.bounce;
+  Duration get scaleDuration => animations.scale;
+  Duration get rotationDuration => animations.rotation;
+  Duration get pulseDuration => animations.pulse;
+  Duration get shimmerDuration => animations.shimmer;
+  Duration get rippleDuration => animations.ripple;
+  
+  Curve get easeOutCurve => animations.easeOut;
+  Curve get easeInCurve => animations.easeIn;
+  Curve get easeInOutCurve => animations.easeInOut;
+  Curve get bounceInCurve => animations.bounceIn;
+  Curve get bounceOutCurve => animations.bounceOut;
+  Curve get elasticCurve => animations.elastic;
+  Curve get springCurve => animations.spring;
+
 
   const ShopKitTheme({
     required this.colors,
@@ -71,7 +150,16 @@ class ShopKitTheme extends ThemeExtension<ShopKitTheme> {
     this.productFilterTheme,
     this.reviewWidgetTheme,
     this.stickyHeaderTheme,
+  this.shippingCalculatorTheme,
+  this.exitIntentPopupTheme,
+  this.socialShareTheme,
+  this.trustBadgeTheme,
+  this.backToTopTheme,
+  this.currencyConverterTheme,
+  this.orderTrackingTheme,
   this.productRecommendationTheme,
+  this.paymentMethodSelectorTheme,
+  this.productDetailViewTheme,
   });
 
   @override
@@ -94,7 +182,16 @@ class ShopKitTheme extends ThemeExtension<ShopKitTheme> {
     ProductFilterTheme? productFilterTheme,
     ReviewWidgetTheme? reviewWidgetTheme,
     StickyHeaderTheme? stickyHeaderTheme,
+  ShippingCalculatorTheme? shippingCalculatorTheme,
+  ExitIntentPopupTheme? exitIntentPopupTheme,
   ProductRecommendationTheme? productRecommendationTheme,
+  PaymentMethodSelectorTheme? paymentMethodSelectorTheme,
+  SocialShareTheme? socialShareTheme,
+  TrustBadgeTheme? trustBadgeTheme,
+  BackToTopTheme? backToTopTheme,
+  CurrencyConverterTheme? currencyConverterTheme,
+  OrderTrackingTheme? orderTrackingTheme,
+  ProductDetailViewTheme? productDetailViewTheme,
   }) {
     return ShopKitTheme(
       colors: colors ?? this.colors,
@@ -115,8 +212,37 @@ class ShopKitTheme extends ThemeExtension<ShopKitTheme> {
       productFilterTheme: productFilterTheme ?? this.productFilterTheme,
       reviewWidgetTheme: reviewWidgetTheme ?? this.reviewWidgetTheme,
       stickyHeaderTheme: stickyHeaderTheme ?? this.stickyHeaderTheme,
+  shippingCalculatorTheme: shippingCalculatorTheme ?? this.shippingCalculatorTheme,
+  exitIntentPopupTheme: exitIntentPopupTheme ?? this.exitIntentPopupTheme,
   productRecommendationTheme: productRecommendationTheme ?? this.productRecommendationTheme,
+  paymentMethodSelectorTheme: paymentMethodSelectorTheme ?? this.paymentMethodSelectorTheme,
+  socialShareTheme: socialShareTheme ?? this.socialShareTheme,
+  trustBadgeTheme: trustBadgeTheme ?? this.trustBadgeTheme,
+  backToTopTheme: backToTopTheme ?? this.backToTopTheme,
+  currencyConverterTheme: currencyConverterTheme ?? this.currencyConverterTheme,
+  orderTrackingTheme: orderTrackingTheme ?? this.orderTrackingTheme,
+  productDetailViewTheme: productDetailViewTheme ?? this.productDetailViewTheme,
     );
+  }
+
+  /// Backwards-compatible static factories so callers can use
+  /// `ShopKitTheme.material3()` like before.
+  static ShopKitTheme material3({Color? seedColor, Brightness brightness = Brightness.light}) {
+    final seed = seedColor ?? const Color(0xFF6750A4);
+    final scheme = ColorScheme.fromSeed(seedColor: seed, brightness: brightness);
+    return ShopKitThemes.material3(scheme);
+  }
+
+  static ShopKitTheme neumorphic({Color? seedColor, Brightness brightness = Brightness.light}) {
+    final seed = seedColor ?? const Color(0xFF6200EA);
+    final scheme = ColorScheme.fromSeed(seedColor: seed, brightness: brightness);
+    return ShopKitThemes.neumorphic(scheme);
+  }
+
+  static ShopKitTheme glassmorphic({Color? seedColor, Brightness brightness = Brightness.light}) {
+    final seed = seedColor ?? const Color(0xFF6200EA);
+    final scheme = ColorScheme.fromSeed(seedColor: seed, brightness: brightness);
+    return ShopKitThemes.glassmorphic(scheme);
   }
 
   @override
@@ -146,8 +272,33 @@ class ShopKitTheme extends ThemeExtension<ShopKitTheme> {
       productFilterTheme: productFilterTheme?.lerp(other.productFilterTheme, t),
       reviewWidgetTheme: reviewWidgetTheme?.lerp(other.reviewWidgetTheme, t),
       stickyHeaderTheme: stickyHeaderTheme?.lerp(other.stickyHeaderTheme, t),
+  productDetailViewTheme: productDetailViewTheme?.lerp(other.productDetailViewTheme, t),
   productRecommendationTheme: productRecommendationTheme?.lerp(other.productRecommendationTheme, t),
+  paymentMethodSelectorTheme: paymentMethodSelectorTheme?.lerp(other.paymentMethodSelectorTheme, t),
+  exitIntentPopupTheme: exitIntentPopupTheme?.lerp(other.exitIntentPopupTheme, t),
+  backToTopTheme: backToTopTheme?.lerp(other.backToTopTheme, t),
     );
+  }
+}
+/// Backwards-compatible static constructors mirroring the legacy API where tests
+/// and external code expect `ShopKitTheme.material3()`, `ShopKitTheme.neumorphic()`, etc.
+extension ShopKitThemeStaticFactories on ShopKitTheme {
+  static ShopKitTheme material3({Color? seedColor, Brightness brightness = Brightness.light}) {
+    final seed = seedColor ?? const Color(0xFF6750A4);
+    final scheme = ColorScheme.fromSeed(seedColor: seed, brightness: brightness);
+    return ShopKitThemes.material3(scheme);
+  }
+
+  static ShopKitTheme neumorphic({Color? seedColor, Brightness brightness = Brightness.light}) {
+    final seed = seedColor ?? const Color(0xFF6200EA);
+    final scheme = ColorScheme.fromSeed(seedColor: seed, brightness: brightness);
+    return ShopKitThemes.neumorphic(scheme);
+  }
+
+  static ShopKitTheme glassmorphic({Color? seedColor, Brightness brightness = Brightness.light}) {
+    final seed = seedColor ?? const Color(0xFF6200EA);
+    final scheme = ColorScheme.fromSeed(seedColor: seed, brightness: brightness);
+    return ShopKitThemes.glassmorphic(scheme);
   }
 }
 
@@ -171,9 +322,29 @@ class ShopKitThemes {
     fast: Duration(milliseconds: 150),
     normal: Duration(milliseconds: 300),
     slow: Duration(milliseconds: 500),
+    veryFast: Duration(milliseconds: 100),
+    verySlow: Duration(milliseconds: 800),
+    
+    // Specific animation durations
+    fadeIn: Duration(milliseconds: 200),
+    fadeOut: Duration(milliseconds: 150),
+    slideIn: Duration(milliseconds: 250),
+    slideOut: Duration(milliseconds: 200),
+    bounce: Duration(milliseconds: 600),
+    scale: Duration(milliseconds: 200),
+    rotation: Duration(milliseconds: 400),
+    pulse: Duration(milliseconds: 1000),
+    shimmer: Duration(milliseconds: 1200),
+    ripple: Duration(milliseconds: 300),
+    
+    // Animation curves
     easeOut: Curves.easeOut,
     easeIn: Curves.easeIn,
-    bounce: Curves.elasticOut,
+    easeInOut: Curves.easeInOut,
+    bounceIn: Curves.bounceIn,
+    bounceOut: Curves.bounceOut,
+    elastic: Curves.elasticOut,
+    spring: Curves.elasticInOut,
   );
 
   /// A modern, clean theme based on Material 3 principles.
@@ -298,6 +469,127 @@ class ShopKitThemes {
         authorTextStyle: _baseTypography.body2.copyWith(fontWeight: FontWeight.w600),
         bodyTextStyle: _baseTypography.body2,
         dateTextStyle: _baseTypography.caption,
+      ),
+      paymentMethodSelectorTheme: PaymentMethodSelectorTheme(
+        backgroundColor: colorScheme.surface,
+        borderRadius: BorderRadius.circular(_baseRadii.md),
+        padding: EdgeInsets.all(_baseSpacing.md),
+        itemSpacing: _baseSpacing.md,
+        itemPadding: EdgeInsets.all(_baseSpacing.sm),
+        itemBorderRadius: BorderRadius.circular(_baseRadii.sm),
+        itemSelectedBorderColor: colorScheme.primary,
+        itemSelectedBackgroundColor: colorScheme.primary.withValues(alpha: 0.04),
+        iconBackgroundColor: colorScheme.surfaceContainerHighest,
+        iconBorderRadius: BorderRadius.circular(_baseRadii.sm),
+        headerTextStyle: _baseTypography.headline2.copyWith(fontWeight: FontWeight.w600),
+        addButtonStyle: ElevatedButton.styleFrom(padding: EdgeInsets.symmetric(horizontal: _baseSpacing.md, vertical: _baseSpacing.sm)),
+        emptyTitleStyle: _baseTypography.headline2,
+        emptySubtitleStyle: _baseTypography.body2,
+        selectionIndicatorColor: colorScheme.primary,
+      ),
+      trustBadgeTheme: TrustBadgeTheme(
+        backgroundColor: colorScheme.surface,
+        borderRadius: BorderRadius.circular(_baseRadii.sm),
+        padding: EdgeInsets.all(_baseSpacing.sm),
+        elevation: 2.0,
+        width: 80,
+        height: 40,
+        textColor: colorScheme.onSurface,
+        iconScale: 0.4,
+        showTooltip: true,
+        animateOnHover: true,
+        borderColor: colorScheme.onSurface.withValues(alpha: 0.06),
+      ),
+      backToTopTheme: BackToTopTheme(
+        showAfterOffset: 200.0,
+        buttonSize: 56.0,
+        iconSize: 24.0,
+        backgroundColor: colorScheme.primary,
+        foregroundColor: colorScheme.onPrimary,
+        minimalBackgroundColor: colorScheme.surface.withValues(alpha: 0.9),
+        pillBackgroundColor: colorScheme.primary,
+        pillIconColor: colorScheme.onPrimary,
+        pillLabelColor: colorScheme.onPrimary,
+        iconColor: colorScheme.onPrimary,
+        tooltip: 'Back to top',
+        showLabel: false,
+        label: 'Top',
+        showProgress: false,
+        margin: EdgeInsets.all(16),
+      ),
+      currencyConverterTheme: CurrencyConverterTheme(
+        backgroundColor: colorScheme.surface,
+        borderRadius: BorderRadius.circular(_baseRadii.md),
+        padding: EdgeInsets.all(_baseSpacing.md),
+        compact: false,
+        showDropdown: true,
+        showSymbol: true,
+        showCode: false,
+        decimalPlaces: 2,
+        headerText: 'Currency Converter',
+        fromLabel: 'From',
+        toLabel: 'To',
+        iconColor: colorScheme.primary,
+        amountStyle: _baseTypography.body1,
+        convertedAmountStyle: _baseTypography.body1.copyWith(fontWeight: FontWeight.bold, color: colorScheme.primary),
+      ),
+      orderTrackingTheme: OrderTrackingTheme(
+        backgroundColor: colorScheme.surface,
+        borderRadius: BorderRadius.circular(_baseRadii.lg),
+        padding: EdgeInsets.all(_baseSpacing.md),
+        headerText: 'Order Tracking',
+        statusBackgrounds: {
+          'processing': Colors.orange.withValues(alpha: 0.1),
+          'shipped': Colors.blue.withValues(alpha: 0.1),
+          'delivered': Colors.green.withValues(alpha: 0.1),
+          'cancelled': colorScheme.errorContainer,
+        },
+        statusTextColors: {
+          'processing': Colors.orange,
+          'shipped': Colors.blue,
+          'delivered': Colors.green,
+          'cancelled': colorScheme.onErrorContainer,
+        },
+        cardBackgroundColor: colorScheme.primary.withValues(alpha: 0.1),
+        cardBorderColor: colorScheme.primary.withValues(alpha: 0.3),
+      ),
+      shippingCalculatorTheme: ShippingCalculatorTheme(
+        backgroundColor: colorScheme.surface,
+        borderRadius: BorderRadius.circular(_baseRadii.md),
+        padding: EdgeInsets.all(_baseSpacing.md),
+        headerTextStyle: _baseTypography.headline2.copyWith(fontWeight: FontWeight.bold),
+        addressHeaderTextStyle: _baseTypography.body1.copyWith(fontWeight: FontWeight.w600),
+        methodsHeaderTextStyle: _baseTypography.body1.copyWith(fontWeight: FontWeight.w600),
+        calculateButtonStyle: ElevatedButton.styleFrom(padding: EdgeInsets.symmetric(vertical: _baseSpacing.sm, horizontal: _baseSpacing.md)),
+        loadingIndicatorSize: 20,
+        methodItemBorderRadius: BorderRadius.circular(_baseRadii.sm),
+        methodItemPadding: EdgeInsets.all(_baseSpacing.sm),
+        methodSelectedBorderColor: colorScheme.primary,
+        methodSelectedBackgroundColor: colorScheme.primary.withValues(alpha: 0.04),
+      ),
+      exitIntentPopupTheme: ExitIntentPopupTheme(
+        overlayColor: Colors.black.withValues(alpha: 0.5),
+        backgroundColor: colorScheme.surface,
+        borderRadius: BorderRadius.circular(_baseRadii.lg),
+        padding: EdgeInsets.all(_baseSpacing.lg),
+        maxWidth: 560,
+        showCloseButton: true,
+        primaryButtonStyle: ElevatedButton.styleFrom(padding: EdgeInsets.symmetric(vertical: _baseSpacing.sm)),
+        secondaryButtonStyle: TextButton.styleFrom(padding: EdgeInsets.symmetric(vertical: _baseSpacing.sm)),
+        elevation: 24,
+        enableScale: true,
+        enableFade: true,
+        enableSlide: true,
+      ),
+      socialShareTheme: SocialShareTheme(
+        backgroundColor: colorScheme.surface,
+        borderRadius: BorderRadius.circular(_baseRadii.md),
+        padding: EdgeInsets.all(_baseSpacing.sm),
+        iconSize: 20,
+        spacing: _baseSpacing.sm,
+        iconBorderRadius: BorderRadius.circular(_baseRadii.sm),
+        copyToastBackground: colorScheme.onSurface.withValues(alpha: 0.06),
+        copyToastTextStyle: _baseTypography.body2.copyWith(color: colorScheme.onSurface),
       ),
     );
   }

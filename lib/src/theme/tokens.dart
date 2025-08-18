@@ -100,16 +100,52 @@ class ShopKitAnimation {
   final Duration fast;
   final Duration normal;
   final Duration slow;
+  final Duration veryFast;
+  final Duration verySlow;
+  
+  // Specific animation durations
+  final Duration fadeIn;
+  final Duration fadeOut;
+  final Duration slideIn;
+  final Duration slideOut;
+  final Duration bounce;
+  final Duration scale;
+  final Duration rotation;
+  final Duration pulse;
+  final Duration shimmer;
+  final Duration ripple;
+  
+  // Animation curves
   final Curve easeOut;
   final Curve easeIn;
-  final Curve bounce;
+  final Curve easeInOut;
+  final Curve bounceIn;
+  final Curve bounceOut;
+  final Curve elastic;
+  final Curve spring;
 
   const ShopKitAnimation({
     required this.fast,
     required this.normal,
     required this.slow,
+    required this.veryFast,
+    required this.verySlow,
+    required this.fadeIn,
+    required this.fadeOut,
+    required this.slideIn,
+    required this.slideOut,
+    required this.bounce,
+    required this.scale,
+    required this.rotation,
+    required this.pulse,
+    required this.shimmer,
+    required this.ripple,
     required this.easeOut,
     required this.easeIn,
-    required this.bounce,
+    required this.easeInOut,
+    required this.bounceIn,
+    required this.bounceOut,
+    required this.elastic,
+    required this.spring,
   });
 }
