@@ -90,6 +90,8 @@ class _ProductGridState extends State<ProductGrid> {
     }
 
     Widget gridView = GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
       padding: widget.padding,
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: _getCrossAxisCount(context),

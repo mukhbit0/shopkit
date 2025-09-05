@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart' as Material;
+import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:shopkit/shopkit.dart';
 
 void main() {
@@ -10,11 +11,11 @@ class MyApp extends Material.StatelessWidget {
 
   @override
   Material.Widget build(Material.BuildContext context) {
-    return Material.MaterialApp(
+    return ShadApp(
       title: 'ShopKit Example',
-      theme: Material.ThemeData(
-        colorScheme: Material.ColorScheme.fromSeed(seedColor: Material.Colors.deepPurple),
-        useMaterial3: true,
+      theme: ShadThemeData(
+        brightness: Material.Brightness.light,
+        colorScheme: ShadColorScheme.fromName('blue'),
       ),
       home: const ShopKitExamplePage(),
     );
@@ -141,16 +142,19 @@ class _ShopKitExamplePageState extends Material.State<ShopKitExamplePage> {
               style: Material.TextStyle(fontSize: 24, fontWeight: Material.FontWeight.bold),
             ),
             const Material.SizedBox(height: 16),
-            ProductGrid(
-              products: filteredProducts,
-              onAddToCart: (cartItem) {
-                setState(() {
-                  _cartItems.add(cartItem);
-                });
-                Material.ScaffoldMessenger.of(context).showSnackBar(
-                  Material.SnackBar(content: Material.Text('${cartItem.product.name} added to cart')),
-                );
-              },
+            Container(
+              height: 400, // Fixed height to prevent unbounded height issues
+              child: ProductGrid(
+                products: filteredProducts,
+                onAddToCart: (cartItem) {
+                  setState(() {
+                    _cartItems.add(cartItem);
+                  });
+                  Material.ScaffoldMessenger.of(context).showSnackBar(
+                    Material.SnackBar(content: Material.Text('${cartItem.product.name} added to cart')),
+                  );
+                },
+              ),
             ),
             
             const Material.SizedBox(height: 32),
@@ -162,8 +166,9 @@ class _ShopKitExamplePageState extends Material.State<ShopKitExamplePage> {
             ),
             const Material.SizedBox(height: 16),
             if (_products.isNotEmpty)
-              Material.SizedBox(
+              Container(
                 width: 300,
+                height: 400,
                 child: ProductCard(
                   product: _products.first,
                   onAddToCart: (cartItem) {
