@@ -1,138 +1,10 @@
-// Updated ProductCard with layout fixes
 import 'package:flutter/material.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../models/product_model.dart';
 import '../../models/cart_model.dart';
-import '../../theme/theme.dart';
-import '../../theme/components/product_card_theme.dart';
 
-/// Configuration class for ProductCard widget customization
-class FlexibleProductCardConfig {
-  const FlexibleProductCardConfig({
-    this.padding,
-    this.margin,
-    this.borderRadius,
-    this.elevation,
-    this.shadowColor,
-    this.backgroundColor,
-    this.imageAspectRatio,
-    this.imageHeight,
-    this.titleStyle,
-    this.priceStyle,
-    this.originalPriceStyle,
-    this.brandStyle,
-    this.ratingStyle,
-    this.badgeTextStyle,
-    this.badgeBackgroundColor,
-    this.wishlistIconSize,
-    this.cartIconSize,
-    this.animationDuration,
-    this.hoverScale,
-    this.showBrand,
-    this.showRating,
-    this.showDiscount,
-    this.showQuickActions,
-    this.imageBuilder,
-    this.titleBuilder,
-    this.priceBuilder,
-    this.actionBuilder,
-    this.overlayBuilder,
-  });
-
-  final EdgeInsets? padding;
-  final EdgeInsets? margin;
-  final BorderRadius? borderRadius;
-  final double? elevation;
-  final Color? shadowColor;
-  final Color? backgroundColor;
-  final double? imageAspectRatio;
-  final double? imageHeight;
-  final TextStyle? titleStyle;
-  final TextStyle? priceStyle;
-  final TextStyle? originalPriceStyle;
-  final TextStyle? brandStyle;
-  final TextStyle? ratingStyle;
-  final TextStyle? badgeTextStyle;
-  final Color? badgeBackgroundColor;
-  final double? wishlistIconSize;
-  final double? cartIconSize;
-  final Duration? animationDuration;
-  final double? hoverScale;
-  final bool? showBrand;
-  final bool? showRating;
-  final bool? showDiscount;
-  final bool? showQuickActions;
-  
-  // Builder functions for complete customization
-  final Widget Function(BuildContext context, String imageUrl, ProductModel product)? imageBuilder;
-  final Widget Function(BuildContext context, String title, ProductModel product)? titleBuilder;
-  final Widget Function(BuildContext context, double price, double? originalPrice, ProductModel product)? priceBuilder;
-  final Widget Function(BuildContext context, VoidCallback? onAddToCart, VoidCallback? onWishlist, ProductModel product)? actionBuilder;
-  final Widget Function(BuildContext context, ProductModel product)? overlayBuilder;
-
-  FlexibleProductCardConfig copyWith({
-    EdgeInsets? padding,
-    EdgeInsets? margin,
-    BorderRadius? borderRadius,
-    double? elevation,
-    Color? shadowColor,
-    Color? backgroundColor,
-    double? imageAspectRatio,
-    double? imageHeight,
-    TextStyle? titleStyle,
-    TextStyle? priceStyle,
-    TextStyle? originalPriceStyle,
-    TextStyle? brandStyle,
-    TextStyle? ratingStyle,
-    TextStyle? badgeTextStyle,
-    Color? badgeBackgroundColor,
-    double? wishlistIconSize,
-    double? cartIconSize,
-    Duration? animationDuration,
-    double? hoverScale,
-    bool? showBrand,
-    bool? showRating,
-    bool? showDiscount,
-    bool? showQuickActions,
-    Widget Function(BuildContext context, String imageUrl, ProductModel product)? imageBuilder,
-    Widget Function(BuildContext context, String title, ProductModel product)? titleBuilder,
-    Widget Function(BuildContext context, double price, double? originalPrice, ProductModel product)? priceBuilder,
-    Widget Function(BuildContext context, VoidCallback? onAddToCart, VoidCallback? onWishlist, ProductModel product)? actionBuilder,
-    Widget Function(BuildContext context, ProductModel product)? overlayBuilder,
-  }) {
-    return FlexibleProductCardConfig(
-      padding: padding ?? this.padding,
-      margin: margin ?? this.margin,
-      borderRadius: borderRadius ?? this.borderRadius,
-      elevation: elevation ?? this.elevation,
-      shadowColor: shadowColor ?? this.shadowColor,
-      backgroundColor: backgroundColor ?? this.backgroundColor,
-      imageAspectRatio: imageAspectRatio ?? this.imageAspectRatio,
-      imageHeight: imageHeight ?? this.imageHeight,
-      titleStyle: titleStyle ?? this.titleStyle,
-      priceStyle: priceStyle ?? this.priceStyle,
-      originalPriceStyle: originalPriceStyle ?? this.originalPriceStyle,
-      brandStyle: brandStyle ?? this.brandStyle,
-      ratingStyle: ratingStyle ?? this.ratingStyle,
-      badgeTextStyle: badgeTextStyle ?? this.badgeTextStyle,
-      badgeBackgroundColor: badgeBackgroundColor ?? this.badgeBackgroundColor,
-      wishlistIconSize: wishlistIconSize ?? this.wishlistIconSize,
-      cartIconSize: cartIconSize ?? this.cartIconSize,
-      animationDuration: animationDuration ?? this.animationDuration,
-      hoverScale: hoverScale ?? this.hoverScale,
-      showBrand: showBrand ?? this.showBrand,
-      showRating: showRating ?? this.showRating,
-      showDiscount: showDiscount ?? this.showDiscount,
-      showQuickActions: showQuickActions ?? this.showQuickActions,
-      imageBuilder: imageBuilder ?? this.imageBuilder,
-      titleBuilder: titleBuilder ?? this.titleBuilder,
-      priceBuilder: priceBuilder ?? this.priceBuilder,
-      actionBuilder: actionBuilder ?? this.actionBuilder,
-      overlayBuilder: overlayBuilder ?? this.overlayBuilder,
-    );
-  }
-}
-
-/// Modern product card widget aligned with new ShopKit architecture
+/// Modern product card built with shadcn/ui components
 class ProductCard extends StatefulWidget {
   const ProductCard({
     super.key,
@@ -140,296 +12,347 @@ class ProductCard extends StatefulWidget {
     this.onTap,
     this.onAddToCart,
     this.onToggleWishlist,
-    this.onImageTap,
     this.isInWishlist = false,
-    this.isInCart = false,
-    this.customBuilder,
-    this.heroTag,
-    this.aspectRatio,
-    this.imageHeight,
     this.width,
     this.height,
-  this.config,
+    this.aspectRatio,
+    this.showQuickActions = true,
+    this.showDiscount = true,
+    this.showRating = true,
+    this.showBrand = true,
+    this.imageHeight = 180,
   });
 
   final ProductModel product;
   final VoidCallback? onTap;
   final Function(CartItemModel)? onAddToCart;
   final VoidCallback? onToggleWishlist;
-  final VoidCallback? onImageTap;
   final bool isInWishlist;
-  final bool isInCart;
-  final Widget Function(BuildContext, ProductModel, ProductCardState)?
-      customBuilder;
-  final String? heroTag;
-  final double? aspectRatio;
-  final double? imageHeight;
   final double? width;
   final double? height;
-  final FlexibleProductCardConfig? config;
+  final double? aspectRatio;
+  final bool showQuickActions;
+  final bool showDiscount;
+  final bool showRating;
+  final bool showBrand;
+  final double imageHeight;
 
   @override
-  State<ProductCard> createState() => ProductCardState();
+  State<ProductCard> createState() => _ProductCardState();
 }
 
-class ProductCardState extends State<ProductCard>
-    with TickerProviderStateMixin {
-  late AnimationController _hoverController;
-  late AnimationController _favoriteController;
+class _ProductCardState extends State<ProductCard>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<double> _scaleAnimation;
+  bool _isHovered = false;
 
   @override
   void initState() {
     super.initState();
-
-    _hoverController = AnimationController(
+    _animationController = AnimationController(
       duration: const Duration(milliseconds: 200),
       vsync: this,
     );
-
-    _favoriteController = AnimationController(
-      duration: const Duration(milliseconds: 300),
-      vsync: this,
-    );
+    _scaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: 1.02,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInOut,
+    ));
   }
 
   @override
   void dispose() {
-    _hoverController.dispose();
-    _favoriteController.dispose();
+    _animationController.dispose();
     super.dispose();
+  }
+
+  void _handleHover(bool isHovered) {
+    setState(() {
+      _isHovered = isHovered;
+    });
+    if (isHovered) {
+      _animationController.forward();
+    } else {
+      _animationController.reverse();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (widget.customBuilder != null) {
-      return widget.customBuilder!(context, widget.product, this);
-    }
-
-    final shopKitTheme = Theme.of(context).extension<ShopKitTheme>();
-    final compTheme = shopKitTheme?.productCardTheme;
-    if (compTheme != null) {
-      return _buildThemeExtensionCard(context, compTheme);
-    }
-    return _buildBasicCard(context);
-  }
-
-  /// Fallback card design when no theme is specified
-  Widget _buildBasicCard(BuildContext context) {
-    return Card(
-      elevation: 4,
-      margin: EdgeInsets.zero,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: InkWell(
-        onTap: widget.onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Image
-              Container(
-                height: 120,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8),
-                  color: Theme.of(context).colorScheme.surfaceContainer,
-                ),
-                child: widget.product.imageUrl != null
-                  ? ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: Image.network(
-                        widget.product.imageUrl!,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => Icon(
-                          Icons.image,
-                          size: 32,
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    )
-                  : Icon(
-                      Icons.image,
-                      size: 32,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-              ),
-              const SizedBox(height: 8),
-              // Title
-              Flexible(
-                child: Text(
-                  widget.product.name,
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+    return MouseRegion(
+      onEnter: (_) => _handleHover(true),
+      onExit: (_) => _handleHover(false),
+      child: AnimatedBuilder(
+        animation: _scaleAnimation,
+        builder: (context, child) {
+          return Transform.scale(
+            scale: _scaleAnimation.value,
+            child: ShadCard(
+              width: widget.width,
+              height: widget.height,
+              padding: EdgeInsets.zero,
+              child: InkWell(
+                onTap: widget.onTap,
+                borderRadius: BorderRadius.circular(8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildImageSection(),
+                    _buildContentSection(),
+                  ],
                 ),
               ),
-              const SizedBox(height: 6),
-              // Price
-              Text(
-                '\$${widget.product.price.toStringAsFixed(2)}',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.primary,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                ),
-              ),
-              const SizedBox(height: 8),
-              // Add to Cart Button
-              SizedBox(
-                width: double.infinity,
-                height: 32,
-                child: ElevatedButton(
-                  onPressed: () {
-                    final cartItem = CartItemModel.createSafe(
-                      product: widget.product,
-                      quantity: 1,
-                      pricePerItem: widget.product.price,
-                    );
-                    widget.onAddToCart?.call(cartItem);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  ),
-                  child: const Text(
-                    'Add to Cart',
-                    style: TextStyle(fontSize: 10),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildThemeExtensionCard(BuildContext context, ProductCardTheme compTheme) {
-    final product = widget.product;
-    final background = compTheme.backgroundColor ?? Theme.of(context).colorScheme.surface;
-    final radius = compTheme.borderRadius ?? BorderRadius.circular(12);
-    final elevation = compTheme.elevation ?? 0;
-    return Material(
-      elevation: elevation,
-      borderRadius: radius,
-      color: background,
-      child: InkWell(
-        onTap: widget.onTap,
-        borderRadius: radius,
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildImage(context, radius),
-              const SizedBox(height: 8),
-              _buildTitle(context, compTheme),
-              const SizedBox(height: 6),
-              _buildPrice(context, compTheme),
-              const SizedBox(height: 8),
-              _buildAddToCart(context, product, radius),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildImage(BuildContext context, BorderRadius radius) {
-    return Container(
-      height: 120,
-      width: double.infinity,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(radius.topLeft.x * 0.8),
-        color: Theme.of(context).colorScheme.surfaceContainer,
-      ),
-      child: widget.product.imageUrl != null
-          ? ClipRRect(
-              borderRadius: BorderRadius.circular(radius.topLeft.x * 0.8),
-              child: Image.network(
-                widget.product.imageUrl!,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stack) => Icon(
-                  Icons.image,
-                  size: 32,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-              ),
-            )
-          : Icon(
-              Icons.image,
-              size: 32,
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
-    );
-  }
-
-  Widget _buildTitle(BuildContext context, ProductCardTheme compTheme) {
-    return Flexible(
-      child: Text(
-        widget.product.name,
-        style: compTheme.titleStyle ?? Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold, fontSize: 12),
-        maxLines: 2,
-        overflow: TextOverflow.ellipsis,
-      ),
-    );
-  }
-
-  Widget _buildPrice(BuildContext context, ProductCardTheme compTheme) {
-    return Text(
-  '\$${widget.product.price.toStringAsFixed(2)}',
-      style: compTheme.priceStyle ?? Theme.of(context).textTheme.titleMedium?.copyWith(
-            color: Theme.of(context).colorScheme.primary,
-            fontWeight: FontWeight.bold,
-            fontSize: 14,
-          ),
-    );
-  }
-
-  Widget _buildAddToCart(BuildContext context, ProductModel product, BorderRadius radius) {
-    return SizedBox(
-      width: double.infinity,
-      height: 32,
-      child: ElevatedButton(
-        onPressed: () {
-          final cartItem = CartItemModel.createSafe(
-            product: product,
-            quantity: 1,
-            pricePerItem: product.price,
           );
-          widget.onAddToCart?.call(cartItem);
         },
-        style: ElevatedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radius.topLeft.x * 0.6)),
-        ),
-        child: const Text('Add to Cart', style: TextStyle(fontSize: 10)),
       ),
     );
   }
 
+  Widget _buildImageSection() {
+    return Stack(
+      children: [
+        // Product Image
+        Container(
+          width: double.infinity,
+          height: widget.imageHeight,
+          decoration: BoxDecoration(
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(8),
+              topRight: Radius.circular(8),
+            ),
+            color: Colors.grey.shade50,
+          ),
+          child: ClipRRect(
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(8),
+              topRight: Radius.circular(8),
+            ),
+            child: widget.product.imageUrl != null
+                ? CachedNetworkImage(
+                    imageUrl: widget.product.imageUrl!,
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) => Container(
+                      color: Colors.grey.shade100,
+                      child: const Center(
+                        child: CircularProgressIndicator(),
+                      ),
+                    ),
+                    errorWidget: (context, url, error) => Container(
+                      color: Colors.grey.shade100,
+                      child: const Icon(
+                        Icons.image_not_supported,
+                        size: 48,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  )
+                : Container(
+                    color: Colors.grey.shade100,
+                    child: const Icon(
+                      Icons.image,
+                      size: 48,
+                      color: Colors.grey,
+                    ),
+                  ),
+          ),
+        ),
 
+        // Discount Badge
+        if (widget.showDiscount && widget.product.hasDiscount)
+          Positioned(
+            top: 8,
+            left: 8,
+            child: ShadBadge(
+              child: Text('${widget.product.discountPercentage!.round()}% OFF'),
+            ),
+          ),
+
+        // Quick Actions
+        if (widget.showQuickActions)
+          Positioned(
+            top: 8,
+            right: 8,
+            child: Column(
+              children: [
+                // Wishlist Button
+                ShadButton(
+                  onPressed: widget.onToggleWishlist,
+                  child: Icon(
+                    widget.isInWishlist ? Icons.favorite : Icons.favorite_border,
+                    size: 18,
+                    color: widget.isInWishlist ? Colors.red : null,
+                  ),
+                ),
+                
+                const SizedBox(height: 4),
+                
+                // Quick View Button (appears on hover)
+                AnimatedOpacity(
+                  opacity: _isHovered ? 1.0 : 0.0,
+                  duration: const Duration(milliseconds: 200),
+                  child: ShadButton(
+                    onPressed: widget.onTap,
+                    child: const Icon(
+                      Icons.visibility,
+                      size: 18,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+        // Stock Status
+        if (!widget.product.isInStock)
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.6),
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(8),
+                  topRight: Radius.circular(8),
+                ),
+              ),
+              child: const Center(
+                child: ShadBadge(
+                  child: Text(
+                    'OUT OF STOCK',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildContentSection() {
+    return Expanded(
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Brand
+            if (widget.showBrand && widget.product.brand?.isNotEmpty == true) ...[
+              Text(
+                widget.product.brand!,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Colors.grey.shade600,
+                  fontSize: 10,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 2),
+            ],
+
+            // Product Name
+            Text(
+              widget.product.name,
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+
+            const SizedBox(height: 6),
+
+            // Rating
+            if (widget.showRating && 
+                widget.product.rating != null && 
+                widget.product.rating! > 0) ...[
+              Row(
+                children: [
+                  ...List.generate(5, (index) {
+                    return Icon(
+                      index < widget.product.rating!.floor()
+                          ? Icons.star
+                          : index < widget.product.rating!
+                              ? Icons.star_half
+                              : Icons.star_border,
+                      size: 12,
+                      color: Colors.amber,
+                    );
+                  }),
+                  const SizedBox(width: 4),
+                  Text(
+                    '(${widget.product.reviewCount ?? 0})',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      fontSize: 10,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+            ],
+
+            // Price Section
+            Row(
+              children: [
+                Text(
+                  widget.product.formattedPrice,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+                if (widget.product.hasDiscount) ...[
+                  const SizedBox(width: 8),
+                  Text(
+                    widget.product.formattedOriginalPrice,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      decoration: TextDecoration.lineThrough,
+                      color: Colors.grey.shade600,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+
+            const Spacer(),
+
+            // Add to Cart Button
+            SizedBox(
+              width: double.infinity,
+              child: ShadButton(
+                onPressed: widget.product.isInStock
+                    ? () {
+                        final cartItem = CartItemModel.createSafe(
+                          product: widget.product,
+                          quantity: 1,
+                          pricePerItem: widget.product.discountedPrice,
+                        );
+                        widget.onAddToCart?.call(cartItem);
+                      }
+                    : null,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.shopping_cart, size: 16),
+                    const SizedBox(width: 8),
+                    Text(
+                      widget.product.isInStock ? 'Add to Cart' : 'Out of Stock',
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
-
-// CRITICAL FIXES SUMMARY:
-// 1. Added mainAxisSize: MainAxisSize.min to all Column widgets
-// 2. Changed Expanded to Flexible with FlexFit.loose where appropriate
-// 3. Used IntrinsicWidth for price row to handle overflow
-// 4. Replaced Spacer with Flexible in constrained layouts
-// 5. Added proper overflow handling with ellipsis
-
-// HOW TO APPLY THESE FIXES TO YOUR PROJECT:
-// 1. Replace all Column widgets with mainAxisSize: MainAxisSize.min
-// 2. Change Expanded to Flexible(fit: FlexFit.loose) in scrollable containers
-// 3. Use Flexible(fit: FlexFit.tight) only when you want equal distribution
-// 4. Add overflow: TextOverflow.ellipsis to text widgets in constrained spaces
-// 5. Use IntrinsicWidth/IntrinsicHeight for natural sizing when needed
-
-

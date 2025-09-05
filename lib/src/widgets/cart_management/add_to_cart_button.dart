@@ -1,333 +1,212 @@
 import 'package:flutter/material.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 import '../../models/product_model.dart';
 import '../../models/cart_model.dart';
 import '../../models/variant_model.dart';
-import '../../theme/theme.dart'; // Import the new, unified theme system
 
-/// An animated button for adding products to the cart, styled via ShopKitTheme.
-///
-/// This widget handles various states like loading, success (in cart), and out of stock,
-/// with smooth animations. Its appearance is now controlled centrally through the
-/// `AddToCartButtonTheme` within your app's `ShopKitTheme`.
+/// Modern add to cart button built with shadcn/ui components
 class AddToCartButton extends StatefulWidget {
-  /// Creates an Add to Cart button.
-  ///
-  /// The constructor is now focused on data and behavior, not styling.
   const AddToCartButton({
     super.key,
     required this.product,
-    this.variant,
-    this.quantity = 1,
     this.onAddToCart,
-    this.onAddToCartAnimationComplete,
-    this.isInCart = false,
+    this.quantity = 1,
+    this.selectedVariant,
     this.isLoading = false,
-    this.isOutOfStock = false,
-    this.showIcon = true,
+    this.disabled = false,
+    this.width,
+    this.height,
     this.showQuantitySelector = false,
-    this.minQuantity = 1,
-    this.maxQuantity = 99,
-    // --- Text content can be overridden for specific instances ---
-    this.text = 'Add to Cart',
-    this.inCartText = 'In Cart',
-    this.outOfStockText = 'Out of Stock',
+    this.showIcon = true,
+    this.text,
     this.loadingText = 'Adding...',
-    this.successText = 'Added!',
+    this.outOfStockText = 'Out of Stock',
   });
 
-  /// The product to be added to the cart.
   final ProductModel product;
-
-  /// The selected product variant, if any.
-  final VariantModel? variant;
-
-  /// The quantity of the product to add.
+  final Function(CartItemModel)? onAddToCart;
   final int quantity;
-
-  /// Callback fired when the button is pressed.
-  final void Function(CartItemModel)? onAddToCart;
-
-  /// Callback fired after the success animation completes.
-  final VoidCallback? onAddToCartAnimationComplete;
-
-  /// Determines if the product is already in the cart to show a success state.
-  final bool isInCart;
-
-  /// If true, shows a loading indicator.
+  final VariantModel? selectedVariant;
   final bool isLoading;
-
-  /// If true, disables the button and shows an "Out of Stock" message.
-  final bool isOutOfStock;
-
-  /// Toggles the visibility of the leading icon.
-  final bool showIcon;
-
-  /// If true, displays a quantity selector next to the button.
+  final bool disabled;
+  final double? width;
+  final double? height;
   final bool showQuantitySelector;
-
-  /// The minimum quantity selectable.
-  final int minQuantity;
-
-  /// The maximum quantity selectable.
-  final int maxQuantity;
-
-  // --- Customizable Text Properties ---
-  final String text;
-  final String inCartText;
-  final String outOfStockText;
+  final bool showIcon;
+  final String? text;
   final String loadingText;
-  final String successText;
+  final String outOfStockText;
 
   @override
   State<AddToCartButton> createState() => _AddToCartButtonState();
 }
 
 class _AddToCartButtonState extends State<AddToCartButton>
-    with TickerProviderStateMixin {
-  late AnimationController _scaleController;
-  late AnimationController _checkController;
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
-  late Animation<double> _checkAnimation;
-
   int _currentQuantity = 1;
-  bool _showSuccessState = false;
 
   @override
   void initState() {
     super.initState();
     _currentQuantity = widget.quantity;
-
-    // Initialize animation controllers. Durations will be sourced from the theme.
-    _scaleController = AnimationController(vsync: this);
-    _checkController = AnimationController(vsync: this);
-
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95)
-        .animate(CurvedAnimation(parent: _scaleController, curve: Curves.easeInOut));
-
-    _checkAnimation = Tween<double>(begin: 0.0, end: 1.0)
-        .animate(CurvedAnimation(parent: _checkController, curve: Curves.elasticOut));
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 150),
+      vsync: this,
+    );
+    _scaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: 0.95,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInOut,
+    ));
   }
 
   @override
   void dispose() {
-    _scaleController.dispose();
-    _checkController.dispose();
+    _animationController.dispose();
     super.dispose();
   }
-  
-  @override
-  void didUpdateWidget(covariant AddToCartButton oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.quantity != oldWidget.quantity) {
-      _currentQuantity = widget.quantity;
-    }
-  }
 
-  void _handleAddToCart() async {
-    if (widget.isLoading || widget.isOutOfStock) return;
+  void _handleTap() async {
+    if (_isDisabled) return;
 
-    // Get animation durations and curves from the theme
-    final shopKitTheme = Theme.of(context).extension<ShopKitTheme>();
-    _scaleController.duration = shopKitTheme?.scaleDuration ?? const Duration(milliseconds: 200);
-    _checkController.duration = shopKitTheme?.bounceDuration ?? const Duration(milliseconds: 600);
-
-    // Update animations with theme curves
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95)
-        .animate(CurvedAnimation(
-          parent: _scaleController, 
-          curve: shopKitTheme?.easeInOutCurve ?? Curves.easeInOut
-        ));
-
-    _checkAnimation = Tween<double>(begin: 0.0, end: 1.0)
-        .animate(CurvedAnimation(
-          parent: _checkController, 
-          curve: shopKitTheme?.elasticCurve ?? Curves.elasticOut
-        ));
-
-    await _scaleController.forward();
-    await _scaleController.reverse();
+    // Animation feedback
+    await _animationController.forward();
+    await _animationController.reverse();
 
     final cartItem = CartItemModel.createSafe(
       product: widget.product,
-      variant: widget.variant,
+      variant: widget.selectedVariant,
       quantity: _currentQuantity,
-      pricePerItem: widget.product.discountedPrice + (widget.variant?.additionalPrice ?? 0),
+      pricePerItem: widget.product.discountedPrice +
+          (widget.selectedVariant?.additionalPrice ?? 0),
     );
 
     widget.onAddToCart?.call(cartItem);
-
-    if (mounted) {
-      setState(() => _showSuccessState = true);
-    }
-
-    await _checkController.forward();
-    await Future.delayed(shopKitTheme?.verySlowAnimation ?? const Duration(milliseconds: 800));
-
-    if (mounted) {
-      setState(() => _showSuccessState = false);
-      _checkController.reset();
-      widget.onAddToCartAnimationComplete?.call();
-    }
   }
 
-  void _updateQuantity(int newQuantity) {
-    if (newQuantity >= widget.minQuantity && newQuantity <= widget.maxQuantity) {
-      setState(() {
-        _currentQuantity = newQuantity;
-      });
+  bool get _isDisabled =>
+      widget.disabled ||
+      widget.isLoading ||
+      !widget.product.isInStock ||
+      (widget.selectedVariant != null && !widget.selectedVariant!.isInStock);
+
+  String get _buttonText {
+    if (widget.isLoading) return widget.loadingText;
+    if (!widget.product.isInStock) return widget.outOfStockText;
+    if (widget.selectedVariant != null && !widget.selectedVariant!.isInStock) {
+      return widget.outOfStockText;
     }
+    return widget.text ?? 'Add to Cart';
   }
 
   @override
   Widget build(BuildContext context) {
-    if (widget.showQuantitySelector) {
-      return _buildWithQuantitySelector();
-    }
-    return _buildSimpleButton();
-  }
-
-  Widget _buildSimpleButton() {
-    final shopKitTheme = Theme.of(context).extension<ShopKitTheme>();
-    final buttonTheme = shopKitTheme?.addToCartButtonTheme;
-    final theme = Theme.of(context);
-
-    return ScaleTransition(
-      scale: _scaleAnimation,
-      child: SizedBox(
-        height: buttonTheme?.height ?? 48.0,
-        child: ElevatedButton(
-          onPressed: widget.isLoading || widget.isOutOfStock ? null : _handleAddToCart,
-          style: _getButtonStyle(theme, shopKitTheme),
-          child: _buildButtonContent(theme, shopKitTheme),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildWithQuantitySelector() {
-    final theme = Theme.of(context);
-    final shopKitTheme = Theme.of(context).extension<ShopKitTheme>();
-    final buttonTheme = shopKitTheme?.addToCartButtonTheme;
-
-    return Row(
+    return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Container(
-          decoration: BoxDecoration(
-            border: Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.5)),
-            borderRadius: buttonTheme?.borderRadius ?? BorderRadius.circular(shopKitTheme?.radii.full ?? 999),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              IconButton(
-                onPressed: _currentQuantity > widget.minQuantity ? () => _updateQuantity(_currentQuantity - 1) : null,
-                icon: const Icon(Icons.remove),
-                iconSize: 18,
-              ),
-              Text(
-                _currentQuantity.toString(),
-                style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-              ),
-              IconButton(
-                onPressed: _currentQuantity < widget.maxQuantity ? () => _updateQuantity(_currentQuantity + 1) : null,
-                icon: const Icon(Icons.add),
-                iconSize: 18,
-              ),
-            ],
-          ),
-        ),
-        SizedBox(width: shopKitTheme?.spacing.sm ?? 8.0),
-        Expanded(child: _buildSimpleButton()),
+        if (widget.showQuantitySelector) ...[
+          _buildQuantitySelector(),
+          const SizedBox(height: 12),
+        ],
+        _buildAddToCartButton(),
       ],
     );
   }
 
-  ButtonStyle _getButtonStyle(ThemeData theme, ShopKitTheme? shopKitTheme) {
-    final buttonTheme = shopKitTheme?.addToCartButtonTheme;
-    
-    Color getBackgroundColor() {
-      if (widget.isOutOfStock) return buttonTheme?.disabledColor ?? theme.disabledColor;
-      if (widget.isLoading) return buttonTheme?.backgroundColor?.withValues(alpha: 0.7) ?? shopKitTheme?.colors.primary.withValues(alpha: 0.7) ?? theme.colorScheme.primary.withValues(alpha: 0.7);
-      if (_showSuccessState || widget.isInCart) return buttonTheme?.successColor ?? shopKitTheme?.colors.success ?? Colors.green;
-      return buttonTheme?.backgroundColor ?? shopKitTheme?.colors.primary ?? theme.colorScheme.primary;
-    }
-
-    return ElevatedButton.styleFrom(
-      backgroundColor: getBackgroundColor(),
-      foregroundColor: buttonTheme?.foregroundColor ?? shopKitTheme?.colors.onPrimary ?? theme.colorScheme.onPrimary,
-      elevation: buttonTheme?.elevation ?? 0,
-      textStyle: buttonTheme?.textStyle ?? shopKitTheme?.typography.button,
-      shape: RoundedRectangleBorder(
-        borderRadius: buttonTheme?.borderRadius ?? BorderRadius.circular(shopKitTheme?.radii.full ?? 999),
-      ),
+  Widget _buildQuantitySelector() {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          'Quantity:',
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Container(
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey.shade300),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ShadButton(
+                onPressed: _currentQuantity > 1
+                    ? () => setState(() => _currentQuantity--)
+                    : null,
+                child: const Icon(Icons.remove, size: 16),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Text(
+                  _currentQuantity.toString(),
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              ShadButton(
+                onPressed: () => setState(() => _currentQuantity++),
+                child: const Icon(Icons.add, size: 16),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
-  Widget _buildButtonContent(ThemeData theme, ShopKitTheme? shopKitTheme) {
-    Widget content;
-    IconData? icon;
-    String label;
-
-    if (widget.isLoading) {
-      label = widget.loadingText;
-      content = Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          SizedBox(
-            width: 20,
-            height: 20,
-            child: CircularProgressIndicator(
-              strokeWidth: 2.5,
-              valueColor: AlwaysStoppedAnimation<Color>(
-                shopKitTheme?.addToCartButtonTheme?.foregroundColor ?? shopKitTheme?.colors.onPrimary ?? theme.colorScheme.onPrimary
+  Widget _buildAddToCartButton() {
+    return AnimatedBuilder(
+      animation: _scaleAnimation,
+      builder: (context, child) {
+        return Transform.scale(
+          scale: _scaleAnimation.value,
+          child: SizedBox(
+            width: widget.width,
+            height: widget.height ?? 48,
+            child: ShadButton(
+              onPressed: _isDisabled ? null : _handleTap,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (widget.isLoading) ...[
+                    const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                  ] else if (widget.showIcon && widget.product.isInStock) ...[
+                    const Icon(Icons.shopping_cart, size: 18),
+                    const SizedBox(width: 8),
+                  ] else if (!widget.product.isInStock) ...[
+                    const Icon(Icons.block, size: 18),
+                    const SizedBox(width: 8),
+                  ],
+                  Flexible(
+                    child: Text(
+                      _buttonText,
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
-          SizedBox(width: shopKitTheme?.spacing.sm ?? 8.0),
-          Text(label),
-        ],
-      );
-    } else {
-      if (widget.isOutOfStock) {
-        label = widget.outOfStockText;
-        icon = Icons.block;
-      } else if (_showSuccessState) {
-        label = widget.successText;
-        icon = Icons.check_circle_outline;
-      } else if (widget.isInCart) {
-        label = widget.inCartText;
-        icon = Icons.check_circle;
-      } else {
-        label = widget.text;
-        icon = Icons.add_shopping_cart;
-      }
-
-      content = Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          if (widget.showIcon) ...[
-            Icon(icon, size: 20),
-            SizedBox(width: shopKitTheme?.spacing.sm ?? 8.0),
-          ],
-          Text(label),
-        ],
-      );
-    }
-
-    // Apply success animation if needed
-    if (_showSuccessState) {
-      return AnimatedBuilder(
-        animation: _checkAnimation,
-        builder: (context, child) {
-          return Transform.scale(
-            scale: _checkAnimation.value,
-            child: child,
-          );
-        },
-        child: content,
-      );
-    }
-
-    return content;
+        );
+      },
+    );
   }
 }

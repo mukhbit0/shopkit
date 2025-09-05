@@ -16,6 +16,11 @@ dependencies:
   cached_network_image: ^3.3.1
   equatable: ^2.0.5
   flutter_animate: ^4.5.2
+  # Shadcn UI packages - using both to leverage best of each
+  shadcn_ui: ^0.30.1+1
+  shadcn_flutter: ^0.0.44
+  # Additional packages for enhanced functionality
+  collection: ^1.18.0
 
 dev_dependencies:
   flutter_test:

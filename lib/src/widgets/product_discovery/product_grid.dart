@@ -1,1088 +1,236 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import '../../theme/theme.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 import '../../models/product_model.dart';
-import 'product_grid_types.dart';
-import 'components/product_grid_image.dart';
-import 'components/product_grid_badges.dart';
-import 'components/product_grid_action_button.dart';
+import '../../models/cart_model.dart';
+import 'product_card.dart';
 
-/// A comprehensive product grid widget with advanced features and unlimited customization
-/// Features: Multiple layouts, infinite scroll, search/filter, animations, and extensive theming
+/// Modern product grid built with shadcn/ui components
 class ProductGrid extends StatefulWidget {
   const ProductGrid({
     super.key,
     required this.products,
-  // config removed
-    this.customBuilder,
-    this.customItemBuilder,
-    this.customEmptyBuilder,
-    this.customLoadingBuilder,
-    this.customErrorBuilder,
     this.onProductTap,
-    this.onProductLongPress,
-    this.onProductFavorite,
-    this.onProductAddToCart,
-    this.onLoadMore,
-    this.onRefresh,
-    this.onSelectionChanged,
-    this.crossAxisCount = 2,
-    this.childAspectRatio = 0.8,
-    this.crossAxisSpacing = 8.0,
-    this.mainAxisSpacing = 8.0,
+    this.onAddToCart,
+    this.onToggleWishlist,
+    this.crossAxisCount,
+    this.childAspectRatio = 0.75,
+    this.mainAxisSpacing = 16,
+    this.crossAxisSpacing = 16,
+    this.padding = const EdgeInsets.all(16),
     this.isLoading = false,
-    this.hasError = false,
-    this.errorMessage,
-    this.canLoadMore = false,
-    this.enableInfiniteScroll = false,
-    this.enableRefresh = false,
-    this.enableSelection = false,
-    this.enableSearch = false,
-    this.enableFilter = false,
-    this.enableAnimations = true,
-    this.enableHaptics = true,
-    this.showFavoriteButton = true,
-    this.showAddToCartButton = true,
-    this.showPricing = true,
+    this.emptyBuilder,
+    this.loadingBuilder,
+    this.showQuickActions = true,
+    this.showDiscount = true,
     this.showRating = true,
-    this.showBadges = true,
-    this.style = ProductGridStyle.card,
-    this.layout = ProductGridLayout.grid,
-    this.imageStyle = ProductGridImageStyle.cover,
-    this.animationType = ProductGridAnimationType.fadeIn,
-    this.enableResponsive = true,
+    this.showBrand = true,
+    this.enableRefresh = false,
+    this.onRefresh,
   });
 
-  /// List of products to display
   final List<ProductModel> products;
-
-  /// Configuration for unlimited customization
-  // Legacy FlexibleWidgetConfig removed
-
-  /// Custom builder for complete control
-  final Widget Function(BuildContext, List<ProductModel>, ProductGridState)? customBuilder;
-
-  /// Custom item builder for product cards
-  final Widget Function(BuildContext, ProductModel, int, ProductGridState)? customItemBuilder;
-
-  /// Custom empty state builder
-  final Widget Function(BuildContext)? customEmptyBuilder;
-
-  /// Custom loading state builder
-  final Widget Function(BuildContext)? customLoadingBuilder;
-
-  /// Custom error state builder
-  final Widget Function(BuildContext, String?)? customErrorBuilder;
-
-  /// Callback when product is tapped
-  final Function(ProductModel product, int index)? onProductTap;
-
-  /// Callback when product is long pressed
-  final Function(ProductModel product, int index)? onProductLongPress;
-
-  /// Callback when product is favorited
-  final Function(ProductModel product, bool isFavorite)? onProductFavorite;
-
-  /// Callback when product is added to cart
-  final Function(ProductModel product, int quantity)? onProductAddToCart;
-
-  /// Callback to load more products
-  final VoidCallback? onLoadMore;
-
-  /// Callback for pull to refresh
+  final Function(ProductModel)? onProductTap;
+  final Function(CartItemModel)? onAddToCart;
+  final Function(ProductModel)? onToggleWishlist;
+  final int? crossAxisCount;
+  final double childAspectRatio;
+  final double mainAxisSpacing;
+  final double crossAxisSpacing;
+  final EdgeInsets padding;
+  final bool isLoading;
+  final Widget Function(BuildContext)? emptyBuilder;
+  final Widget Function(BuildContext)? loadingBuilder;
+  final bool showQuickActions;
+  final bool showDiscount;
+  final bool showRating;
+  final bool showBrand;
+  final bool enableRefresh;
   final Future<void> Function()? onRefresh;
 
-  /// Callback when selection changes
-  final Function(List<ProductModel> selectedProducts)? onSelectionChanged;
-
-  /// Number of columns in grid
-  final int crossAxisCount;
-
-  /// Aspect ratio of grid items
-  final double childAspectRatio;
-
-  /// Spacing between columns
-  final double crossAxisSpacing;
-
-  /// Spacing between rows
-  final double mainAxisSpacing;
-
-  /// Whether currently loading
-  final bool isLoading;
-
-  /// Whether has error
-  final bool hasError;
-
-  /// Error message to display
-  final String? errorMessage;
-
-  /// Whether can load more items
-  final bool canLoadMore;
-
-  /// Whether to enable infinite scroll
-  final bool enableInfiniteScroll;
-
-  /// Whether to enable pull to refresh
-  final bool enableRefresh;
-
-  /// Whether to enable multi-selection
-  final bool enableSelection;
-
-  /// Whether to enable search
-  final bool enableSearch;
-
-  /// Whether to enable filtering
-  final bool enableFilter;
-
-  /// Whether to enable animations
-  final bool enableAnimations;
-
-  /// Whether to enable haptic feedback
-  final bool enableHaptics;
-
-  /// Whether to show favorite button
-  final bool showFavoriteButton;
-
-  /// Whether to show add to cart button
-  final bool showAddToCartButton;
-
-  /// Whether to show pricing
-  final bool showPricing;
-
-  /// Whether to show rating
-  final bool showRating;
-
-  /// Whether to show badges
-  final bool showBadges;
-
-  /// Style of the product grid
-  final ProductGridStyle style;
-
-  /// Layout type
-  final ProductGridLayout layout;
-
-  /// Image style
-  final ProductGridImageStyle imageStyle;
-
-  /// Animation type
-  final ProductGridAnimationType animationType;
-
-  /// Whether to adapt crossAxisCount based on available width breakpoints
-  final bool enableResponsive;
-
-  /// Theme style for consistent visual styling (material3, neumorphism, glassmorphism, etc.)
-  // themeStyle removed
-
   @override
-  State<ProductGrid> createState() => ProductGridState();
+  State<ProductGrid> createState() => _ProductGridState();
 }
 
-class ProductGridState extends State<ProductGrid>
-    with TickerProviderStateMixin {
-  late ScrollController _scrollController;
-  late AnimationController _animationController;
-  late AnimationController _loadingController;
-  late Animation<double> _fadeAnimation;
-  late Animation<double> _scaleAnimation;
-  late Animation<double> _slideAnimation;
+class _ProductGridState extends State<ProductGrid> {
+  final Set<String> _wishlistedProducts = <String>{};
 
-  List<ProductModel> _filteredProducts = [];
-  List<ProductModel> _selectedProducts = [];
-  String _searchQuery = '';
-  bool _isSearching = false;
-  bool _isLoadingMore = false;
-
-  // Configuration helpers
-  T _getConfig<T>(String key, T defaultValue) => defaultValue; // dynamic config removed
-
-  @override
-  void initState() {
-    super.initState();
-    _filteredProducts = List.from(widget.products);
+  int _getCrossAxisCount(BuildContext context) {
+    if (widget.crossAxisCount != null) return widget.crossAxisCount!;
     
-    _setupControllers();
-    _setupAnimations();
-    _setupScrollListener();
+    final width = MediaQuery.of(context).size.width;
+    if (width >= 1200) return 4;
+    if (width >= 800) return 3;
+    if (width >= 600) return 2;
+    return 1;
   }
 
-  void _setupControllers() {
-    _scrollController = ScrollController();
-    
-    _animationController = AnimationController(
-      duration: Duration(milliseconds: _getConfig('animationDuration', 300)),
-      vsync: this,
-    );
-
-    _loadingController = AnimationController(
-      duration: Duration(milliseconds: _getConfig('loadingAnimationDuration', 1000)),
-      vsync: this,
-    );
+  bool _isWishlisted(ProductModel product) {
+    return _wishlistedProducts.contains(product.id);
   }
 
-  void _setupAnimations() {
-  _fadeAnimation = CurvedAnimation(parent: _animationController, curve: Curves.easeInOut);
-
-    _scaleAnimation = Tween<double>(
-      begin: _getConfig('scaleAnimationStart', 0.8),
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.elasticOut,
-    ));
-
-    _slideAnimation = Tween<double>(
-      begin: _getConfig('slideAnimationStart', 50.0),
-      end: 0.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeOutCubic,
-    ));
-
-    if (widget.enableAnimations) {
-      _animationController.forward();
-      _loadingController.repeat();
-    } else {
-      _animationController.value = 1.0;
-    }
-  }
-
-  void _setupScrollListener() {
-    if (widget.enableInfiniteScroll) {
-      _scrollController.addListener(() {
-        if (_scrollController.position.pixels >= 
-            _scrollController.position.maxScrollExtent - _getConfig('loadMoreThreshold', 200.0)) {
-          if (widget.canLoadMore && !_isLoadingMore) {
-            _loadMore();
-          }
-        }
-      });
-    }
-  }
-
-  void _loadMore() {
-    if (widget.onLoadMore != null && !_isLoadingMore) {
-      setState(() {
-        _isLoadingMore = true;
-      });
-      
-      widget.onLoadMore!();
-      
-      // Reset loading state after a delay (would normally be handled by parent)
-      Future.delayed(Duration(milliseconds: _getConfig('loadMoreDelay', 1000)), () {
-        if (mounted) {
-          setState(() {
-            _isLoadingMore = false;
-          });
-        }
-      });
-    }
-  }
-
-  void _handleProductTap(ProductModel product, int index) {
-    if (widget.enableHaptics && _getConfig('enableTapHaptics', true)) {
-      HapticFeedback.lightImpact();
-    }
-
-    if (widget.enableSelection && _selectedProducts.isNotEmpty) {
-      _toggleSelection(product);
-    } else {
-      widget.onProductTap?.call(product, index);
-    }
-  }
-
-  void _handleProductLongPress(ProductModel product, int index) {
-    if (widget.enableHaptics && _getConfig('enableLongPressHaptics', true)) {
-      HapticFeedback.mediumImpact();
-    }
-
-    if (widget.enableSelection) {
-      _toggleSelection(product);
-    } else {
-      widget.onProductLongPress?.call(product, index);
-    }
-  }
-
-  void _toggleSelection(ProductModel product) {
+  void _handleToggleWishlist(ProductModel product) {
     setState(() {
-      if (_selectedProducts.contains(product)) {
-        _selectedProducts.remove(product);
+      if (_wishlistedProducts.contains(product.id)) {
+        _wishlistedProducts.remove(product.id);
       } else {
-        _selectedProducts.add(product);
+        _wishlistedProducts.add(product.id);
       }
     });
-    
-    widget.onSelectionChanged?.call(_selectedProducts);
-  }
-
-  void _handleFavorite(ProductModel product) {
-    if (widget.enableHaptics && _getConfig('enableFavoriteHaptics', true)) {
-      HapticFeedback.lightImpact();
-    }
-
-    // Use a placeholder favorite state since ProductModel doesn't have isFavorite
-    const isFavorite = true; // This would typically be managed by parent state
-    widget.onProductFavorite?.call(product, isFavorite);
-  }
-
-  void _handleAddToCart(ProductModel product) {
-    if (widget.enableHaptics && _getConfig('enableAddToCartHaptics', true)) {
-      HapticFeedback.mediumImpact();
-    }
-
-    final quantity = _getConfig('defaultAddToCartQuantity', 1);
-    widget.onProductAddToCart?.call(product, quantity);
-  }
-
-  void _search(String query) {
-    setState(() {
-      _searchQuery = query;
-      _isSearching = query.isNotEmpty;
-      
-      if (query.isEmpty) {
-        _filteredProducts = List.from(widget.products);
-      } else {
-        _filteredProducts = widget.products.where((product) {
-          return product.name.toLowerCase().contains(query.toLowerCase()) ||
-                 (product.description?.toLowerCase().contains(query.toLowerCase()) ?? false) ||
-                 (product.categoryName?.toLowerCase().contains(query.toLowerCase()) ?? false);
-        }).toList();
-      }
-    });
-  }
-
-  @override
-  void didUpdateWidget(ProductGrid oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.products != oldWidget.products) {
-      setState(() {
-        if (_searchQuery.isEmpty) {
-          _filteredProducts = List.from(widget.products);
-        } else {
-          _search(_searchQuery);
-        }
-      });
-    }
-  }
-
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    _animationController.dispose();
-    _loadingController.dispose();
-    super.dispose();
+    widget.onToggleWishlist?.call(product);
   }
 
   @override
   Widget build(BuildContext context) {
-    if (widget.customBuilder != null) {
-      return widget.customBuilder!(context, _filteredProducts, this);
+    if (widget.isLoading) {
+      return widget.loadingBuilder?.call(context) ?? _buildLoadingState();
     }
 
-    final theme = Theme.of(context).extension<ShopKitTheme>()!;
-    return _buildProductGrid(context, theme);
-  }
-
-  Widget _buildProductGrid(BuildContext context, ShopKitTheme theme) {
-    return Column(
-      children: [
-        if (widget.enableSearch) _buildSearchBar(context, theme),
-        if (widget.enableFilter) _buildFilterBar(context, theme),
-        if (_selectedProducts.isNotEmpty) _buildSelectionBar(context, theme),
-        Expanded(
-          child: _buildGridContent(context, theme),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSearchBar(BuildContext context, ShopKitTheme theme) {
-    final backgroundColor = theme.surfaceColor;
-    final borderRadius = BorderRadius.circular(12.0);
-    
-    return Container(
-      padding: EdgeInsets.all(_getConfig('searchBarPadding', 16.0)),
-      child: TextField(
-        onChanged: _search,
-        decoration: InputDecoration(
-          hintText: _getConfig('searchHintText', 'Search products...'),
-          prefixIcon: Icon(Icons.search, color: theme.onSurfaceColor.withValues(alpha: 0.6)),
-          suffixIcon: _isSearching
-            ? IconButton(
-                icon: Icon(Icons.clear, color: theme.onSurfaceColor.withValues(alpha: 0.6)),
-                onPressed: () => _search(''),
-              )
-            : null,
-          border: OutlineInputBorder(
-            borderRadius: borderRadius,
-            borderSide: BorderSide(color: theme.onSurfaceColor.withValues(alpha: 0.2)),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: borderRadius,
-            borderSide: BorderSide(color: theme.onSurfaceColor.withValues(alpha: 0.2)),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: borderRadius,
-            borderSide: BorderSide(color: theme.primaryColor, width: 2),
-          ),
-          filled: true,
-          fillColor: backgroundColor,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFilterBar(BuildContext context, ShopKitTheme theme) {
-    return Container(
-      height: _getConfig('filterBarHeight', 60.0),
-      padding: EdgeInsets.symmetric(horizontal: _getConfig('filterBarPadding', 16.0)),
-      child: Row(
-        children: [
-          Icon(Icons.filter_list, color: theme.onSurfaceColor.withValues(alpha: 0.6)),
-          const SizedBox(width: 8),
-          Text(
-            _getConfig('filterText', 'Filters'),
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.onSurfaceColor.withValues(alpha: 0.8),
-            ),
-          ),
-          const Spacer(),
-          // Add filter chips here based on your filter implementation
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSelectionBar(BuildContext context, ShopKitTheme theme) {
-    return Container(
-      padding: EdgeInsets.all(_getConfig('selectionBarPadding', 16.0)),
-      color: theme.primaryColor.withValues(alpha: 0.1),
-      child: Row(
-        children: [
-          Text(
-            '${_selectedProducts.length} selected',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.primaryColor,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const Spacer(),
-          TextButton(
-            onPressed: () {
-              setState(() {
-                _selectedProducts.clear();
-              });
-              widget.onSelectionChanged?.call(_selectedProducts);
-            },
-            child: Text(
-              _getConfig('clearSelectionText', 'Clear'),
-              style: TextStyle(color: theme.primaryColor),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildGridContent(BuildContext context, ShopKitTheme theme) {
-    if (widget.hasError) {
-      return _buildErrorState(context, theme);
+    if (widget.products.isEmpty) {
+      return widget.emptyBuilder?.call(context) ?? _buildEmptyState();
     }
 
-    if (widget.isLoading && _filteredProducts.isEmpty) {
-      return _buildLoadingState(context, theme);
-    }
-
-    if (_filteredProducts.isEmpty) {
-      return _buildEmptyState(context, theme);
-    }
-
-  Widget content = _buildGrid(context, theme);
-
-    if (widget.enableRefresh && widget.onRefresh != null) {
-      content = RefreshIndicator(
-        onRefresh: widget.onRefresh!,
-        color: theme.primaryColor,
-        child: content,
-      );
-    }
-
-    return content;
-  }
-
-  Widget _buildGrid(BuildContext context, ShopKitTheme theme) {
-    switch (widget.layout) {
-      case ProductGridLayout.list:
-  return _buildListLayout(context, theme);
-      case ProductGridLayout.staggered:
-  return _buildStaggeredLayout(context, theme);
-      case ProductGridLayout.grid:
-  return _buildGridLayout(context, theme);
-    }
-  }
-
-  Widget _buildGridLayout(BuildContext context, ShopKitTheme theme) {
-    final width = MediaQuery.of(context).size.width;
-    int crossAxis = widget.crossAxisCount;
-    if (widget.enableResponsive) {
-      if (width >= 1400) {
-        crossAxis = 6;
-      } else if (width >= 1100) {
-        crossAxis = 5;
-      } else if (width >= 900) {
-        crossAxis = 4;
-      } else if (width >= 600) {
-        crossAxis = 3;
-      }
-    }
-    return GridView.builder(
-      controller: _scrollController,
-      padding: EdgeInsets.all(_getConfig('gridPadding', 16.0)),
+    Widget gridView = GridView.builder(
+      padding: widget.padding,
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: crossAxis,
+        crossAxisCount: _getCrossAxisCount(context),
         childAspectRatio: widget.childAspectRatio,
-        crossAxisSpacing: widget.crossAxisSpacing,
         mainAxisSpacing: widget.mainAxisSpacing,
+        crossAxisSpacing: widget.crossAxisSpacing,
       ),
-      itemCount: _filteredProducts.length + (_isLoadingMore ? 1 : 0),
+      itemCount: widget.products.length,
       itemBuilder: (context, index) {
-        if (index >= _filteredProducts.length) {
-          return _buildLoadMoreIndicator(context, theme);
-        }
-        
-  return _buildProductItem(context, theme, _filteredProducts[index], index);
-      },
-    );
-  }
-
-  Widget _buildListLayout(BuildContext context, ShopKitTheme theme) {
-    return ListView.builder(
-      controller: _scrollController,
-      padding: EdgeInsets.all(_getConfig('listPadding', 16.0)),
-      itemCount: _filteredProducts.length + (_isLoadingMore ? 1 : 0),
-      itemBuilder: (context, index) {
-        if (index >= _filteredProducts.length) {
-          return _buildLoadMoreIndicator(context, theme);
-        }
-        
-        return Container(
-          margin: EdgeInsets.only(bottom: _getConfig('listItemSpacing', 16.0)),
-          child: _buildProductListItem(context, theme, _filteredProducts[index], index),
+        final product = widget.products[index];
+        return ProductCard(
+          product: product,
+          onTap: () => widget.onProductTap?.call(product),
+          onAddToCart: widget.onAddToCart,
+          onToggleWishlist: () => _handleToggleWishlist(product),
+          isInWishlist: _isWishlisted(product),
+          showQuickActions: widget.showQuickActions,
+          showDiscount: widget.showDiscount,
+          showRating: widget.showRating,
+          showBrand: widget.showBrand,
         );
       },
     );
-  }
 
-  Widget _buildStaggeredLayout(BuildContext context, ShopKitTheme theme) {
-    // For now, fallback to grid layout
-    // In a real implementation, you'd use flutter_staggered_grid_view package
-    return _buildGridLayout(context, theme);
-  }
-
-  Widget _buildProductItem(BuildContext context, ShopKitTheme theme, ProductModel product, int index) {
-    if (widget.customItemBuilder != null) {
-      return widget.customItemBuilder!(context, product, index, this);
+    if (widget.enableRefresh && widget.onRefresh != null) {
+      return RefreshIndicator(
+        onRefresh: widget.onRefresh!,
+        child: gridView,
+      );
     }
 
-  Widget item = _buildProductCard(context, theme, product, index);
-
-    // Apply animations
-    if (widget.enableAnimations) {
-      item = _applyAnimation(item, index);
-    }
-
-    return item;
+    return gridView;
   }
 
-  Widget _buildProductCard(BuildContext context, ShopKitTheme theme, ProductModel product, int index) {
-    final isSelected = _selectedProducts.contains(product);
-    
-    // Use theme config if available, otherwise fallback to legacy config  
-  final borderRadius = BorderRadius.circular(12);
-  const showShadow = true;
-  const shadowOpacity = 0.1;
-  const shadowBlur = 8.0;
-  const shadowOffset = 2.0;
-    
-    return GestureDetector(
-      onTap: () => _handleProductTap(product, index),
-      onLongPress: widget.enableSelection ? () => _handleProductLongPress(product, index) : null,
-      child: Container(
-        decoration: BoxDecoration(
-          color: isSelected 
-            ? theme.primaryColor.withValues(alpha: 0.1) 
-            : theme.surfaceColor,
-          borderRadius: borderRadius,
-          border: isSelected 
-            ? Border.all(color: theme.primaryColor, width: 2)
-            : null,
-          boxShadow: (showShadow == true)
-            ? [
-                BoxShadow(
-                  color: theme.onSurfaceColor.withValues(alpha: shadowOpacity),
-                  blurRadius: shadowBlur,
-                  offset: Offset(0, shadowOffset),
-                ),
-              ]
-            : null,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildProductImage(context, theme, product),
-            Expanded(
-              child: _buildProductInfo(context, theme, product),
-            ),
-          ],
-        ),
+  Widget _buildLoadingState() {
+    return GridView.builder(
+      padding: widget.padding,
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: _getCrossAxisCount(context),
+        childAspectRatio: widget.childAspectRatio,
+        mainAxisSpacing: widget.mainAxisSpacing,
+        crossAxisSpacing: widget.crossAxisSpacing,
       ),
+      itemCount: 6, // Show 6 skeleton cards
+      itemBuilder: (context, index) => _buildSkeletonCard(),
     );
   }
 
-  Widget _buildProductListItem(BuildContext context, ShopKitTheme theme, ProductModel product, int index) {
-    final isSelected = _selectedProducts.contains(product);
-    
-    // Use theme config if available, otherwise fallback to legacy config  
-  final borderRadius = BorderRadius.circular(12);
-  const showShadow = true;
-  const shadowOpacity = 0.1;
-  const shadowBlur = 8.0;
-  const shadowOffset = 2.0;
-  const itemHeight = 120.0;
-  const imageWidth = 100.0;
-  const itemSpacing = 12.0;
-    
-    return GestureDetector(
-      onTap: () => _handleProductTap(product, index),
-      onLongPress: widget.enableSelection ? () => _handleProductLongPress(product, index) : null,
-      child: Container(
-        height: itemHeight,
-        decoration: BoxDecoration(
-          color: isSelected 
-            ? theme.primaryColor.withValues(alpha: 0.1) 
-            : theme.surfaceColor,
-          borderRadius: borderRadius,
-          border: isSelected 
-            ? Border.all(color: theme.primaryColor, width: 2)
-            : null,
-          boxShadow: (showShadow == true)
-            ? [
-                BoxShadow(
-                  color: theme.onSurfaceColor.withValues(alpha: shadowOpacity),
-                  blurRadius: shadowBlur,
-                  offset: Offset(0, shadowOffset),
-                ),
-              ]
-            : null,
-        ),
-        child: Row(
-          children: [
-            SizedBox(
-              width: imageWidth,
-              height: double.infinity,
-              child: _buildProductImage(context, theme, product),
-            ),
-            SizedBox(width: itemSpacing),
-            Expanded(
-              child: _buildProductInfo(context, theme, product),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildProductImage(BuildContext context, ShopKitTheme theme, ProductModel product) {
-    return ProductGridImage(
-      product: product,
-      theme: theme,
-      showBadges: widget.showBadges,
-      showFavoriteButton: widget.showFavoriteButton,
-      showAddToCartButton: widget.showAddToCartButton,
-      imageStyle: widget.imageStyle,
-      layout: widget.layout,
-      onFavorite: () => _handleFavorite(product),
-      onAddToCart: () => _handleAddToCart(product),
-      buildBadges: () => _buildBadges(context, theme, product),
-      buildActionButton: ({required IconData icon, required Color color, required VoidCallback onTap, String? semanticsLabel}) => _buildActionButton(
-        context,
-        theme,
-        icon: icon,
-        color: color,
-        onTap: onTap,
-        semanticsLabel: semanticsLabel,
-      ),
-    );
-  }
-
-  Widget _buildProductInfo(BuildContext context, ShopKitTheme theme, ProductModel product) {
-    return Padding(
-      padding: EdgeInsets.all(_getConfig('productInfoPadding', 12.0)),
+  Widget _buildSkeletonCard() {
+    return ShadCard(
+      padding: EdgeInsets.zero,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Product name
-          Text(
-            product.name,
-            style: theme.textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.w500,
-              color: theme.onSurfaceColor,
+          // Image skeleton
+          Container(
+            height: 180,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Colors.grey.shade200,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(8),
+                topRight: Radius.circular(8),
+              ),
             ),
-            maxLines: _getConfig('productNameMaxLines', 2),
-            overflow: TextOverflow.ellipsis,
           ),
           
-          SizedBox(height: _getConfig('productInfoSpacing', 4.0)),
-          
-          // Product description
-          if (product.description != null && _getConfig('showProductDescription', true))
-            Text(
-              product.description!,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.onSurfaceColor.withValues(alpha: 0.6),
-              ),
-              maxLines: _getConfig('productDescriptionMaxLines', 1),
-              overflow: TextOverflow.ellipsis,
-            ),
-          
-          if (product.description != null && _getConfig('showProductDescription', true))
-            SizedBox(height: _getConfig('productInfoSpacing', 4.0)),
-          
-          // Rating
-          if (widget.showRating && product.rating != null && product.rating! > 0)
-            Row(
-              children: [
-                Icon(
-                  Icons.star,
-                  color: Colors.amber,
-                  size: _getConfig('ratingStarSize', 16.0),
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  product.rating!.toStringAsFixed(1),
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.onSurfaceColor.withValues(alpha: 0.8),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Title skeleton
+                  Container(
+                    height: 16,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade200,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
                   ),
-                ),
-                if (product.reviewCount != null && product.reviewCount! > 0) ...[
-                  const SizedBox(width: 4),
-                  Text(
-                    '(${product.reviewCount!})',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.onSurfaceColor.withValues(alpha: 0.6),
+                  
+                  const SizedBox(height: 8),
+                  
+                  // Price skeleton
+                  Container(
+                    height: 14,
+                    width: 80,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade200,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                  
+                  const Spacer(),
+                  
+                  // Button skeleton
+                  Container(
+                    height: 36,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade200,
+                      borderRadius: BorderRadius.circular(6),
                     ),
                   ),
                 ],
-              ],
-            ),
-          
-          const Spacer(),
-          
-          // Pricing
-          if (widget.showPricing)
-            Row(
-              children: [
-                if (product.hasDiscount)
-                  Text(
-                    product.formattedOriginalPrice,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.onSurfaceColor.withValues(alpha: 0.6),
-                      decoration: TextDecoration.lineThrough,
-                    ),
-                  ),
-                
-                if (product.hasDiscount)
-                  const SizedBox(width: 8),
-                
-                Text(
-                  product.formattedPrice,
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    color: theme.primaryColor,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-        ],
-      ),
-    );
-  }
-
-  List<Widget> _buildBadges(BuildContext context, ShopKitTheme theme, ProductModel product) {
-  return ProductGridBadgesBuilder(theme).build(product);
-  }
-
-  Widget _buildActionButton(
-    BuildContext context,
-    ShopKitTheme theme, {
-    required IconData icon,
-    required Color color,
-    required VoidCallback onTap,
-    String? semanticsLabel,
-  }) {
-    return ProductGridActionButton(
-      icon: icon,
-      color: color,
-      onTap: onTap,
-      semanticsLabel: semanticsLabel,
-      theme: theme,
-    );
-  }
-
-  Widget _applyAnimation(Widget child, int index) {
-    // Remove unused delay variable and fix type issues
-    
-    switch (widget.animationType) {
-      case ProductGridAnimationType.slideUp:
-        return AnimatedBuilder(
-          animation: _slideAnimation,
-          builder: (context, child) {
-            return Transform.translate(
-              offset: Offset(0, _slideAnimation.value),
-              child: child,
-            );
-          },
-          child: child,
-        );
-      
-      case ProductGridAnimationType.scale:
-        return AnimatedBuilder(
-          animation: _scaleAnimation,
-          builder: (context, child) {
-            return Transform.scale(
-              scale: _scaleAnimation.value,
-              child: child,
-            );
-          },
-          child: child,
-        );
-      
-      case ProductGridAnimationType.fadeIn:
-      default:
-        return AnimatedBuilder(
-          animation: _fadeAnimation,
-          builder: (context, child) {
-            return Opacity(
-              opacity: _fadeAnimation.value,
-              child: child,
-            );
-          },
-          child: child,
-        );
-    }
-  }
-
-  Widget _buildLoadingState(BuildContext context, ShopKitTheme theme) {
-    if (widget.customLoadingBuilder != null) {
-      return widget.customLoadingBuilder!(context);
-    }
-
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(theme.primaryColor),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            _getConfig('loadingText', 'Loading products...'),
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.onSurfaceColor.withValues(alpha: 0.6),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLoadMoreIndicator(BuildContext context, ShopKitTheme theme) {
-    return Center(
-      child: Padding(
-        padding: EdgeInsets.all(_getConfig('loadMoreIndicatorPadding', 16.0)),
-        child: CircularProgressIndicator(
-          valueColor: AlwaysStoppedAnimation<Color>(theme.primaryColor),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildEmptyState(BuildContext context, ShopKitTheme theme) {
-    if (widget.customEmptyBuilder != null) {
-      return widget.customEmptyBuilder!(context);
-    }
-
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            _isSearching ? Icons.search_off : Icons.inventory_2_outlined,
-            size: _getConfig('emptyStateIconSize', 64.0),
-            color: theme.onSurfaceColor.withValues(alpha: 0.4),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            _isSearching 
-              ? _getConfig('noSearchResultsText', 'No products found')
-              : _getConfig('emptyStateText', 'No products available'),
-            style: theme.textTheme.titleMedium?.copyWith(
-              color: theme.onSurfaceColor.withValues(alpha: 0.6),
-            ),
-          ),
-          if (_isSearching) ...[
-            const SizedBox(height: 8),
-            Text(
-              _getConfig('searchSuggestionText', 'Try a different search term'),
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.onSurfaceColor.withValues(alpha: 0.5),
               ),
             ),
-          ],
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildErrorState(BuildContext context, ShopKitTheme theme) {
-    if (widget.customErrorBuilder != null) {
-      return widget.customErrorBuilder!(context, widget.errorMessage);
-    }
-
+  Widget _buildEmptyState() {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            Icons.error_outline,
-            size: _getConfig('errorStateIconSize', 64.0),
-            color: theme.errorColor,
+            Icons.inventory_2_outlined,
+            size: 64,
+            color: Colors.grey.shade400,
           ),
           const SizedBox(height: 16),
           Text(
-            widget.errorMessage ?? _getConfig('errorStateText', 'Something went wrong'),
-            style: theme.textTheme.titleMedium?.copyWith(
-              color: theme.onSurfaceColor.withValues(alpha: 0.6),
+            'No products found',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              color: Colors.grey.shade600,
             ),
-            textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: () {
-              // Trigger refresh or retry
-              widget.onRefresh?.call();
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: theme.primaryColor,
-              foregroundColor: theme.onPrimaryColor,
+          const SizedBox(height: 8),
+          Text(
+            'Try adjusting your search or filters',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Colors.grey.shade500,
             ),
-            child: Text(_getConfig('retryButtonText', 'Retry')),
           ),
         ],
       ),
     );
   }
-
-  /// Public API for external control
-  List<ProductModel> get filteredProducts => _filteredProducts;
-  
-  List<ProductModel> get selectedProducts => _selectedProducts;
-  
-  String get searchQuery => _searchQuery;
-  
-  bool get isSearching => _isSearching;
-  
-  bool get isLoadingMore => _isLoadingMore;
-  
-  ScrollController get scrollController => _scrollController;
-  
-  void search(String query) {
-    _search(query);
-  }
-  
-  void clearSearch() {
-    _search('');
-  }
-  
-  void selectAll() {
-    setState(() {
-      _selectedProducts = List.from(_filteredProducts);
-    });
-    widget.onSelectionChanged?.call(_selectedProducts);
-  }
-  
-  void clearSelection() {
-    setState(() {
-      _selectedProducts.clear();
-    });
-    widget.onSelectionChanged?.call(_selectedProducts);
-  }
-  
-  void selectProduct(ProductModel product) {
-    if (!_selectedProducts.contains(product)) {
-      setState(() {
-        _selectedProducts.add(product);
-      });
-      widget.onSelectionChanged?.call(_selectedProducts);
-    }
-  }
-  
-  void deselectProduct(ProductModel product) {
-    if (_selectedProducts.contains(product)) {
-      setState(() {
-        _selectedProducts.remove(product);
-      });
-      widget.onSelectionChanged?.call(_selectedProducts);
-    }
-  }
-  
-  void scrollToTop({bool animate = true}) {
-    if (animate) {
-      _scrollController.animateTo(
-        0,
-  duration: const Duration(milliseconds: 500),
-  curve: Curves.easeOutCubic,
-      );
-    } else {
-      _scrollController.jumpTo(0);
-    }
-  }
-  
-  void scrollToIndex(int index, {bool animate = true}) {
-    // Approximate scroll position based on item height
-    final itemHeight = widget.layout == ProductGridLayout.list
-      ? _getConfig('listItemHeight', 120.0) + _getConfig('listItemSpacing', 16.0)
-      : (MediaQuery.of(context).size.width / widget.crossAxisCount) / widget.childAspectRatio + widget.mainAxisSpacing;
-    
-    final offset = index * itemHeight;
-    
-    if (animate) {
-      _scrollController.animateTo(
-        offset,
-  duration: const Duration(milliseconds: 300),
-  curve: Curves.easeInOut,
-      );
-    } else {
-      _scrollController.jumpTo(offset);
-    }
-  }
-  
-  void refreshGrid() {
-    setState(() {
-      _filteredProducts = List.from(widget.products);
-      _selectedProducts.clear();
-      _searchQuery = '';
-      _isSearching = false;
-    });
-    
-    if (widget.enableAnimations) {
-      _animationController.reset();
-      _animationController.forward();
-    }
-  }
-  
-  void triggerLoadMore() {
-    _loadMore();
-  }
 }
-
-// Enum types moved to product_grid_types.dart
